@@ -1,0 +1,342 @@
+/* The globe. Dotted land, every corridor between world regions drawn as a lane whose
+   brightness is its efficiency that week, flow particles in vessel colours moving along
+   the lanes (slower and thinner when a route is losing efficiency), a valve at every
+   strait that opens and closes with its traffic, and the live ships from the server.
+   Drag to spin (it keeps its momentum), scroll to zoom, click a strait, lane or ship. */
+
+(() => {
+  const HW = window.HW, C = HW.C, RAD = Math.PI / 180;
+  const vec = (lat, lon) => { const a = lat * RAD, b = lon * RAD; return [Math.cos(a) * Math.sin(b), Math.sin(a), Math.cos(a) * Math.cos(b)]; };
+  const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const norm = a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+  const toLatLon = v => [Math.asin(HW.clamp(v[1], -1, 1)) / RAD, Math.atan2(v[0], v[2]) / RAD];
+  const slerp = (a, b, t) => {
+    const om = Math.acos(HW.clamp(dot3(a, b), -1, 1));
+    if (om < 1e-6) return a;
+    const s = Math.sin(om), wa = Math.sin((1 - t) * om) / s, wb = Math.sin(t * om) / s;
+    return [wa * a[0] + wb * b[0], wa * a[1] + wb * b[1], wa * a[2] + wb * b[2]];
+  };
+  const VESSELS = ['container', 'tanker', 'dry_bulk', 'general_cargo', 'roro'];
+  const VCOL = { container: C.container, tanker: C.tanker, dry_bulk: C.bulk, general_cargo: C.general, roro: C.roro };
+
+  HW.makeGlobe = (canvas, D, opts = {}) => {
+    const rnd = HW.rng(7);
+
+    /* ---------- geometry built once ---------- */
+    const ld = D.land.dots, nL = ld.length / 2;
+    const LX = new Float32Array(nL), LY = new Float32Array(nL), LZ = new Float32Array(nL), LB = new Float32Array(nL);
+    for (let i = 0; i < nL; i++) { const v = vec(ld[2 * i] / 100, ld[2 * i + 1] / 100); LX[i] = v[0]; LY[i] = v[1]; LZ[i] = v[2]; LB[i] = rnd(); }
+    const nO = 5200, OX = new Float32Array(nO), OY = new Float32Array(nO), OZ = new Float32Array(nO);
+    for (let i = 0; i < nO; i++) { const y = 1 - 2 * (i + 0.5) / nO, r = Math.sqrt(1 - y * y), a = i * 2.399963; OX[i] = r * Math.cos(a); OY[i] = y; OZ[i] = r * Math.sin(a); }
+    const rings = D.land.borders.map(r => {
+      const n = r.length / 2, f = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) { const v = vec(r[2 * i + 1] / 10, r[2 * i] / 10); f[3 * i] = v[0]; f[3 * i + 1] = v[1]; f[3 * i + 2] = v[2]; }
+      return f;
+    });
+
+    // corridors: densified 3D polylines with cumulative length, for drawing and particles
+    const weeks = D.status.weeks, nW = weeks.length;
+    const rWeeks = D.routes.weeks, rOff = rWeeks.indexOf(weeks[0]) >= 0 ? rWeeks.indexOf(weeks[0]) : 0;
+    const lanes = D.corridors.features.map(f => {
+      const raw = f.geometry.coordinates.map(([lon, lat]) => vec(lat, lon));
+      const pts = [raw[0]];
+      for (let i = 1; i < raw.length; i++) {
+        const a = raw[i - 1], b = raw[i], om = Math.acos(HW.clamp(dot3(a, b), -1, 1)), n = Math.max(1, Math.ceil(om / (1.6 * RAD)));
+        for (let k = 1; k <= n; k++) pts.push(slerp(a, b, k / n));
+      }
+      const cum = [0];
+      for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.acos(HW.clamp(dot3(pts[i - 1], pts[i]), -1, 1)));
+      const id = f.properties.corridor_id, r = D.routes.corridors[id];
+      return { id, p: f.properties, pts, cum, len: cum[cum.length - 1], r, sx: new Float32Array(pts.length), sy: new Float32Array(pts.length), sv: new Uint8Array(pts.length) };
+    });
+    const laneAt = (L, s) => {   // point at arc length s along a lane
+      let lo = 0, hi = L.cum.length - 1;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (L.cum[m] <= s) lo = m; else hi = m; }
+      const seg = L.cum[hi] - L.cum[lo] || 1, t = (s - L.cum[lo]) / seg, a = L.pts[lo], b = L.pts[hi];
+      return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+    };
+
+    // flow particles: more on longer, busier lanes
+    const parts = [];
+    for (const L of lanes) {
+      const n = Math.max(2, Math.round(L.len / (2.2 * RAD)));
+      for (let i = 0; i < n; i++) parts.push({ L, s: rnd() * L.len, v: (0.7 + rnd() * 0.6), dir: rnd() < 0.5 ? 1 : -1, pick: rnd(), off: (rnd() - 0.5) * 0.004 });
+    }
+
+    // straits
+    const straits = D.straits.map(s => ({ ...s, v: vec(s.lat, s.lon), sx: 0, sy: 0, vis: false }));
+
+    /* ---------- state ---------- */
+    const S = {
+      ti: nW - 1, zoom: 1, zoomT: 1, idle: 9, wAxis: [0, 1, 0], wSpeed: 0, dragAng: 0, fly: null,
+      hover: null, sel: null, quiet: 1, ships: [], shipsAt: 0, shipsFade: 0, showShips: true, dive: null,
+    };
+    const rotM = (axis, ang) => {
+      const [x, y, z] = axis, c = Math.cos(ang), s = Math.sin(ang), t = 1 - c;
+      return [t * x * x + c, t * x * y - s * z, t * x * z + s * y, t * x * y + s * z, t * y * y + c, t * y * z - s * x, t * x * z - s * y, t * y * z + s * x, t * z * z + c];
+    };
+    const mul = (a, b) => { const o = new Array(9); for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) o[r * 3 + c] = a[r * 3] * b[c] + a[r * 3 + 1] * b[3 + c] + a[r * 3 + 2] * b[6 + c]; return o; };
+    let M = mul(rotM([1, 0, 0], 18 * RAD), rotM([0, 1, 0], -58 * RAD));   // start over the Indian Ocean: Suez, Hormuz and Malacca in view
+    const spin = (axis, ang) => { if (ang) M = mul(rotM(axis, ang), M); };
+    const view = v => [M[0] * v[0] + M[1] * v[1] + M[2] * v[2], M[3] * v[0] + M[4] * v[1] + M[5] * v[2], M[6] * v[0] + M[7] * v[1] + M[8] * v[2]];
+    const unview = v => [M[0] * v[0] + M[3] * v[1] + M[6] * v[2], M[1] * v[0] + M[4] * v[1] + M[7] * v[2], M[2] * v[0] + M[5] * v[1] + M[8] * v[2]];
+
+    let cx = 0, cy = 0, R = 1;
+    const ball = (x, y) => { const px = (x - cx) / R, py = (cy - y) / R, d2 = px * px + py * py; return norm(d2 <= 0.5 ? [px, py, Math.sqrt(1 - d2)] : [px, py, 0.5 / Math.sqrt(d2)]); };
+
+    /* values at the current week */
+    const wi = () => Math.round(HW.clamp(S.ti, 0, nW - 1));
+    const laneEff = L => { const e = L.r && L.r.efficiency; if (!e) return 1; return e[HW.clamp(wi() + rOff, 0, e.length - 1)]; };
+    const laneBlocked = L => { const b = L.r && L.r.blocked_share; if (!b) return 0; return b[HW.clamp(wi() + rOff, 0, b.length - 1)]; };
+    const straitRatio = s => { const r = s.status.ratio; return r[HW.clamp(wi(), 0, r.length - 1)]; };
+    const straitMix = s => {   // vessel-type shares at the strait this week
+      const w = s.weekly, i = HW.clamp(wi() - (nW - w.total.length), 0, w.total.length - 1), tot = w.total[i] || 1;
+      return VESSELS.map(k => (w[k] ? w[k][i] : 0) / tot);
+    };
+    // world vessel mix this week, for flow particles
+    let mixWeek = -1, mix = [0.35, 0.25, 0.25, 0.1, 0.05];
+    const worldMix = () => {
+      if (mixWeek === wi()) return mix;
+      const acc = [0, 0, 0, 0, 0];
+      for (const s of straits) { const m = straitMix(s), t = s.weekly.total[HW.clamp(wi() - (nW - s.weekly.total.length), 0, s.weekly.total.length - 1)]; m.forEach((x, k) => acc[k] += x * t); }
+      const tot = acc.reduce((a, b) => a + b, 0) || 1;
+      mix = acc.map(x => x / tot); mixWeek = wi();
+      return mix;
+    };
+    const pickVessel = r => { const m = worldMix(); let a = 0; for (let k = 0; k < 5; k++) { a += m[k]; if (r <= a) return VESSELS[k]; } return 'container'; };
+
+    /* ---------- drawing ---------- */
+    const obj = {
+      down() { S.wSpeed = 0; S.dragAng = 0; S.fly = null; S.idle = 0; },
+      drag(st, dx, dy) {
+        const P = st.ptr, a = ball(P.x - dx, P.y - dy), b = ball(P.x, P.y), ax = cross(a, b), l = Math.hypot(ax[0], ax[1], ax[2]);
+        if (l < 1e-6) return;
+        const ang = Math.asin(Math.min(1, l)) * 1.1;
+        S.wAxis = [ax[0] / l, ax[1] / l, ax[2] / l]; S.dragAng += ang; spin(S.wAxis, ang); S.idle = 0;
+      },
+      wheel(st, dy) { S.zoomT = HW.clamp(S.zoomT * Math.exp(-dy * 0.0016), 0.85, 9); S.idle = 0; },
+      click() {
+        const h = S.hover;
+        if (!h) { api.select(null); return; }
+        api.select(h);
+      },
+      frame(st, dt) {
+        const { ctx, W, H } = st, P = st.ptr;
+        ctx.clearRect(0, 0, W, H);
+        S.zoom += (S.zoomT - S.zoom) * (1 - Math.exp(-6 * dt));
+        const panelShift = S.sel && W > 960 ? -Math.min(190, W * 0.13) : 0;
+        S.shift = (S.shift || 0) + (panelShift - (S.shift || 0)) * (1 - Math.exp(-5 * dt));
+        cx = W / 2 + S.shift; cy = H * 0.53; R = Math.min(W * 0.33, H * 0.36) * S.zoom;
+
+        /* rotation: momentum, fly-to, slow idle drift */
+        S.idle += dt;
+        if (P.down) { S.wSpeed = HW.lerp(S.wSpeed, S.dragAng / dt, 0.45); S.dragAng = 0; }
+        else {
+          spin(S.wAxis, S.wSpeed * dt); S.wSpeed *= Math.exp(-2.1 * dt);
+          if (S.fly) {
+            const cur = view(S.fly.v), to = [0, 0, 1], ax = cross(cur, to), l = Math.hypot(ax[0], ax[1], ax[2]), rem = Math.atan2(l, dot3(cur, to));
+            if (S.fly.zoom) S.zoomT = S.fly.zoom;
+            if (rem < 0.003 || l < 1e-7) { if (S.fly.done) S.fly.done(); S.fly = null; }
+            else spin([ax[0] / l, ax[1] / l, ax[2] / l], rem * (1 - Math.exp(-(S.fly.rate || 3.4) * dt)));
+          } else if (!S.sel && !P.inside && S.zoomT < 1.6) spin([0, 1, 0], 0.045 * dt * HW.smooth((S.idle - 2) / 3));
+        }
+        const m0 = M[0], m1 = M[1], m2 = M[2], m3 = M[3], m4 = M[4], m5 = M[5], m6 = M[6], m7 = M[7], m8 = M[8];
+        const proj = (v, out) => { out[0] = cx + (m0 * v[0] + m1 * v[1] + m2 * v[2]) * R; out[1] = cy - (m3 * v[0] + m4 * v[1] + m5 * v[2]) * R; return m6 * v[0] + m7 * v[1] + m8 * v[2]; };
+        const tmp = [0, 0];
+        S.quiet += ((S.sel ? 0.35 : 1) - S.quiet) * (1 - Math.exp(-6 * dt));
+
+        /* sphere body and rim */
+        const g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.05, cx, cy, R);
+        g.addColorStop(0, '#2c2c2d'); g.addColorStop(0.7, '#242425'); g.addColorStop(1, '#1d1d1e');
+        ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.2832); ctx.fill();
+        const halo = ctx.createRadialGradient(cx, cy, R * 0.99, cx, cy, R * 1.16);
+        halo.addColorStop(0, 'rgba(236,236,236,0.06)'); halo.addColorStop(1, 'rgba(236,236,236,0)');
+        ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, R * 1.16, 0, 6.2832); ctx.arc(cx, cy, R, 0, 6.2832, true); ctx.fill();
+        ctx.strokeStyle = 'rgba(236,236,236,0.16)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.2832); ctx.stroke();
+
+        /* ocean grid dots */
+        ctx.fillStyle = C.fg; ctx.globalAlpha = 0.045; ctx.beginPath();
+        for (let i = 0; i < nO; i++) {
+          const z = m6 * OX[i] + m7 * OY[i] + m8 * OZ[i]; if (z < 0.05) continue;
+          ctx.rect(cx + (m0 * OX[i] + m1 * OY[i] + m2 * OZ[i]) * R - 0.5, cy - (m3 * OX[i] + m4 * OY[i] + m5 * OZ[i]) * R - 0.5, 1, 1);
+        }
+        ctx.fill();
+
+        /* land dots in three brightness buckets so the texture breathes a little */
+        const ds = HW.clamp(1.25 * Math.sqrt(S.zoom), 1.2, 2.6), hs = ds / 2, px = P.inside ? P.x : -1e4, py = P.y;
+        for (let b = 0; b < 3; b++) {
+          ctx.fillStyle = b === 2 ? '#8a8a8a' : b === 1 ? '#5f5f5f' : '#474747';
+          ctx.globalAlpha = 1; ctx.beginPath();
+          for (let i = 0; i < nL; i++) {
+            const Z = m6 * LX[i] + m7 * LY[i] + m8 * LZ[i]; if (Z < 0) continue;
+            let sx = cx + (m0 * LX[i] + m1 * LY[i] + m2 * LZ[i]) * R, sy = cy - (m3 * LX[i] + m4 * LY[i] + m5 * LZ[i]) * R;
+            if (sx < -4 || sx > W + 4 || sy < -4 || sy > H + 4) continue;
+            const dx = sx - px, dy = sy - py, near = dx * dx + dy * dy < 7000 ? Math.exp(-(dx * dx + dy * dy) / 2400) : 0;
+            const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2;
+            const bucket = lum > 1.05 ? 2 : lum > 0.72 ? 1 : 0;
+            if (bucket !== b) continue;
+            ctx.rect(sx - hs, sy - hs, ds, ds);
+          }
+          ctx.fill();
+        }
+
+        /* country outlines, faint */
+        ctx.globalAlpha = 1; ctx.strokeStyle = 'rgba(236,236,236,0.07)'; ctx.lineWidth = 0.6; ctx.beginPath();
+        for (const f of rings) {
+          let pen = false;
+          for (let i = 0; i < f.length; i += 3) {
+            const x0 = f[i], y0 = f[i + 1], z0 = f[i + 2], Z = m6 * x0 + m7 * y0 + m8 * z0;
+            if (Z < 0.02) { pen = false; continue; }
+            const x = cx + (m0 * x0 + m1 * y0 + m2 * z0) * R, y = cy - (m3 * x0 + m4 * y0 + m5 * z0) * R;
+            if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; }
+          }
+        }
+        ctx.stroke();
+
+        /* lanes: brightness is efficiency, blocked share turns the lane into a dotted grey line */
+        const hovLane = S.hover && S.hover.kind === 'lane' ? S.hover.L : null, selLane = S.sel && S.sel.kind === 'lane' ? S.sel.L : null;
+        let lanePick = null, laneD = 60;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        for (const L of lanes) {
+          const n = L.pts.length;
+          for (let j = 0; j < n; j++) {
+            const Z = proj(L.pts[j], tmp); L.sx[j] = tmp[0]; L.sy[j] = tmp[1]; L.sv[j] = Z > 0.01 ? 1 : 0;
+            if (L.sv[j] && P.inside && !P.down && j % 2 === 0) { const d2 = (tmp[0] - px) ** 2 + (tmp[1] - py) ** 2; if (d2 < laneD) { laneD = d2; lanePick = L; } }
+          }
+          const eff = laneEff(L), blk = laneBlocked(L), hi = L === hovLane || L === selLane;
+          ctx.strokeStyle = hi ? C.fg : blk > 0.3 ? '#6b6b6b' : C.fg;
+          ctx.lineWidth = hi ? 1.6 : 0.6 + 0.6 * eff;
+          ctx.globalAlpha = hi ? 0.95 : (0.05 + 0.2 * Math.pow(eff, 3)) * S.quiet;
+          ctx.setLineDash(blk > 0.3 ? [2, 4] : []);
+          ctx.beginPath(); let pen = false;
+          for (let j = 0; j < n; j++) { if (!L.sv[j]) { pen = false; continue; } if (pen) ctx.lineTo(L.sx[j], L.sy[j]); else { ctx.moveTo(L.sx[j], L.sy[j]); pen = true; } }
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        /* flow particles: speed and length scale with lane efficiency; blocked lanes hold their ships as dots */
+        const tail = 0.012 * Math.min(2.2, S.zoom);
+        for (const p of parts) {
+          const L = p.L, eff = laneEff(L), blk = laneBlocked(L);
+          const sp = 0.05 * p.v * (0.25 + 0.75 * eff) * (blk > 0.5 ? 0.08 : 1);
+          p.s += p.dir * sp * dt; if (p.s > L.len) p.s -= L.len; if (p.s < 0) p.s += L.len;
+          const a = laneAt(L, p.s), Z = proj(a, tmp); if (Z < 0.03) continue;
+          const x = tmp[0], y = tmp[1]; if (x < -10 || x > W + 10 || y < -10 || y > H + 10) continue;
+          const kind = pickVessel(p.pick), col = VCOL[kind], hi = L === hovLane || L === selLane;
+          ctx.globalAlpha = (hi ? 1 : 0.85 * S.quiet) * (Z < 0.2 ? Z * 5 : 1);
+          if (blk > 0.5) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.5, 0, 6.2832); ctx.fill(); continue; }
+          const b = laneAt(L, HW.clamp(p.s - p.dir * tail * (0.4 + eff), 0, L.len)); proj(b, tmp);
+          ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(tmp[0], tmp[1]); ctx.lineTo(x, y); ctx.stroke();
+        }
+
+        /* live ships, only at "now" */
+        const atNow = S.ti >= nW - 1.01;
+        S.shipsFade += ((atNow && S.showShips ? 1 : 0) - S.shipsFade) * (1 - Math.exp(-4 * dt));
+        let shipPick = null, shipD = S.zoom > 2.5 ? 64 : 0;
+        if (S.shipsFade > 0.02 && S.ships.length) {
+          const len = 2 + 1.6 * Math.sqrt(S.zoom);
+          for (const s of S.ships) {
+            const Z = proj(s.v, tmp); if (Z < 0.03) continue;
+            const x = tmp[0], y = tmp[1]; if (x < -6 || x > W + 6 || y < -6 || y > H + 6) continue;
+            const main = s.g === 'cargo' || s.g === 'tanker';
+            ctx.globalAlpha = S.shipsFade * (main ? 0.95 : 0.35) * (Z < 0.2 ? Z * 5 : 1);
+            ctx.strokeStyle = ctx.fillStyle = HW.groupColour(s.g);
+            if (s.sog > 3 && s.cog != null) {
+              // streak points backwards along course; course is clockwise from north
+              const c = s.cog * RAD, l = len * HW.clamp(s.sog / 14, 0.4, 1.6);
+              const north = view([-Math.sin(s.lat * RAD) * Math.sin(s.lon * RAD), Math.cos(s.lat * RAD), -Math.sin(s.lat * RAD) * Math.cos(s.lon * RAD)]);
+              const east = view([Math.cos(s.lon * RAD), 0, -Math.sin(s.lon * RAD)]);
+              const vx = Math.sin(c) * east[0] + Math.cos(c) * north[0], vy = Math.sin(c) * east[1] + Math.cos(c) * north[1];
+              ctx.lineWidth = main ? 1.3 : 1; ctx.beginPath(); ctx.moveTo(x - vx * l, y + vy * l); ctx.lineTo(x, y); ctx.stroke();
+            } else { ctx.beginPath(); ctx.rect(x - 0.9, y - 0.9, 1.8, 1.8); ctx.fill(); }
+            if (shipD && main && P.inside && !P.down) { const d2 = (x - px) ** 2 + (y - py) ** 2; if (d2 < shipD) { shipD = d2; shipPick = s; } }
+          }
+        }
+
+        /* strait valves: two arcs whose gap is the traffic vs baseline, filled with dots in the strait's vessel mix */
+        let straitPick = null, straitD = 260;
+        const vr = HW.clamp(7 + 2.2 * Math.sqrt(S.zoom), 8, 15);
+        for (const s of straits) {
+          const Z = proj(s.v, tmp); s.vis = Z > 0.05; if (!s.vis) continue;
+          const x = tmp[0], y = tmp[1]; s.sx = x; s.sy = y;
+          const ratio = straitRatio(s), open = HW.clamp(ratio, 0, 1.2), hi = (S.hover && S.hover.s === s) || (S.sel && S.sel.s === s);
+          const busy = s.status.baseline_per_week > 250 || hi;
+          ctx.globalAlpha = (hi ? 1 : busy ? 0.9 : 0.45) * (Z < 0.25 ? Z * 4 : 1);
+          ctx.strokeStyle = ratio < 0.6 ? '#9a9a9a' : C.fg; ctx.lineWidth = hi ? 1.6 : 1.1;
+          const gap = 0.12 + 0.95 * HW.clamp(open, 0, 1);   // radians of opening on each side
+          ctx.beginPath(); ctx.arc(x, y, vr, -Math.PI / 2 + gap, Math.PI / 2 - gap); ctx.stroke();
+          ctx.beginPath(); ctx.arc(x, y, vr, Math.PI / 2 + gap, Math.PI * 1.5 - gap); ctx.stroke();
+          const m = straitMix(s), n = 10; let a = 0;
+          for (let k = 0; k < n; k++) {
+            const ang = st.t * (0.6 + open) + k * 0.628, rr = vr * 0.55;
+            let acc = 0, kind = 0; const r = (k + 0.5) / n; for (let q = 0; q < 5; q++) { acc += m[q]; if (r <= acc) { kind = q; break; } }
+            ctx.fillStyle = VCOL[VESSELS[kind]]; ctx.beginPath(); ctx.arc(x + Math.cos(ang) * rr * open, y + Math.sin(ang) * rr * open, 1.25, 0, 6.2832); ctx.fill();
+          }
+          if (P.inside && !P.down) { const d2 = (x - px) ** 2 + (y - py) ** 2; if (d2 < straitD) { straitD = d2; straitPick = s; } }
+          if (busy && !hi && S.zoom < 3.5) {
+            const pct = (ratio - 1) * 100, right = x >= cx;
+            HW.label(ctx, (right ? '' : '') + s.name.replace(' Strait', '').replace(' Canal', '').toUpperCase() + ' ' + HW.fPct(pct), x + (right ? vr + 5 : -vr - 5), y + 4, ratio < 0.6 ? '#b0b0b0' : '#9a9a9a', right ? 'left' : 'right', 10);
+          }
+        }
+
+        /* hover: strait first, then ship, then lane */
+        if (!P.down) {
+          const was = S.hover && (S.hover.s || S.hover.L || S.hover.ship);
+          S.hover = straitPick ? { kind: 'strait', s: straitPick } : shipPick ? { kind: 'ship', ship: shipPick } : lanePick ? { kind: 'lane', L: lanePick } : null;
+          const now = S.hover && (S.hover.s || S.hover.L || S.hover.ship);
+          if (now !== was) canvas.style.cursor = S.hover ? 'pointer' : 'grab';
+        }
+
+        /* callout */
+        const h = S.hover;
+        if (h && !P.down) {
+          let x, y, title, sub, sub2;
+          if (h.kind === 'strait') {
+            const r = straitRatio(h.s); x = h.s.sx; y = h.s.sy; title = h.s.name.toUpperCase();
+            sub = `${HW.fPct((r - 1) * 100)} VS 2023 · ${HW.fInt(r * h.s.status.baseline_per_week)} SHIPS/WK`;
+          } else if (h.kind === 'ship') {
+            proj(h.ship.v, tmp); x = tmp[0]; y = tmp[1]; title = (h.ship.name || 'MMSI ' + h.ship.mmsi).toUpperCase();
+            sub = `${HW.groupLabel(h.ship.g)} · ${h.ship.sog != null ? h.ship.sog.toFixed(1) + ' KN' : ''}`; sub2 = h.ship.destination ? '→ ' + h.ship.destination.toUpperCase() : '';
+          } else {
+            const L = h.L, mid = L.pts[Math.floor(L.pts.length / 2)]; proj(mid, tmp); x = P.x; y = P.y;
+            const e = laneEff(L); title = (L.p.region_a + ' → ' + L.p.region_b).toUpperCase();
+            sub = `${(L.r ? L.r.expected_days[HW.clamp(wi() + rOff, 0, L.r.expected_days.length - 1)] : L.p.days).toFixed(1)} DAYS · EFFICIENCY ${e.toFixed(2)}`;
+          }
+          const right = x < W - 300, lx = x + (right ? 42 : -42), ly = Math.max(70, y - 48);
+          ctx.globalAlpha = 0.8; ctx.strokeStyle = '#bbb'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(lx, ly + 4); ctx.stroke();
+          ctx.globalAlpha = 1; ctx.fillStyle = C.fg; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 6.2832); ctx.fill();
+          const al = right ? 'left' : 'right', tx = lx + (right ? 6 : -6);
+          HW.label(ctx, title, tx, ly - 12, C.fg, al, 12, 500);
+          HW.label(ctx, sub, tx, ly + 3, '#b8b8b8', al, 10.5);
+          if (sub2) HW.label(ctx, sub2, tx, ly + 17, '#8c8c8c', al, 10.5);
+        }
+
+        if (opts.onFrame) opts.onFrame(S);
+      },
+    };
+
+    const api = {
+      S, lanes, straits, weeks, rOff,
+      laneEff, straitRatio, straitMix, worldMix,
+      setWeek(f) { S.ti = HW.clamp(f, 0, nW - 1); },
+      setShips(list) {
+        S.ships = list.map(s => ({ ...s, v: vec(s.lat, s.lon), g: s.type_group || HW.vesselGroup(s.type) }));
+        S.shipsAt = Date.now();
+      },
+      flyTo(lat, lon, zoom, done, rate) { S.fly = { v: vec(lat, lon), zoom, done, rate }; S.wSpeed = 0; S.idle = 0; },
+      select(item) {
+        S.sel = item;
+        if (item && item.kind === 'strait') api.flyTo(item.s.lat, item.s.lon, Math.max(S.zoomT, 1.7));
+        if (item && item.kind === 'lane') { const v = item.L.pts[Math.floor(item.L.pts.length / 2)]; const [la, lo] = toLatLon(v); api.flyTo(la, lo, Math.max(1, Math.min(S.zoomT, 1.4))); }
+        if (opts.onSelect) opts.onSelect(item);
+      },
+      zoomBy(f) { S.zoomT = HW.clamp(S.zoomT * f, 0.85, 9); },
+      screenOf(lat, lon) { const out = [0, 0]; const v = vec(lat, lon); const Z = M[6] * v[0] + M[7] * v[1] + M[8] * v[2]; out[0] = cx + (M[0] * v[0] + M[1] * v[1] + M[2] * v[2]) * R; out[1] = cy - (M[3] * v[0] + M[4] * v[1] + M[5] * v[2]) * R; return { x: out[0], y: out[1], visible: Z > 0 }; },
+    };
+    canvas.style.cursor = 'grab';
+    canvas.style.touchAction = 'none';
+    api.stage = HW.stage(canvas, obj);
+    return api;
+  };
+})();
