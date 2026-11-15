@@ -1,7 +1,7 @@
 /* Weather overlay for the globe: live conditions over the whole planet, drawn in the
    same glyph language as the logo and loading screen.
 
-   Data: Open-Meteo (free, no key), current conditions on a 10° grid (504 points): wind,
+   Data: Open-Meteo (free, no key), current conditions on a 5° grid (1,944 points): wind,
    gusts, rain and weather code from the forecast API first, then wave height from the
    marine API a minute later (the free tier allows about 600 point-lookups a minute).
    Kept in the browser for 15 minutes, refreshed after that while the overlay is on.
@@ -27,7 +27,7 @@
 (() => {
   const HW = window.HW, RAD = Math.PI / 180;
   const vec = (lat, lon) => { const a = lat * RAD, b = lon * RAD; return [Math.cos(a) * Math.sin(b), Math.sin(a), Math.cos(a) * Math.cos(b)]; };
-  const STEP = 10;
+  const STEP = 5;   // 5° grid: 1,944 points (the coarse 10° ones load first)
   const PTS = [];
   for (let lat = -60; lat <= 70; lat += STEP) for (let lon = -180; lon < 180; lon += STEP) PTS.push({ lat, lon, v: vec(lat, lon), w: null });
 
@@ -39,54 +39,77 @@
 
   /* ---------- fetch ---------- */
   const chunk = (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };
-  const CACHE = 'hw-weather-grid-v1';
+  const CACHE = 'hw-weather-grid-v2';
   const getJSON = url => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  const save = () => { try { localStorage.setItem(CACHE, JSON.stringify({ at: wx.loadedAt, w: PTS.map(p => p.w) })); } catch { /* fine */ } };
+
+  // Open-Meteo's free tier allows ~600 point-lookups a minute, so spend at most 500 a
+  // minute: remember what we used and wait before a batch that would go over.
+  const used = [];
+  const budget = async n => {
+    for (;;) {
+      const now = Date.now();
+      while (used.length && now - used[0][0] > 61000) used.shift();
+      const sum = used.reduce((a, u) => a + u[1], 0);
+      if (sum + n <= 500) { used.push([now, n]); return; }
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  };
+  const fetchForecast = async g => {
+    await budget(g.length);
+    const f = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${g.map(p => p.lat).join(',')}&longitude=${g.map(p => p.lon).join(',')}&current=wind_speed_10m,wind_gusts_10m,precipitation,weather_code,cloud_cover&wind_speed_unit=kn`);
+    (Array.isArray(f) ? f : [f]).forEach((r, i) => {
+      const c = r && r.current; if (!c) return;
+      g[i].w = { wind: c.wind_speed_10m, gust: c.wind_gusts_10m, rain: c.precipitation, code: c.weather_code, cloud: c.cloud_cover, wave: g[i].w ? g[i].w.wave : null };
+      classify(g[i]);
+    });
+  };
+  const fetchMarine = async g => {
+    await budget(g.length);
+    const m = await getJSON(`https://marine-api.open-meteo.com/v1/marine?latitude=${g.map(p => p.lat).join(',')}&longitude=${g.map(p => p.lon).join(',')}&current=wave_height`);
+    (Array.isArray(m) ? m : [m]).forEach((r, i) => { if (g[i].w && r && r.current) { g[i].w.wave = r.current.wave_height; g[i].hasWave = true; classify(g[i]); } });
+  };
+
   const fetchAll = async () => {
     if (wx.loading) return;
-    // fresh enough copy in this browser? use it
+    wx.loading = true;
+    // a fresh enough copy in this browser? start from it and only fetch what's missing
+    let fresh = false;
     try {
       const c = JSON.parse(localStorage.getItem(CACHE) || 'null');
       if (c && Date.now() - c.at < 15 * 60e3 && c.w.length === PTS.length) {
-        c.w.forEach((w, i) => { PTS[i].w = w; if (w) classify(PTS[i]); });
-        wx.loadedAt = c.at; fieldDirty = true; summary(); return;
+        c.w.forEach((w, i) => { PTS[i].w = w; PTS[i].hasWave = !!(w && w.wave != null); if (w) classify(PTS[i]); });
+        wx.loadedAt = c.at; fresh = true; fieldDirty = true; summary();
       }
     } catch { /* no storage: just fetch */ }
-    wx.loading = true; status('LOADING LIVE WEATHER…');
-    // 0. our server's shared copy, if it has one
-    try {
-      const d = await getJSON(`${HW.SERVER}/api/weather/grid`);
-      const byKey = new Map((d.points || []).map(q => [q.lat + ',' + q.lon, q]));
-      let n = 0;
-      PTS.forEach(p => { const q = byKey.get(p.lat + ',' + p.lon); if (q) { p.w = { wind: q.wind, gust: q.gust, rain: q.rain, code: q.code, cloud: q.cloud, wave: q.wave }; classify(p); n++; } });
-      if (n > PTS.length * 0.6) {
-        wx.loading = false; wx.loadedAt = Date.parse(d.at) || Date.now(); fieldDirty = true;
-        summary(' · FROM OUR SERVER'); return;
-      }
-    } catch { /* server doesn't have it (yet): ask Open-Meteo directly */ }
-    const groups = chunk(PTS, 126);
-    // 1. wind, gusts, rain, weather code
-    for (const g of groups) {
+    if (!fresh) {
+      PTS.forEach(p => { p.w = null; p.hasWave = false; });
+      status('LOADING LIVE WEATHER…');
+      // 0. our server's shared copy, if it has one
       try {
-        const f = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${g.map(p => p.lat).join(',')}&longitude=${g.map(p => p.lon).join(',')}&current=wind_speed_10m,wind_gusts_10m,precipitation,weather_code,cloud_cover&wind_speed_unit=kn`);
-        (Array.isArray(f) ? f : [f]).forEach((r, i) => {
-          const c = r && r.current; if (!c) return;
-          g[i].w = { wind: c.wind_speed_10m, gust: c.wind_gusts_10m, rain: c.precipitation, code: c.weather_code, cloud: c.cloud_cover, wave: g[i].w ? g[i].w.wave : null };
-          classify(g[i]);
-        });
-      } catch { /* leave these points empty */ }
+        const d = await getJSON(`${HW.SERVER}/api/weather/grid`);
+        const byKey = new Map((d.points || []).map(q => [q.lat + ',' + q.lon, q]));
+        let n = 0;
+        PTS.forEach(p => { const q = byKey.get(p.lat + ',' + p.lon); if (q) { p.w = { wind: q.wind, gust: q.gust, rain: q.rain, code: q.code, cloud: q.cloud, wave: q.wave }; p.hasWave = true; classify(p); n++; } });
+        if (n > PTS.length * 0.2) { wx.loadedAt = Date.parse(d.at) || Date.now(); fieldDirty = true; summary(' · FROM OUR SERVER'); save(); }
+      } catch { /* server doesn't have it (yet): ask Open-Meteo directly */ }
+      wx.loadedAt = wx.loadedAt || Date.now();
     }
-    wx.loadedAt = Date.now(); fieldDirty = true; summary(' · WAVES IN A MINUTE');
-    // 2. wave heights, a minute later so we stay inside the free rate limit
-    setTimeout(async () => {
-      for (const g of groups) {
-        try {
-          const m = await getJSON(`https://marine-api.open-meteo.com/v1/marine?latitude=${g.map(p => p.lat).join(',')}&longitude=${g.map(p => p.lon).join(',')}&current=wave_height`);
-          (Array.isArray(m) ? m : [m]).forEach((r, i) => { if (g[i].w && r && r.current) { g[i].w.wave = r.current.wave_height; classify(g[i]); } });
-        } catch { /* no waves for these */ }
-      }
-      wx.loading = false; fieldDirty = true; summary();
-      try { localStorage.setItem(CACHE, JSON.stringify({ at: wx.loadedAt, w: PTS.map(p => p.w) })); } catch { /* fine */ }
-    }, 61000);
+    // 1. coarse 10° points first so the map fills in fast, then the in-between 5° points
+    const coarse = PTS.filter(p => p.lat % 10 === 0 && p.lon % 10 === 0), fine = PTS.filter(p => !(p.lat % 10 === 0 && p.lon % 10 === 0));
+    const order = [...coarse, ...fine];
+    const jobs = [];
+    chunk(order.filter(p => !p.w), 120).forEach(g => jobs.push(['f', g]));
+    chunk(order.filter(p => !p.hasWave), 120).forEach(g => jobs.push(['m', g]));
+    // run waves for the coarse points right after their forecast, then the rest
+    jobs.sort((a, b) => (order.indexOf(a[1][0]) - order.indexOf(b[1][0])) || (a[0] === 'f' ? -1 : 1));
+    let done = 0;
+    for (const [kind, g] of jobs) {
+      try { if (kind === 'f') await fetchForecast(g); else await fetchMarine(g); } catch { /* skip this batch */ }
+      done++; fieldDirty = true; save();
+      summary(done < jobs.length ? ` · REFINING ${Math.round(done / jobs.length * 100)}%` : '');
+    }
+    wx.loading = false; fieldDirty = true; summary(); save();
   };
   const summary = (extra = '') => {
     const n = PTS.filter(p => p.w).length, rough = PTS.filter(p => p.w && p.sev >= 0.5).length;
@@ -126,19 +149,22 @@
   };
   // grid value at any lat/lon: bilinear between the 10° points, wrapping in longitude
   const ROWS = Math.round((70 - -60) / STEP) + 1, COLS = 360 / STEP;
-  const gridVal = (get, lat, lon) => {
-    const r = (lat + 60) / STEP, c = ((lon + 180) % 360 + 360) % 360 / STEP;
-    const r0 = Math.max(0, Math.min(ROWS - 1, Math.floor(r))), r1 = Math.min(ROWS - 1, r0 + 1), c0 = Math.floor(c) % COLS, c1 = (c0 + 1) % COLS;
-    const fr = Math.max(0, Math.min(1, r - r0)), fc = c - Math.floor(c);
+  const gridVal = (get, lat, lon) => gridAt(get, lat, lon, STEP) ?? gridAt(get, lat, lon, 10);
+  const gridAt = (get, lat, lon, step) => {
+    const k = step / STEP, R2 = Math.round((70 - -60) / step) + 1, C2 = 360 / step;
+    const r = (lat + 60) / step, c = ((lon + 180) % 360 + 360) % 360 / STEP;
+    const c2 = ((lon + 180) % 360 + 360) % 360 / step;
+    const r0 = Math.max(0, Math.min(R2 - 1, Math.floor(r))), r1 = Math.min(R2 - 1, r0 + 1), c0 = Math.floor(c2) % C2, c1 = (c0 + 1) % C2;
+    const fr = Math.max(0, Math.min(1, r - r0)), fc = c2 - Math.floor(c2);
     let sum = 0, wsum = 0;
     [[r0, c0, (1 - fr) * (1 - fc)], [r0, c1, (1 - fr) * fc], [r1, c0, fr * (1 - fc)], [r1, c1, fr * fc]].forEach(([rr, cc, wt]) => {
-      const p = PTS[rr * COLS + cc]; const v = p && p.w ? get(p.w) : null;
+      const p = PTS[(rr * k) * COLS + cc * k]; const v = p && p.w ? get(p.w) : null;
       if (v != null && wt > 0) { sum += v * wt; wsum += wt; }
     });
-    return wsum > 0.15 ? sum / wsum : null;
+    return wsum > 0.6 ? sum / wsum : null;
   };
   // 3° cells over the globe, corners as 3D unit vectors
-  const CS = 3, CLAT0 = -72, CLAT1 = 78, NR = (CLAT1 - CLAT0) / CS, NC = 360 / CS;
+  const CS = 2, CLAT0 = -72, CLAT1 = 78, NR = (CLAT1 - CLAT0) / CS, NC = 360 / CS;
   const VX = new Float32Array((NR + 1) * (NC + 1)), VY = new Float32Array(VX.length), VZ = new Float32Array(VX.length);
   for (let i = 0; i <= NR; i++) for (let j = 0; j <= NC; j++) { const v = vec(CLAT0 + i * CS, -180 + j * CS), k = i * (NC + 1) + j; VX[k] = v[0]; VY[k] = v[1]; VZ[k] = v[2]; }
   const PX = new Float32Array(VX.length), PY = new Float32Array(VX.length), PZ = new Float32Array(VX.length);
@@ -173,7 +199,7 @@
     ctx.save();
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.2832); ctx.clip();
     ctx.globalAlpha = alpha;
-    ctx.filter = `blur(${Math.max(3, R / 90).toFixed(1)}px) saturate(1.25)`;   // soften the cells into a smooth gradient
+    ctx.filter = `blur(${Math.max(2, R / 140).toFixed(1)}px) saturate(1.25)`;   // soften the cells into a smooth gradient
     ctx.drawImage(off, 0, 0, W, H);
     ctx.filter = 'none';
     ctx.restore();

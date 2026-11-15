@@ -22,8 +22,9 @@
   .hw-loader .hw-bar i { position:absolute; left:0; top:0; bottom:0; width:0; background:#4c8dff; transition:width .35s ease; }
   .hw-loader .hw-row { width:min(320px, 64vw); display:flex; justify-content:space-between; gap:12px; font:300 10.5px/1.3 ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing:.2em; text-transform:uppercase; color:#8a8a8a; }
   .hw-loader .hw-row span:first-child { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .hw-logo { display:block; width:220px; height:42px; }
-  @media (max-width: 820px) { .hw-logo { width:150px; height:28px; } }
+  .hw-logo { display:block; width:340px; height:64px; }
+  @media (max-width: 1180px) { .hw-logo { width:260px; height:49px; } }
+  @media (max-width: 820px) { .hw-logo { width:170px; height:32px; } }
   `;
   const style = document.createElement('style');
   style.textContent = css;
@@ -34,11 +35,11 @@
     if (!HW.glyphIntro || host.querySelector('canvas.hw-logo')) return;
     const cv = document.createElement('canvas');
     cv.className = 'hw-logo';
-    cv.width = 440; cv.height = 84;             // 2x the shown size; chunky cells so the letters read small
+    cv.width = 680; cv.height = 128;            // 2x the shown size; chunky cells so the letters read clearly
     cv.setAttribute('aria-label', 'Headway');
     host.textContent = '';
     host.appendChild(cv);
-    HW.glyphIntro(cv, { step: 5, bg: null });
+    HW.glyphIntro(cv, { step: 6, bg: null });
   };
 
   /* ---------- the loader ---------- */
