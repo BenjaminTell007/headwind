@@ -83,10 +83,10 @@ Split work by file where you can. Two people editing `main.js` or `app.css` at t
 
 ## 5. Look and feel (don't break these)
 
-- Vessel hues only ever mean vessel type: container `#f08a3c`, tanker `#8f82f2`, dry bulk `#46b36f`, general cargo `#ea86b5`, ro-ro `#e9c84b`, other `#f2f2f2`.
-- One exception: the accent blue `#4c8dff` (`--accent`, `HW.C.accent`) for routes, selection, hover and buttons. No other hues.
+- Vessel hues only ever mean vessel type: container/cargo green `#46b36f`, tanker orange `#f08a3c`, dry bulk purple `#8f82f2`, general cargo `#ea86b5`, ro-ro `#e9c84b`, other `#f2f2f2` (swapped on Nov 15 in Sam's colour pass, approved by Kimball).
+- The one other hue is the accent blue `#4c8dff` (`--accent`, `HW.C.accent`): route lines (brighter the busier they are this week), the hovered country, selection, buttons, and the headline numbers. Nothing else gets a hue.
 - Efficiency, odds and drops use brightness, thickness, opacity or length, never a new hue.
-- Background `#0a0a0a`, countries `#2c2f34`, text `#f2f2f0`, dim `#8a8a8a`. YES `#f2f2f2`, NO `#6b6b6b`.
-- Labels: light monospace, caps, wide letter spacing. Numbers: the sans stack. The logo is the word HEADWAY in that same monospace, white, not animated.
-- The page shows right now only (no replay timeline), per Sam's restyle that Kimball approved on Nov 15.
+- Background `#0a0a0a`, text `#f2f2f0`, dim `#8a8a8a`. YES `#f2f2f2`, NO `#6b6b6b`. Land is dots in the text colour, with faint country outlines.
+- Labels: light monospace, caps, wide letter spacing. Numbers: the sans stack. The header logo is the word HEADWAY in that monospace, plain text; the map page's intro is the animated glyph word.
+- The landing page (repo root `index.html`) is black and white footage and glyphs with a little accent blue.
 - Tokens live in `design/tokens.css`. Full rules: the Look and feel section of `BRIEF.md`.

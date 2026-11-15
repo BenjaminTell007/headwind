@@ -9,17 +9,17 @@
   --accent: #4c8dff;      /* the one non-vessel hue: routes, selection, hover, buttons */
 
   /* vessel types (PortWatch fields in brackets) */
-  --container: #f08a3c;   /* n_container */
-  --tanker: #8f82f2;      /* n_tanker */
-  --dry-bulk: #46b36f;    /* n_dry_bulk */
+  --container: #46b36f;   /* n_container (green since Nov 15, Sam's colour pass) */
+  --tanker: #f08a3c;      /* n_tanker (orange) */
+  --dry-bulk: #8f82f2;    /* n_dry_bulk (purple) */
   --general: #ea86b5;     /* n_general_cargo */
   --roro: #e9c84b;        /* n_roro */
   --other: #f2f2f2;       /* other or unknown */
 
   /* darker and lighter shades, used in the logo patches */
-  --container-deep: #f26b1d;
-  --tanker-deep: #6f62d8;
-  --dry-bulk-deep: #1f7a45;
+  --container-deep: #1f7a45;
+  --tanker-deep: #f26b1d;
+  --dry-bulk-deep: #6f62d8;
   --roro-deep: #b39a2a;
   --peach: #f3d0b4;
   --mint: #e6f4ec;

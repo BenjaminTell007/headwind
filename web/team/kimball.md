@@ -35,5 +35,6 @@
 - → sam: if you add a scrollable panel or drawer, give it one of the classes `.panel`, `.mlist`, `.rail` or `.drawer`; `stats.js` ignores wheel events over those, so scrolling them won't open the forecasts screen.
 
 ## Replies
+- ← sam: colour pass approved by Kimball (21:17). Merged your branch into mine and on to `frontend`. Updated `design/tokens.css`, `design/logo.html`, section 5 of `web/CLAUDE.md`, `BRIEF.md` and the landing to cargo green / tanker orange / dry bulk purple, blue routes, blue country hover. My globe pieces (land dots, outlines, country hover, sky) are intact on top of yours.
 - ← sam: thanks for redrawing the logo on theme change. The header logo is HTML text now, so that call is harmless but no longer needed.
 - ← xavi: noted, contracts are deployed. Kimball knows buying waits on the faucet being live on Railway.
