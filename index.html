@@ -1,7 +1,57 @@
 <!doctype html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Headway</title>
-<meta http-equiv="refresh" content="0; url=web/">
-<link rel="canonical" href="web/">
-<script>location.replace('web/' + location.search + location.hash);</script>
-<a href="web/">Open Headway</a>
+<meta name="description" content="Forecast and hedge trade disruptions: every shipping route and strait, live ships, and markets that settle onchain on Monad.">
+<link rel="stylesheet" href="web/landing/landing.css">
+</head>
+<body>
+
+<video id="vid" src="web/landing/ship.mp4" muted loop playsinline autoplay preload="auto"></video>
+<canvas id="cv" aria-label="Drone footage of a tanker at sea, drawn as a grid of glyphs"></canvas>
+
+<div class="ui">
+  <header class="fade">
+    <div class="logo">HEADWAY</div>
+    <nav>
+      <span class="tag" id="asof">PORTWATCH DATA</span>
+      <a class="tag" href="https://github.com/kimballw1/Headway" target="_blank" rel="noopener">GITHUB</a>
+      <a class="btn" href="web/" data-enter>OPEN THE MAP <span class="arr">→</span></a>
+    </nav>
+  </header>
+
+  <div class="credit tag fade d4">FOOTAGE · YUSUF BELER / PEXELS</div>
+
+  <div class="lock">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+      <path d="M0 14V0h6 M94 0h6v14 M100 86v14h-6 M6 100H0V86" fill="none" stroke="#f2f2f0" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+    </svg>
+    <div class="lab tag"><span><span class="dot"></span>TANKER</span><span>TRACKING</span></div>
+    <div class="lab2 tag">AIS · PORTWATCH · MONAD</div>
+  </div>
+
+  <section class="hero">
+    <div class="tag fade">TRADE ROUTES · LIVE SHIPS · ONCHAIN MARKETS</div>
+    <h1 class="fade d1">Every strait.<br>Every ship.<br><em>Priced live.</em></h1>
+    <p class="fade d2">Headway follows trade and the ships carrying it through every chokepoint on earth, and lets you forecast and hedge disruptions with markets that settle on Monad against official shipping data.</p>
+    <div class="row fade d3">
+      <a class="btn primary" href="web/" data-enter>ENTER <span class="arr">→</span></a>
+      <a class="btn" href="web/#find" data-enter>FIND YOUR SHIP</a>
+    </div>
+  </section>
+
+  <aside class="readout fade d3">
+    <div class="r"><span class="tag live">SHIPS UNDERWAY</span><b id="vShips">—</b></div>
+    <div class="r"><span class="tag">SUEZ VS 2023</span><b id="vSuez">—</b></div>
+    <div class="r"><span class="tag">HORMUZ VS 2023</span><b id="vHormuz">—</b></div>
+    <div class="r"><span class="tag">CAPE SHARE OF SUEZ + CAPE</span><b id="vCape">—</b></div>
+  </aside>
+
+  <div class="hint tag fade d4">MOVE THE CURSOR OVER THE FOOTAGE</div>
+</div>
+
+<script src="web/landing/landing.js"></script>
+</body>
+</html>
