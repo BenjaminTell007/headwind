@@ -22,9 +22,7 @@
   // (the ship in the clip is a tanker, so its hue is the tanker hue).
   const GREYS = ['#1d2024', '#26292e', '#30343a', '#3c4047', '#4b4f56', '#5f6369', '#787b80', '#96989b'];
   const BRIGHT = ['#f2f2f0', '#8f82f2', '#6f62d8', '#f2f2f0', '#d9d6ff'];
-  // second act, the fleet: a mixed fleet, so every vessel hue (container, tanker, bulk, general, ro-ro)
-  const FLEET = ['#f08a3c', '#8f82f2', '#46b36f', '#ea86b5', '#e9c84b', '#f2f2f0', '#f26b1d', '#1f7a45'];
-  const COLOURS = GREYS.concat(BRIGHT, FLEET);
+  const COLOURS = GREYS.concat(BRIGHT);
   const N_SHAPES = 10;
 
   let W = 0, H = 0, DPR = 1, cell = 10, cols = 0, rows = 0;
@@ -32,7 +30,7 @@
   let sample = null, sctx = null;
   let rnd = new Float32Array(0);
   const mouse = { x: -9999, y: -9999, s: 0 };
-  let t0 = performance.now(), leaving = 0, uiShown = false, target = 'web/';
+  let t0 = null, leaving = 0, uiShown = false, target = 'web/';
 
   /* ---------- one glyph, drawn into the sprite atlas ---------- */
   const drawGlyph = (c, k, x, y, s, col) => {
@@ -171,6 +169,7 @@
   let act = 1;
 
   const frame = now => {
+    if (t0 === null) { requestAnimationFrame(frame); return; }   // still on the loading screen
     const t = (now - t0) / 1000;
 
     // which act, which clip, how far the footage is open, how zoomed the camera is
@@ -188,7 +187,7 @@
       // the fleet: start pushed in, keep pulling back as the footage opens
       src = video2;
       const u = (t - SWITCH_AT - CLOSE_FOR) / OPEN2_FOR;
-      open = ease(u) * (0.52 + 0.02 * Math.sin(t * 0.45));
+      open = ease(u) * (0.78 + 0.02 * Math.sin(t * 0.45));
       zoom = 1.55 - 0.5 * ease((t - SWITCH_AT - CLOSE_FOR) / 6);
       cyK = 0.5; ellX = 0.5;
       frontK = 0.12 + 0.88 * (1 - smooth(0.7, 1.4, u));
@@ -278,19 +277,6 @@
         if (act === 1 && L > 0.5) {
           const cw = wave(i + 300, j - 100, t, 0.05, 0.3);
           ci = GREYS.length + clamp(Math.floor(((cw + 4) / 8) * BRIGHT.length), 0, BRIGHT.length - 1);
-        } else if (act === 2 && L > 0.42) {
-          // the fleet: vertical streams of vessel colour with gaps between them (like
-          // the reference), small clusters of one colour shifting in place, greys elsewhere
-          const stream = Math.sin(i * 0.33 + wave(i, j * 0.2, t, 0.05, 0.2) * 0.9);
-          if (stream > 0.15 && r > 0.12) {
-            const cluster = Math.floor(i / 2) * 7.13 + Math.floor(j / 3) * 3.71;
-            const cw = Math.sin(cluster) * 2 + wave(i, j, t, 0.11, 0.3) * 0.5;
-            ci = GREYS.length + BRIGHT.length + clamp(Math.floor(((cw + 4) / 8) * FLEET.length), 0, FLEET.length - 1);
-          } else if (stream > -0.35) {
-            ci = clamp(Math.floor(L * 0.6 * GREYS.length + g * 0.4), 0, GREYS.length - 1);
-          } else {
-            continue;   // dark gap between streams
-          }
         } else {
           ci = clamp(Math.floor(L * 2 * GREYS.length + g * 0.4), 0, GREYS.length - 1);
         }
@@ -341,6 +327,47 @@
 
   requestAnimationFrame(frame);
 
+  /* ---------- loading screen ----------
+     Shows how much of the tanker clip has downloaded. The intro starts once the clip
+     can play through (or after 9 seconds, whatever happens), so nobody sees half of it. */
+  const loader = document.getElementById('loader');
+  const lfill = document.getElementById('lfill'), lpct = document.getElementById('lpct'), lmsg = document.getElementById('lmsg');
+  const MSGS = ['LOADING FOOTAGE', 'CONNECTING TO LIVE AIS', 'READING PORTWATCH', 'PRICING STRAITS'];
+  const shownAt = performance.now();
+  let started = false;
+  const progress = () => {
+    let p = 0;
+    try {
+      if (video.duration && video.buffered.length) p = video.buffered.end(video.buffered.length - 1) / video.duration;
+    } catch (e) { /* not ready yet */ }
+    if (video.readyState >= 3) p = Math.max(p, 0.9);
+    return clamp(p, 0, 1);
+  };
+  const begin = () => {
+    if (started) return;
+    started = true;
+    lfill.style.width = '100%';
+    lpct.textContent = '100%';
+    setTimeout(() => {
+      loader.classList.add('done');
+      t0 = performance.now();
+      video.currentTime = 0;
+      video.play().catch(() => {});
+    }, 250);
+  };
+  const tickLoader = () => {
+    if (started) return;
+    const p = progress(), waited = performance.now() - shownAt;
+    lfill.style.width = (p * 100).toFixed(0) + '%';
+    lpct.textContent = Math.round(p * 100) + '%';
+    lmsg.textContent = MSGS[Math.floor(waited / 900) % MSGS.length];
+    if ((video.readyState >= 4 || p >= 0.98) && waited > 900) begin();
+    else if (waited > 9000 && video.readyState >= 2) begin();
+    else setTimeout(tickLoader, 120);
+  };
+  video.addEventListener('canplaythrough', () => { if (performance.now() - shownAt > 900) begin(); });
+  tickLoader();
+
   /* ---------- live numbers in the readout ---------- */
   const SERVER = 'https://headway-production-83bb4bd7.up.railway.app';
   const GLYPHS = '#%&*+=<>/\\|0123456789';
@@ -359,6 +386,8 @@
     };
     step();
   };
+  // run fn a moment after the page text has faded in (after the loading screen and reveal)
+  const whenOn = (fn, delay) => { if (body.classList.contains('on')) setTimeout(fn, delay); else setTimeout(() => whenOn(fn, delay), 200); };
   const pct = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)) + '%';
   const set = (id, text) => { const el = document.getElementById(id); if (el) decode(el, text); };
 
@@ -373,14 +402,14 @@
       document.getElementById('asof').textContent =
         'PORTWATCH DATA TO ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).toUpperCase();
     };
-    setTimeout(later, (REVEAL_AT + 1.4) * 1000);
+    whenOn(later, 500);
   }).catch(() => {});
 
   fetch(SERVER + '/api/ships?max_age_minutes=45&moving_only=true&limit=20000')
     .then(r => r.json())
     .then(d => {
       const list = Array.isArray(d) ? d : d.ships || [];
-      if (list.length) setTimeout(() => set('vShips', list.length.toLocaleString('en-US')), (REVEAL_AT + 1.7) * 1000);
+      if (list.length) whenOn(() => set('vShips', list.length.toLocaleString('en-US')), 800);
     })
     .catch(() => {});
 })();

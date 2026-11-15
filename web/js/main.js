@@ -6,7 +6,8 @@ const $ = id => document.getElementById(id);
 const VESSELS = [['container', C.container, 'CONTAINER'], ['tanker', C.tanker, 'TANKER'], ['dry_bulk', C.bulk, 'DRY BULK'], ['general_cargo', C.general, 'GENERAL'], ['roro', C.roro, 'RO-RO']];
 
 /* ---------- intro and brand ---------- */
-const intro = HW.glyphIntro($('introcv'), { step: 12, bg: C.bg });
+// fall back to the static logo if an old cached logo.js has no glyphIntro
+const intro = (HW.glyphIntro || HW.glyphLogo)($('introcv'), { step: 12, bg: C.bg });
 const introStart = performance.now();
 
 /* ---------- chain (Xavi's web/chain): used when it's merged in and contracts are deployed ---------- */

@@ -83,3 +83,11 @@ nav a.tag:hover { color:var(--fg); }
   .lock { width:88vw; height:16vh; }
 }
 @media (prefers-reduced-motion: reduce) { .fade, .lock { transition:none; } }
+
+/* loading screen: shown until the tanker clip can play */
+#loader { position:fixed; inset:0; z-index:50; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; transition:opacity .8s ease, visibility .8s; }
+#loader.done { opacity:0; visibility:hidden; }
+#loader .lw { font:300 clamp(28px, 4vw, 44px)/1 var(--mono); letter-spacing:.42em; padding-left:.42em; color:var(--fg); }
+#loader .lbar { width:min(260px, 60vw); height:1px; background:var(--line); position:relative; overflow:hidden; }
+#loader .lbar i { position:absolute; left:0; top:0; bottom:0; width:0; background:var(--fg); transition:width .3s ease; }
+#loader .lrow { width:min(260px, 60vw); display:flex; justify-content:space-between; }
