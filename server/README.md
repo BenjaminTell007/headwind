@@ -33,7 +33,7 @@ The logger reads the aisstream key from `PRIVATE.md` in the repo root (the line 
 | Endpoint | Returns |
 |---|---|
 | `GET /api/health` | ships in memory, last read of the logger files |
-| `GET /api/ships` | latest position of every ship seen. Filters: `max_age_minutes`, `bbox=minLon,minLat,maxLon,maxLat`, `types=cargo,tanker,passenger,other,unknown`, `moving_only`, `limit` |
+| `GET /api/ships` | latest position of every ship seen. Filters: `max_age_minutes`, `bbox=minLon,minLat,maxLon,maxLat`, `types=cargo,tanker,passenger,other,unknown`, `moving_only`, `limit`, `count_only=true` (just the number) |
 | `GET /api/ship/{query}` | one ship by MMSI, IMO or name, with type, destination, ETA, draught, length |
 | `GET /api/gates/{gate_id}/count` | cargo ships and tankers that crossed the gate since `since` (ISO time) or in the last `minutes`. This is what resolves a live market |
 | `GET /data/{file}` | any file in `data/processed/`, plus `/data/gates.json` |
