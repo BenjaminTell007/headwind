@@ -53,6 +53,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from geometry import segments_cross  # noqa: E402
 
 POLL_SECONDS = 3
+STARTED_AT = datetime.now(timezone.utc).isoformat(timespec="seconds")
 START_BYTES = 12_000_000      # on start-up, read this much of the end of each log file
 GATE_MEMORY_HOURS = 2         # keep this much gate-area history for live counts
 
@@ -250,6 +251,10 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 def health():
     with state.lock:
         return {
+            # Railway sets this to the commit it deployed, so anyone can check
+            # which version is live. Empty when running on a laptop.
+            "commit": os.environ.get("RAILWAY_GIT_COMMIT_SHA", "")[:7] or "local",
+            "started": STARTED_AT,
             "ships_in_memory": len(state.latest),
             "gate_positions_in_memory": len(state.gate_positions),
             "last_poll": state.last_poll.isoformat() if state.last_poll else None,
