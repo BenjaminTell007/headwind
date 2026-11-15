@@ -73,7 +73,7 @@ Ben, mark each one **agreed** or write what you'd rather do.
 **Proposal:** Xavi's code builds the quote and Ben's code signs it. `quote.py` returns unsigned quotes (terms, odds, caps, the model's working), and the server signs them with `chain.sign_quote()`. Xavi removes `sign()` from the server path; the Node seed script keeps its own signer for tests only.
 
 - [x] Ben: agreed
-- [ ] Xavi: make `quote.arrival_quote()` return an unsigned quote by default
+- [x] Xavi: make `quote.arrival_quote()` return an unsigned quote by default (it does unless given a key; `sign()` is for local tests only)
 
 ### 2. Two tools open markets, from two different lists
 Ben's keeper opens markets from `data/processed/market_seeds.json`. Xavi's `contracts/script/seed_markets.mjs` opens them from `contracts/markets/examples.json`. If both run, we get duplicate markets with different thresholds and close times:
@@ -89,7 +89,7 @@ We still need to decide which list the keeper reads:
 Xavi's preference is (a).
 
 - [x] Decide (a) or (b): **(a) `examples.json`**, agreed by Ben
-- [ ] Xavi: make `seed_markets.mjs` refuse to run against the demo deployment without `--force`
+- [x] Xavi: make `seed_markets.mjs` refuse to run against the demo deployment without `--force` (or use `--deployments <scratch file>`)
 
 ### 3. Numbers would get scaled twice (this breaks things)
 In `examples.json`, `threshold` is already the onchain integer, for example route days × 1000. `markets.py` `to_onchain()` scales again, which would turn 35000 into 35000000. `unit_and_scale()` also raises an error on the vessel-type series (`weekly_tanker` and so on).
@@ -120,8 +120,8 @@ One is in `server/chain.py` (Python) and one in `contracts/script/env.mjs` (Node
 
 ## Checklist to a working demo
 
-- [ ] Xavi: deploy (`forge script ... --broadcast`), run `write_deployments.mjs`, commit `contracts/deployments.json` and `web/chain/deployments.js` to `main`
-- [ ] Xavi: send the server key about 2 MON for gas; the faucet gets 10 MON at deploy
+- [x] Xavi: deploy (`forge script ... --broadcast`), run `write_deployments.mjs`, commit `contracts/deployments.json` and `web/chain/deployments.js` to `main`. Markets `0x91655EF876726BC2730DC2FbF3a296688E552db5`, Faucet `0xf7D1255AEBDa35454121C3189850e48a5C82cDB9`; oracle, pricer and relayer all `0x32F0A79FF9e4918D5771BF716ACba54219F1F78c`; vault 20 MON, subject cap 3 MON
+- [x] Xavi: send the server key about 2 MON for gas; the faucet gets 10 MON at deploy (both done; tx `0x93e00135…778b`)
 - [ ] Ben: `SERVER_PRIVATE_KEY` in Railway variables, and add `web3` and `eth-account` to `requirements.txt` (`web3==8.0.0` added, which brings `eth-account`; Railway variable still to do)
 - [ ] Ben: merge `chain.py` and `/api/faucet` to `main`, and check `/api/chain` shows `"on": true`
 - [x] Ben: `POST /api/quote` with body `{ship, port, deadline, cargoUsd}`. It calls `contracts.pricing.quote.arrival_quote()`, signs with `chain.sign_quote()`, and returns `{quote, signature, model, hedge}`. Numbers go out as strings; `web/chain/markets.js` `requestQuote()` already expects this shape.
