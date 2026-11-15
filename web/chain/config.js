@@ -22,15 +22,11 @@ export const GAS_MARGIN_BPS = 1_200; // +12%
 // so one trade costs ~0.012 MON in gas; this is about two trades' worth.
 export const MIN_GAS_BALANCE = 3n * 10n ** 16n; // 0.03 MON
 
-let deployments;
-/** Addresses from contracts/deployments.json (written after `forge script ... --broadcast`). */
+/** Contract addresses, from deployments.js (written by contracts/script/write_deployments.mjs). */
 export async function loadDeployments() {
-  if (deployments) return deployments;
-  const url = new URL('../../contracts/deployments.json', import.meta.url);
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error('contracts/deployments.json not found: deploy the contracts first');
-  deployments = await res.json();
-  return deployments;
+  const { DEPLOYMENTS } = await import('./deployments.js');
+  if (!DEPLOYMENTS?.markets?.address) throw new Error('Contracts not deployed yet: run contracts/script/write_deployments.mjs');
+  return DEPLOYMENTS;
 }
 
 export const txUrl = (hash) => `${EXPLORER}/tx/${hash}`;

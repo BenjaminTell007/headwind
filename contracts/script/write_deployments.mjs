@@ -5,7 +5,7 @@
 //   node script/write_deployments.mjs --markets 0x... --faucet 0x...   (if deployed another way)
 import { writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { CONTRACTS, chain, publicClient, readJson } from './env.mjs';
+import { CONTRACTS, ROOT, chain, publicClient, readJson } from './env.mjs';
 
 const arg = (name) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -55,4 +55,10 @@ const doc = {
   faucet: { address: faucet, abi: abiOf('Faucet') },
 };
 writeFileSync(path.join(CONTRACTS, 'deployments.json'), JSON.stringify(doc, null, 1) + '\n');
-console.log(`Wrote contracts/deployments.json  Markets ${markets}  Faucet ${faucet}`);
+// The page gets addresses only (ABIs live in web/chain/abi.js), as a module so it works wherever web/ is hosted.
+const forPage = { chainId: doc.chainId, deployedAt: doc.deployedAt, markets: { address: markets }, faucet: { address: faucet } };
+writeFileSync(
+  path.join(ROOT, 'web', 'chain', 'deployments.js'),
+  `// Written by contracts/script/write_deployments.mjs. Do not edit by hand.\nexport const DEPLOYMENTS = ${JSON.stringify(forPage, null, 1)};\n`,
+);
+console.log(`Wrote contracts/deployments.json and web/chain/deployments.js  Markets ${markets}  Faucet ${faucet}`);

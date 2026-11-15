@@ -8,8 +8,8 @@ Wallet and contract helpers for the page. Plain ES modules, no build step: viem 
 | `markets.js` | Read markets and positions, buy, sell, redeem, add liquidity, create, and size a hedge |
 | `events.js` | Websocket feed of trades, new markets, settlements and blocks, with Monad's commit state |
 | `abi.js` | The contract ABIs as plain strings (shared with the Node scripts in `contracts/script/`) |
-| `config.js` | Monad testnet, the server URL, and where to find `contracts/deployments.json` |
-| `test.html` | A console for trying it all by hand: http://localhost:8000/web/chain/test.html |
+| `config.js` | Monad testnet and the server URL (Railway) |
+| `deployments.js` | Contract addresses, written by `contracts/script/write_deployments.mjs` after a deploy |
 
 ## Use it from the page
 
@@ -50,5 +50,5 @@ Errors: wrap writes in `try` and show `explain(err)`, which turns contract rever
 
 ## Needs from other folders
 
-- `contracts/deployments.json` must exist (written by `contracts/script/write_deployments.mjs` after deploying).
+- `deployments.js` is filled in by `contracts/script/write_deployments.mjs` after deploying. It's a module, not a fetch, so the page works wherever `web/` is hosted.
 - The server's `POST /api/faucet` drips gas to new burners. Until it's built, burners start empty: use MetaMask with testnet MON, or send a burner some MON by hand.
