@@ -28,7 +28,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const HW = window.HW;
 const NORMALS = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/waternormals.jpg';
-const SAT = (z, x, y) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/GoogleMapsCompatible/${z}/${y}/${x}.jpg`;
+const EOX = (z, x, y) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/GoogleMapsCompatible/${z}/${y}/${x}.jpg`;
+const ESRI = (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
 const RAD = Math.PI / 180;
 const HOURS = +(new URLSearchParams(location.search).get('hours') || 0) || 0;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -235,12 +236,17 @@ const envFrom = (w, ship) => {
 };
 
 /* ---------- the ocean: Gerstner waves + ripples + Fresnel + glint + foam ---------- */
-const N_WAVES = 6;
+const N_WAVES = 10, N_SHIPS = 8;
+const SHIP_PARS = `
+  uniform vec4 uShipA[${N_SHIPS}];   // x, z, heading (rad, clockwise from north), length
+  uniform vec4 uShipB[${N_SHIPS}];   // beam, speed (m/s), active, 0
+`;
 const OCEAN_VS = `
   uniform float uTime;
   uniform vec4 uWave[${N_WAVES}];     // dir.x, dir.z, steepness, wavelength
-  uniform float uDisplace;           // 0 for the flat far ring
+  uniform float uDisplace;
   uniform sampler2D uMask; uniform vec4 uMaskRect;   // x0, z0, size, on
+  ${SHIP_PARS}
   varying vec3 vWorld; varying vec3 vNormal; varying float vCrest; varying float vLand;
   #include <fog_pars_vertex>
   float landAt(vec2 xz) {
@@ -250,24 +256,30 @@ const OCEAN_VS = `
     return texture2D(uMask, vec2(uv.x, 1.0 - uv.y)).r;
   }
   void main() {
-    vec4 wp = modelMatrix * vec4(position, 1.0);
-    vec3 p = wp.xyz;
-    vec3 tangent = vec3(1.0, 0.0, 0.0), binormal = vec3(0.0, 0.0, 1.0), disp = vec3(0.0);
+    vec3 p = (modelMatrix * vec4(position, 1.0)).xyz;
     float land = landAt(p.xz);
-    float calm = 1.0 - smoothstep(0.05, 0.5, land);            // harbours and rivers go flat
-    float edge = 1.0 - smoothstep(1100.0, 1450.0, length(p.xz - cameraPosition.xz));
-    float amp = uDisplace * calm * edge;
+    float amp = uDisplace * (1.0 - smoothstep(0.05, 0.5, land)) * (1.0 - smoothstep(1000.0, 1180.0, length(p.xz - cameraPosition.xz)));
+    // calm the swell under and right around each hull so water never pokes through a deck
+    for (int j = 0; j < ${N_SHIPS}; j++) {
+      if (uShipB[j].z < 0.5) continue;
+      vec2 d = p.xz - uShipA[j].xy; float h = uShipA[j].z;
+      vec2 fwd = vec2(sin(h), -cos(h)), side = vec2(cos(h), sin(h));
+      float along = dot(d, fwd) / (uShipA[j].w * 0.5), lat = dot(d, side) / (uShipB[j].x * 0.5);
+      float inside = 1.0 - smoothstep(0.85, 1.35, max(abs(along), abs(lat) * 0.92));
+      amp *= 1.0 - 0.85 * inside;
+    }
+    vec3 tangent = vec3(1.0, 0.0, 0.0), binormal = vec3(0.0, 0.0, 1.0), disp = vec3(0.0);
     float crest = 0.0;
     for (int i = 0; i < ${N_WAVES}; i++) {
       vec4 w = uWave[i];
       float k = 6.2831853 / w.w, c = sqrt(9.8 / k);
-      vec2 d = normalize(w.xy);
-      float f = k * (dot(d, p.xz) - c * uTime);
-      float s = w.z * amp, a = s / k;
-      disp += vec3(d.x * a * cos(f), a * sin(f), d.y * a * cos(f));
-      tangent += vec3(-d.x * d.x * s * sin(f), d.x * s * cos(f), -d.x * d.y * s * sin(f));
-      binormal += vec3(-d.x * d.y * s * sin(f), d.y * s * cos(f), -d.y * d.y * s * sin(f));
-      crest += s * sin(f);
+      vec2 dd = normalize(w.xy);
+      float f = k * (dot(dd, p.xz) - c * uTime);
+      float st = w.z * amp, a = st / k;
+      disp += vec3(dd.x * a * cos(f), a * sin(f), dd.y * a * cos(f));
+      tangent += vec3(-dd.x * dd.x * st * sin(f), dd.x * st * cos(f), -dd.x * dd.y * st * sin(f));
+      binormal += vec3(-dd.x * dd.y * st * sin(f), dd.y * st * cos(f), -dd.y * dd.y * st * sin(f));
+      crest += st * sin(f);
     }
     p += disp;
     vWorld = p; vNormal = normalize(cross(binormal, tangent)); vCrest = crest; vLand = land;
@@ -276,37 +288,72 @@ const OCEAN_VS = `
     #include <fog_vertex>
   }`;
 const OCEAN_FS = `
+  #define ENVMAP_TYPE_CUBE_UV
   uniform float uTime; uniform sampler2D uNormals; uniform vec3 uSunDir; uniform vec3 uSunColor;
-  uniform vec3 uDeep; uniform vec3 uShallow; uniform vec3 uSkyTop; uniform vec3 uSkyHorizon;
-  uniform float uFoam; uniform float uNight; uniform float uRipple;
+  uniform vec3 uDeep; uniform vec3 uShallow; uniform float uFoam; uniform float uNight; uniform float uRipple;
+  uniform sampler2D envMap; uniform float uEnvOn; uniform vec3 uSkyTop; uniform vec3 uSkyHorizon;
+  ${SHIP_PARS}
   varying vec3 vWorld; varying vec3 vNormal; varying float vCrest; varying float vLand;
+  #include <common>
+  #include <cube_uv_reflection_fragment>
   #include <fog_pars_fragment>
+  float tex(vec2 uv) { return texture2D(uNormals, uv).g; }
   void main() {
-    if (vLand > 0.5) discard;                                  // land: the satellite ground shows
+    if (vLand > 0.5) discard;                                       // land: the satellite ground shows
     vec3 V = normalize(cameraPosition - vWorld);
     float dist = length(cameraPosition - vWorld);
-    vec2 uv = vWorld.xz * 0.021;
+    float near = 1.0 - smoothstep(150.0, 3500.0, dist);
+
+    // ship wakes: waterline foam, bow wave, Kelvin wedge arms and propeller wash
+    float wake = 0.0, churn = 0.0;
+    for (int j = 0; j < ${N_SHIPS}; j++) {
+      if (uShipB[j].z < 0.5) continue;
+      vec2 d = vWorld.xz - uShipA[j].xy; float h = uShipA[j].z, L = uShipA[j].w, B = uShipB[j].x, v = uShipB[j].y;
+      vec2 fwd = vec2(sin(h), -cos(h)), side = vec2(cos(h), sin(h));
+      float along = dot(d, fwd), lat = dot(d, side), alat = abs(lat);
+      float e = max(abs(along) / (L * 0.5), alat / (B * 0.5));
+      float sp = clamp(v / 8.0, 0.0, 1.5);
+      // a ring of foam pressed against the hull, thicker toward the bow when moving
+      wake += smoothstep(1.28, 1.02, e) * step(0.97, e) * (0.35 + 0.65 * sp * smoothstep(-0.1, 0.5, along / L));
+      // bow wave pushed out ahead and to the sides
+      float bow = along - L * 0.5;
+      wake += sp * exp(-pow(max(bow, 0.0) / (B * 0.6), 2.0)) * exp(-pow(alat / (B * 0.9), 2.0)) * step(-L * 0.12, bow);
+      // behind the stern: the V-shaped Kelvin wake (arms at 19.5 degrees) and the propwash
+      float behind = -along - L * 0.5;
+      if (behind > 0.0 && v > 0.4) {
+        float decay = exp(-behind / (120.0 + v * 70.0));
+        float ang = atan(alat, behind + B * 0.5);
+        float arms = exp(-pow((ang - 0.34) / 0.045, 2.0)) * smoothstep(0.0, 25.0, behind);
+        float wash = exp(-pow(alat / (B * 0.55 + behind * 0.045), 2.0));
+        wake += (arms * 0.75 + wash * 0.95) * decay * sp;
+        churn += wash * decay * sp;
+      }
+    }
+
+    // fine ripples: three layers of the normal map, choppier in the propwash
+    vec2 uv = vWorld.xz * 0.019;
     vec3 n1 = texture2D(uNormals, uv + vec2(uTime * 0.012, uTime * 0.009)).rbg * 2.0 - 1.0;
-    vec3 n2 = texture2D(uNormals, uv * 2.3 - vec2(uTime * 0.011, -uTime * 0.016)).rbg * 2.0 - 1.0;
-    vec3 n3 = texture2D(uNormals, uv * 9.0 + vec2(-uTime * 0.03, uTime * 0.02)).rbg * 2.0 - 1.0;
-    float near = 1.0 - smoothstep(200.0, 4000.0, dist);
-    vec3 ripple = vec3(n1.x + n2.x * 0.7 + n3.x * 0.4 * near, 0.0, n1.z + n2.z * 0.7 + n3.z * 0.4 * near);
-    vec3 N = normalize(vNormal + ripple * uRipple * (0.08 + 0.2 * near));
+    vec3 n2 = texture2D(uNormals, uv * 2.7 - vec2(uTime * 0.013, -uTime * 0.017)).rbg * 2.0 - 1.0;
+    vec3 n3 = texture2D(uNormals, uv * 11.0 + vec2(-uTime * 0.04, uTime * 0.03)).rbg * 2.0 - 1.0;
+    vec3 ripple = vec3(n1.x * 0.3 + n2.x * 0.6 + n3.x * (0.55 + churn * 2.0) * near, 0.0, n1.z * 0.3 + n2.z * 0.6 + n3.z * (0.55 + churn * 2.0) * near);
+    vec3 N = normalize(vNormal + ripple * uRipple * (0.04 + 0.16 * near));
     float NdV = max(dot(N, V), 0.0);
     float fres = 0.02 + 0.98 * pow(1.0 - NdV, 5.0);
-    vec3 R = reflect(-V, N);
-    float up = clamp(R.y, 0.0, 1.0);
-    vec3 sky = mix(uSkyHorizon, uSkyTop, pow(up, 0.45));
+    vec3 R = reflect(-V, N); R.y = abs(R.y);
+    vec3 refl = uEnvOn > 0.5 ? textureCubeUV(envMap, R, 0.04).rgb : mix(uSkyHorizon, uSkyTop, pow(R.y, 0.45));
     float sd = max(dot(R, uSunDir), 0.0);
-    vec3 glint = uSunColor * (pow(sd, 900.0) * 30.0 + pow(sd, 90.0) * 0.6) * (1.0 - uNight);
-    // light under the surface: brighter through the crests, greener in shallows
-    float sss = clamp(vCrest * 0.25 + 0.3, 0.0, 1.0) * max(dot(V, -uSunDir) * 0.5 + 0.5, 0.0);
-    vec3 body = mix(uDeep, uShallow, clamp(sss * 0.55 + vLand * 1.4, 0.0, 1.0));
-    vec3 col = mix(body, sky, fres) + glint;
-    // foam on the steep crests, broken up by the ripple texture, and a band along coasts
-    float foam = smoothstep(0.55, 1.1, vCrest + (n2.y + n3.y) * 0.25) * uFoam;
-    foam += smoothstep(0.25, 0.48, vLand) * 0.6;
-    col = mix(col, vec3(0.92, 0.95, 0.97) * (1.0 - 0.8 * uNight), clamp(foam, 0.0, 0.85));
+    vec3 glint = uSunColor * (pow(sd, 1400.0) * 40.0 + pow(sd, 120.0) * 0.5) * (1.0 - uNight);
+    // light scattered up from below: brighter and greener through crests facing the sun
+    float sss = clamp(vCrest * 0.22 + 0.3, 0.0, 1.0) * (0.35 + 0.65 * max(dot(normalize(vec3(-uSunDir.x, 0.0, -uSunDir.z)), -V) * 0.5 + 0.5, 0.0));
+    vec3 body = mix(uDeep, uShallow, clamp(sss * 0.6 + vLand * 1.5, 0.0, 1.0));
+    vec3 col = mix(body, refl, fres) + glint;
+    // foam: steep crests, coastlines and wakes, broken up by the ripple texture
+    float breakup = tex(uv * 3.1 + uTime * 0.01) * 0.6 + tex(uv * 13.0 - uTime * 0.02) * 0.4;
+    float foam = smoothstep(0.6, 1.15, vCrest + breakup * 0.35) * uFoam;
+    foam += smoothstep(0.25, 0.48, vLand) * 0.55;
+    foam += smoothstep(0.18, 0.9, wake * (0.55 + breakup * 0.9));
+    vec3 foamCol = vec3(0.93, 0.96, 0.98) * mix(1.0, 0.16, uNight);
+    col = mix(col, foamCol, clamp(foam, 0.0, 0.92));
     gl_FragColor = vec4(col, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
@@ -319,47 +366,61 @@ const lonLatToTile = (lon, lat, z) => {
   const y = (1 - Math.log(Math.tan(lat * RAD) + 1 / Math.cos(lat * RAD)) / Math.PI) / 2 * n;
   return [x, y];
 };
-const loadSatellite = async (lat, lon) => {
-  const Z = 14, T = 7, PX = 256 * T;
-  const [fx, fy] = lonLatToTile(lon, lat, Z);
+// a square mosaic of T x T tiles centred on a point; returns the canvas and where the point sits
+const mosaic = async (urlOf, Z, T, lat, lon) => {
+  const PX = 256 * T, [fx, fy] = lonLatToTile(lon, lat, Z);
   const tx0 = Math.floor(fx) - (T >> 1), ty0 = Math.floor(fy) - (T >> 1);
   const cv = document.createElement('canvas'); cv.width = cv.height = PX;
-  const g = cv.getContext('2d');
+  const g = cv.getContext('2d', { willReadFrequently: true });
   const jobs = [];
   for (let j = 0; j < T; j++) for (let i = 0; i < T; i++) {
     jobs.push(new Promise(res => {
       const im = new Image(); im.crossOrigin = 'anonymous';
       im.onload = () => { g.drawImage(im, i * 256, j * 256); res(true); };
       im.onerror = () => res(false);
-      im.src = SAT(Z, tx0 + i, ty0 + j);
+      im.src = urlOf(Z, tx0 + i, ty0 + j);
     }));
   }
   const ok = (await Promise.all(jobs)).filter(Boolean).length;
   if (ok < T * T * 0.5) return null;
-  // metres per pixel at this latitude, and where the ship sits in the canvas
   const mpp = 156543.03392 * Math.cos(lat * RAD) / 2 ** Z;
   const sx = (fx - tx0) * 256, sy = (fy - ty0) * 256;
-  const size = PX * mpp;
-  // water is dark and bluish in Sentinel-2 cloudless; land is brighter, greener or browner
-  const src = g.getImageData(0, 0, PX, PX).data;
+  return { cv, g, PX, mpp, size: PX * mpp, cx: (PX / 2 - sx) * mpp, cz: (PX / 2 - sy) * mpp, sx, sy };
+};
+const toTex = cv => { const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 16; t.generateMipmaps = true; return t; };
+
+// The ground under the scene: Esri World Imagery (sub-metre) for what you see, a sharp close-up
+// layer around the ship plus a wide one, and a land/water mask from Sentinel-2 cloudless (EOX),
+// whose water is a uniform dark blue that's easy to tell from land.
+const loadSatellite = async (lat, lon) => {
+  const [wide, close, maskSrc] = await Promise.all([
+    mosaic(ESRI, 14, 7, lat, lon).then(r => r || mosaic(EOX, 14, 7, lat, lon)),
+    mosaic(ESRI, 17, 9, lat, lon),
+    mosaic(EOX, 14, 7, lat, lon),
+  ]);
+  if (!wide) return null;
+  const m = maskSrc || wide;
+  const src = m.g.getImageData(0, 0, m.PX, m.PX).data;
   const M = 512, mcv = document.createElement('canvas'); mcv.width = mcv.height = M;
-  const mg = mcv.getContext('2d'), md = mg.createImageData(M, M);
-  let landN = 0, nearLand = 0;
+  const mg = mcv.getContext('2d', { willReadFrequently: true }), md = mg.createImageData(M, M);
+  let nearLand = 0;
   for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) {
-    const sxp = Math.floor(x / M * PX), syp = Math.floor(y / M * PX), o = (syp * PX + sxp) * 4;
+    const o = (Math.floor(y / M * m.PX) * m.PX + Math.floor(x / M * m.PX)) * 4;
     const r = src[o], gg = src[o + 1], b = src[o + 2], l = 0.2126 * r + 0.7152 * gg + 0.0722 * b;
-    const water = (l < 58 && b >= r - 4) || (l < 40);
-    const v = water ? 0 : 255;
-    md.data[(y * M + x) * 4] = v; md.data[(y * M + x) * 4 + 3] = 255;
-    if (!water) { landN++; const dx = x - sx / PX * M, dy = y - sy / PX * M; if (dx * dx + dy * dy < (2500 / size * M) ** 2) nearLand++; }
+    // water: dark with no red cast (open sea, North Sea green-blue), or teal/turbid (Singapore)
+    const water = (l < 58 && b >= r - 4) || l < 40 || (b >= r + 15 && l < 95 && Math.abs(gg - b) < 28);
+    md.data[(y * M + x) * 4] = water ? 0 : 255; md.data[(y * M + x) * 4 + 3] = 255;
+    if (!water) { const dx = x - m.sx / m.PX * M, dy = y - m.sy / m.PX * M; if (dx * dx + dy * dy < (2500 / m.size * M) ** 2) nearLand++; }
   }
   mg.putImageData(md, 0, 0);
   mg.filter = 'blur(2px)'; mg.drawImage(mcv, 0, 0); mg.filter = 'none';
-  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 16;
   const mask = new THREE.CanvasTexture(mcv); mask.minFilter = mask.magFilter = THREE.LinearFilter;
-  // canvas centre relative to the ship, in scene metres (x east, z south)
-  const cx = (PX / 2 - sx) * mpp, cz = (PX / 2 - sy) * mpp;
-  return { tex, mask, size, cx, cz, landFrac: landN / (M * M), coastal: nearLand > 40 };
+  return {
+    tex: toTex(wide.cv), size: wide.size, cx: wide.cx, cz: wide.cz,
+    close: close ? { tex: toTex(close.cv), size: close.size, cx: close.cx, cz: close.cz } : null,
+    mask, maskRect: { size: m.size, cx: m.cx, cz: m.cz }, coastal: nearLand > 40,
+    credit: close || wide !== maskSrc ? 'IMAGERY: ESRI, MAXAR, EARTHSTAR GEOGRAPHICS · COASTLINE: SENTINEL-2 CLOUDLESS BY EOX' : 'IMAGERY: SENTINEL-2 CLOUDLESS BY EOX (COPERNICUS DATA)',
+  };
 };
 
 HW.makeShipScene3D = canvas => {
@@ -415,6 +476,7 @@ HW.makeShipScene3D = canvas => {
   const normals = new THREE.TextureLoader().load(NORMALS, t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 16; });
   const waveU = Array.from({ length: N_WAVES }, () => new THREE.Vector4(1, 0, 0, 100));
   const maskBlank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); maskBlank.needsUpdate = true;
+  const shipA = Array.from({ length: N_SHIPS }, () => new THREE.Vector4()), shipB = Array.from({ length: N_SHIPS }, () => new THREE.Vector4());
   const oceanUniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
     uTime: { value: 0 }, uWave: { value: waveU }, uDisplace: { value: 1 },
     uNormals: { value: normals }, uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uSunColor: { value: new THREE.Color(1, 0.95, 0.85) },
@@ -422,18 +484,30 @@ HW.makeShipScene3D = canvas => {
     uSkyTop: { value: new THREE.Color(0.2, 0.42, 0.7) }, uSkyHorizon: { value: new THREE.Color(0.7, 0.8, 0.9) },
     uFoam: { value: 0.5 }, uNight: { value: 0 }, uRipple: { value: 1 },
     uMask: { value: maskBlank }, uMaskRect: { value: new THREE.Vector4(0, 0, 1, 0) },
+    envMap: { value: null }, uEnvOn: { value: 0 }, uShipA: { value: shipA }, uShipB: { value: shipB },
   }]);
-  oceanUniforms.uWave.value = waveU; oceanUniforms.uNormals.value = normals; oceanUniforms.uMask.value = maskBlank;
-  const oceanMat = new THREE.ShaderMaterial({ uniforms: oceanUniforms, vertexShader: OCEAN_VS, fragmentShader: OCEAN_FS, fog: true });
-  const nearGeo = new THREE.PlaneGeometry(3000, 3000, 420, 420); nearGeo.rotateX(-Math.PI / 2);
-  const ocean = new THREE.Mesh(nearGeo, oceanMat); ocean.frustumCulled = false; ocean.receiveShadow = false; scene.add(ocean);
-  const farGeo = new THREE.RingGeometry(1380, 50000, 96, 1); farGeo.rotateX(-Math.PI / 2);
-  const farOcean = new THREE.Mesh(farGeo, new THREE.ShaderMaterial({ uniforms: { ...oceanUniforms, uDisplace: { value: 0 } }, vertexShader: OCEAN_VS, fragmentShader: OCEAN_FS, fog: true }));
+  Object.assign(oceanUniforms, { uWave: { value: waveU }, uNormals: { value: normals }, uMask: { value: maskBlank }, uShipA: { value: shipA }, uShipB: { value: shipB } });
+  const oceanDefines = { CUBEUV_TEXEL_WIDTH: '0.001', CUBEUV_TEXEL_HEIGHT: '0.001', CUBEUV_MAX_MIP: '8.0' };
+  const oceanMat = new THREE.ShaderMaterial({ uniforms: oceanUniforms, vertexShader: OCEAN_VS, fragmentShader: OCEAN_FS, fog: true, defines: { ...oceanDefines } });
+  const nearGeo = new THREE.PlaneGeometry(2400, 2400, 600, 600); nearGeo.rotateX(-Math.PI / 2);   // 4 m between vertices
+  const ocean = new THREE.Mesh(nearGeo, oceanMat); ocean.frustumCulled = false; scene.add(ocean);
+  const farGeo = new THREE.RingGeometry(1100, 50000, 128, 1); farGeo.rotateX(-Math.PI / 2);
+  const farMat = new THREE.ShaderMaterial({ uniforms: { ...oceanUniforms, uDisplace: { value: 0 } }, vertexShader: OCEAN_VS, fragmentShader: OCEAN_FS, fog: true, defines: { ...oceanDefines } });
+  const farOcean = new THREE.Mesh(farGeo, farMat);
   farOcean.position.y = -0.05; farOcean.frustumCulled = false; scene.add(farOcean);
+  // point the water's reflections at the sky's environment map (the same one that lights the ships)
+  const useEnv = tex => {
+    const hgt = tex.image.height, maxMip = Math.log2(hgt) - 2;
+    const defs = { CUBEUV_TEXEL_WIDTH: String(1 / (3 * Math.max(Math.pow(2, maxMip), 7 * 16))), CUBEUV_TEXEL_HEIGHT: String(1 / hgt), CUBEUV_MAX_MIP: maxMip.toFixed(1) };
+    [oceanMat, farMat].forEach(m => { Object.assign(m.defines, defs); m.needsUpdate = true; });
+    oceanUniforms.envMap.value = tex; oceanUniforms.uEnvOn.value = 1;
+  };
 
   /* satellite ground (filled in by loadSatellite) */
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 }));
-  ground.position.y = -0.4; ground.visible = false; ground.receiveShadow = true; scene.add(ground);
+  ground.position.y = -30; ground.visible = false; ground.receiveShadow = true; scene.add(ground);
+  const groundClose = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, polygonOffset: true, polygonOffsetFactor: -1 }));
+  groundClose.position.y = -29.8; groundClose.visible = false; groundClose.receiveShadow = true; scene.add(groundClose);
   let sat = null;
 
   /* clouds */
@@ -490,17 +564,20 @@ HW.makeShipScene3D = canvas => {
   /* waves: Gerstner set from the live sea state */
   const setWaves = () => {
     const H = clamp(Math.max(env.wave, 0.15), 0.15, 12), T = clamp(env.period || 7, 3, 18);
-    const Ls = clamp(1.56 * T * T, 25, 320), Lw = clamp(1.56 * (T * 0.62) ** 2, 25, 140);
+    const Ls = clamp(1.56 * T * T, 70, 320), Lw = clamp(1.56 * (T * 0.62) ** 2, 45, 150);
     const dirOf = fromDeg => { const b = (fromDeg + 180) * RAD; return [Math.sin(b), -Math.cos(b)]; };   // travel direction in x,z
     const sw = dirOf(env.swellDir), wd = dirOf(env.windDir);
     const rot = (d, deg) => { const a = deg * RAD; return [d[0] * Math.cos(a) - d[1] * Math.sin(a), d[0] * Math.sin(a) + d[1] * Math.cos(a)]; };
     const set = [
-      [sw, Ls, H * 0.62], [rot(sw, 22), Ls * 0.62, H * 0.32], [wd, Lw, H * 0.45],
-      [rot(wd, -28), Lw * 0.64, H * 0.24], [rot(wd, 47), Lw * 0.41, H * 0.13], [rot(wd, -66), Lw * 0.3, H * 0.08],
+      [sw, Ls, H * 0.55], [rot(sw, 17), Ls * 0.71, H * 0.3], [rot(sw, -12), Ls * 0.53, H * 0.2],
+      [wd, Lw, H * 0.42], [rot(wd, -28), Lw * 0.66, H * 0.25], [rot(wd, 41), Lw * 0.47, H * 0.16],
+      [rot(wd, -57), Lw * 0.34, H * 0.1], [rot(wd, 73), Lw * 0.26, H * 0.07], [rot(wd, -9), Lw * 0.19, H * 0.05], [rot(wd, 31), Lw * 0.14, H * 0.035],
     ];
     let sum = 0;
-    const st = set.map(([d, L, h]) => { const s = Math.min(0.32, Math.PI * h / L); sum += s; return [d, L, s]; });
-    const scale = sum > 0.8 ? 0.8 / sum : 1;
+    // the mesh has a vertex every 4 m, so a wave shorter than ~22 m would alias into blotches:
+    // keep geometry waves at least that long (shorter chop comes from the ripple texture)
+    const st = set.map(([d, L, h]) => { L = Math.max(22, L); const s = Math.min(0.28, Math.PI * h / L); sum += s; return [d, L, s]; });
+    const scale = sum > 0.85 ? 0.85 / sum : 1;
     st.forEach(([d, L, s], i) => waveU[i].set(d[0], d[1], s * scale, L));
   };
   // the same waves on the CPU, for floating ships: surface height at a point
@@ -552,14 +629,15 @@ HW.makeShipScene3D = canvas => {
     oceanUniforms.uSunColor.value.copy(sunLight.color).multiplyScalar(lerp(1, 0.1, night) * dim + 0.05);
     oceanUniforms.uNight.value = night;
     ground.material.color.setScalar(lerp(1, 0.18, night) * (1 - 0.3 * env.cloud));
+    groundClose.material.color.copy(ground.material.color);
     if (envRT) envRT.dispose();
-    envRT = pmrem.fromScene(sky); scene.environment = envRT.texture;
+    envRT = pmrem.fromScene(sky); scene.environment = envRT.texture; useEnv(envRT.texture);
   };
 
   const applyWeather = () => {
     setWaves();
     const warm = clamp((env.sst - 4) / 26, 0, 1), rough = Math.max(env.storm, env.rain * 0.5);
-    oceanUniforms.uDeep.value.setRGB(lerp(0.012, 0.005, warm), lerp(0.05, 0.11, warm), lerp(0.08, 0.14, warm)).multiplyScalar(1 - 0.35 * rough);
+    oceanUniforms.uDeep.value.setRGB(lerp(0.02, 0.012, warm), lerp(0.075, 0.13, warm), lerp(0.11, 0.17, warm)).multiplyScalar(1 - 0.35 * rough);
     oceanUniforms.uShallow.value.setRGB(lerp(0.05, 0.03, warm), lerp(0.22, 0.38, warm), lerp(0.26, 0.36, warm));
     oceanUniforms.uFoam.value = clamp(0.15 + env.wind / 35 + env.wave / 6, 0.1, 1);
     oceanUniforms.uRipple.value = clamp(0.5 + env.wind / 20, 0.5, 2.2);
@@ -648,15 +726,15 @@ HW.makeShipScene3D = canvas => {
       const hb = heightAt(f.x + fx * half, f.z + fz * half, t), hs = heightAt(f.x - fx * half, f.z - fz * half, t);
       const hp = heightAt(f.x - fz * beamH, f.z + fx * beamH, t), hst = heightAt(f.x + fz * beamH, f.z - fx * beamH, t);
       const hc = (hb + hs + hp + hst) / 4;
-      f.mesh.position.set(f.x, lerp(f.mesh.position.y, hc * 0.85, 0.2), f.z);
+      f.mesh.position.set(f.x, lerp(f.mesh.position.y, hc * 0.3, 0.2), f.z);   // the water right at the hull is calmed, so heave less
       f.mesh.rotation.z = lerp(f.mesh.rotation.z, Math.atan2(hb - hs, half * 2) * 0.8, 0.15);      // pitch (bow up)
       f.mesh.rotation.x = lerp(f.mesh.rotation.x, Math.atan2(hst - hp, beamH * 2) * 0.6, 0.12);    // roll
       f.mesh.traverse(o => { if (o.userData.spin) o.rotation.y += dt * 2.5; });
       // wake: spray at the bow, churn at the stern, spreading behind
       if (v > 0.5) {
-        const n = Math.round((20 + v * 9) * dt * 6 * (f === focus ? 1.6 : 0.7));
+        const n = Math.round((8 + v * 4) * dt * 6 * (f === focus ? 1.4 : 0.5));   // bow spray (the wake itself is drawn on the water)
         for (let q = 0; q < n; q++) {
-          const i = foamI++ % N_FOAM, bow = Math.random() < 0.35;
+          const i = foamI++ % N_FOAM, bow = true;
           const along = bow ? f.L * 0.46 : -f.L * 0.5, side = (Math.random() < 0.5 ? -1 : 1) * (bow ? 0.5 : Math.random() * 0.45) * f.L * 0.155;
           const sx = -fz, sz = fx;
           foamPos[i * 3] = f.x + fx * along + sx * side; foamPos[i * 3 + 1] = 0.5; foamPos[i * 3 + 2] = f.z + fz * along + sz * side;
@@ -666,9 +744,17 @@ HW.makeShipScene3D = canvas => {
         }
       }
     }
+    // hand the nearest ships to the ocean shader: hull calming, waterline foam, bow wave, wake
+    const nearest = fleet.map(f => [Math.hypot(f.x - camTarget.x, f.z - camTarget.z), f]).sort((a, b) => a[0] - b[0]).slice(0, N_SHIPS);
+    for (let j = 0; j < N_SHIPS; j++) {
+      const f = nearest[j] && nearest[j][1];
+      if (!f) { shipB[j].z = 0; continue; }
+      shipA[j].set(f.x, f.z, f.heading, f.L);
+      shipB[j].set(f.L * (f.kind === 'passenger' ? 0.13 : 0.155), f.speed * 0.5144, 1, 0);
+    }
     for (let i = 0; i < N_FOAM; i++) {
       foamAge[i] += dt;
-      if (foamAge[i] > 18) { foamPos[i * 3 + 1] = -999; continue; }
+      if (foamAge[i] > 5) { foamPos[i * 3 + 1] = -999; continue; }
       foamPos[i * 3] += foamVel[i * 3] * dt; foamPos[i * 3 + 2] += foamVel[i * 3 + 2] * dt;
       foamPos[i * 3 + 1] = Math.max(heightAt(foamPos[i * 3], foamPos[i * 3 + 2], t) * 0.8 + 0.4, foamPos[i * 3 + 1] + foamVel[i * 3 + 1] * dt);
       foamVel[i * 3 + 1] -= 9.8 * dt; foamVel[i * 3] *= 0.996; foamVel[i * 3 + 2] *= 0.996;
@@ -690,7 +776,7 @@ HW.makeShipScene3D = canvas => {
     if (camera.position.y < camWater) camera.position.y = camWater;
     camera.lookAt(camTarget.x, camTarget.y + lerp(0, focus.L * 0.04, k), camTarget.z);
     S.alt = camera.position.y;
-    ocean.position.set(Math.round(camera.position.x / 7) * 7, 0, Math.round(camera.position.z / 7) * 7);
+    ocean.position.set(Math.round(camera.position.x / 4) * 4, 0, Math.round(camera.position.z / 4) * 4);
     farOcean.position.x = camera.position.x; farOcean.position.z = camera.position.z;
 
     // shadows follow the focused ship
@@ -772,17 +858,24 @@ HW.makeShipScene3D = canvas => {
       const tg = modeTargets(); Object.assign(orbit, { az: tg.az, el: tg.el, dist: tg.dist, tAz: tg.az, tEl: tg.el, tDist: tg.dist });
       foamAge.fill(99);
       // satellite ground and coastline mask
-      sat = null; maskData = null; ground.visible = false; oceanUniforms.uMaskRect.value.set(0, 0, 1, 0);
+      sat = null; maskData = null; ground.visible = false; groundClose.visible = false; oceanUniforms.uMaskRect.value.set(0, 0, 1, 0);
       credit.textContent = 'IMAGERY: SENTINEL-2 CLOUDLESS BY EOX (CONTAINS COPERNICUS DATA) · SKY & SEA: THREE.JS';
       loadSatellite(lat0, lon0).then(r => {
         if (!r || !S.on || focus.data !== s) return;
-        sat = r;
+        sat = { size: r.maskRect.size, cx: r.maskRect.cx, cz: r.maskRect.cz };
         ground.material.map = r.tex; ground.material.needsUpdate = true;
-        ground.scale.set(r.size, 1, r.size); ground.position.set(r.cx, -0.4, r.cz); ground.visible = true;
+        // well below the deepest wave trough: it only shows where the water is cut away (land)
+        ground.scale.set(r.size, 1, r.size); ground.position.set(r.cx, -30, r.cz); ground.visible = true;
+        if (r.close) {
+          groundClose.material.map = r.close.tex; groundClose.material.needsUpdate = true;
+          groundClose.scale.set(r.close.size, 1, r.close.size); groundClose.position.set(r.close.cx, -29.8, r.close.cz); groundClose.visible = true;
+        }
         oceanUniforms.uMask.value = r.mask;
-        oceanUniforms.uMaskRect.value.set(r.cx - r.size / 2, r.cz - r.size / 2, r.size, 1);
+        oceanUniforms.uMaskRect.value.set(r.maskRect.cx - r.maskRect.size / 2, r.maskRect.cz - r.maskRect.size / 2, r.maskRect.size, 1);
         maskData = r.mask.image.getContext('2d').getImageData(0, 0, 512, 512).data;
         S.coastal = r.coastal;
+        S.landShare = (() => { let n = 0; for (let i = 0; i < maskData.length; i += 4) if (maskData[i] > 127) n++; return n / (maskData.length / 4); })();
+        credit.textContent = r.credit + ' · RENDER: THREE.JS';
         applySky();
       });
       loadFleet(s);
@@ -800,6 +893,7 @@ HW.makeShipScene3D = canvas => {
     setMode(m) { S.mode = m; orbit.user = false; },
     close() { S.on = false; clearFleet(); },
     envFrom,
+    debug: { oceanUniforms, waveU },
   };
   return api;
 };
