@@ -116,7 +116,7 @@ FEATURE_LABELS = {
 def make_model(q):
     return HistGradientBoostingRegressor(
         loss="quantile", quantile=q,
-        max_iter=300, learning_rate=0.05, max_leaf_nodes=15, min_samples_leaf=40,
+        max_iter=200, learning_rate=0.05, max_leaf_nodes=15, min_samples_leaf=40,
         l2_regularization=1.0, categorical_features=[FEATURES.index("strait_code")],
         random_state=0,
     )
@@ -170,6 +170,7 @@ def main():
     bt_models = fit_models(train)
     bt_preds = predict(bt_models, test[FEATURES])
     backtest = []
+    widen = {}
     for h in HORIZONS:
         ok = test[f"target_{h}"].notna().to_numpy()
         actual_chg = test[f"target_{h}"].to_numpy()[ok]
@@ -178,21 +179,37 @@ def main():
         med = np.expm1(np.log1p(level) + bt_preds[h][ok, 2])
         lo = np.expm1(np.log1p(level) + bt_preds[h][ok, 0])
         hi = np.expm1(np.log1p(level) + bt_preds[h][ok, 4])
-        denom = np.maximum(actual, 1)
+        # Conformal widening (CQR): how far outside the raw 5-95% band the actual log change
+        # landed, at the 90th percentile. Added to both ends of every future band, so the
+        # band covers ~90% on data like the backtest.
+        a = actual_chg
+        score = np.maximum(bt_preds[h][ok, 0] - a, a - bt_preds[h][ok, 4])
+        widen[h] = float(np.quantile(score, 0.9))
+        lo_c = np.expm1(np.log1p(level) + bt_preds[h][ok, 0] - widen[h])
+        hi_c = np.expm1(np.log1p(level) + bt_preds[h][ok, 4] + widen[h])
+        # WAPE: total absolute error over total ships, so busy straits count for more
         backtest.append({
             "h": h,
             "n": int(ok.sum()),
-            "mape_model": round(float(np.mean(np.abs(med - actual) / denom)) * 100, 1),
-            "mape_naive": round(float(np.mean(np.abs(level - actual) / denom)) * 100, 1),
-            "coverage_90": round(float(np.mean((actual >= lo) & (actual <= hi))) * 100, 1),
+            "wape_model": round(float(np.sum(np.abs(med - actual)) / np.sum(actual)) * 100, 1),
+            "wape_naive": round(float(np.sum(np.abs(level - actual)) / np.sum(actual)) * 100, 1),
+            "coverage_90_raw": round(float(np.mean((actual >= lo) & (actual <= hi))) * 100, 1),
+            "coverage_90_calibrated": round(float(np.mean((actual >= lo_c) & (actual <= hi_c))) * 100, 1),
         })
-        print(f"h={h}: model {backtest[-1]['mape_model']}% vs naive {backtest[-1]['mape_naive']}% "
-              f"MAPE, 90% band covers {backtest[-1]['coverage_90']}%")
+        b = backtest[-1]
+        print(f"h={h}: WAPE model {b['wape_model']}% vs naive {b['wape_naive']}%, "
+              f"90% band covers {b['coverage_90_raw']}% raw, {b['coverage_90_calibrated']}% calibrated")
 
     # ---------- final models on everything ----------
     models = fit_models(feat)
     latest = feat[feat["week"] == last_week].copy()
     preds = predict(models, latest[FEATURES])
+    for h in HORIZONS:
+        # widen the outer quantiles by the full conformal amount and the inner ones by half
+        preds[h][:, 0] -= widen[h]
+        preds[h][:, 1] -= widen[h] / 2
+        preds[h][:, 3] += widen[h] / 2
+        preds[h][:, 4] += widen[h]
 
     # what the 1-week median model leans on
     rows = feat.dropna(subset=["target_1"]).sample(n=min(6000, len(feat)), random_state=0)
@@ -264,6 +281,7 @@ def main():
         "model": "Gradient-boosted trees (HistGradientBoostingRegressor, LightGBM-style), quantile loss, one model per horizon and quantile, all straits pooled",
         "quantiles": QUANTILES,
         "backtest": backtest,
+        "backtest_note": "Trained on data up to 34 weeks before the end, scored on the last 26 weeks. WAPE = total absolute error / total ships. Naive = same as the latest week. Calibrated coverage is measured on the same 26 weeks used to set the widening, so it is optimistic.",
         "importance": importance,
         "straits": straits,
         "market_odds": market_odds,
