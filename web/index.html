@@ -10,7 +10,7 @@
    whenever you come back to the tab, check the published version (never cached) and,
    if it's newer than this copy, reload once onto it. web/tools/stamp.sh sets both. */
 (function () {
-  var SITE_VERSION = '20261115T2110', URL_ = 'version.json';
+  var SITE_VERSION = '20261115T2115', URL_ = 'version.json';
   function check() {
     fetch(URL_ + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       if (!d.v || d.v === SITE_VERSION) return;
@@ -24,8 +24,8 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
 })();
 </script>
-<link rel="stylesheet" href="app.css?v=20261115T2110">
-<link rel="stylesheet" href="stats.css?v=20261115T2110">
+<link rel="stylesheet" href="app.css?v=20261115T2115">
+<link rel="stylesheet" href="stats.css?v=20261115T2115">
 </head>
 <body>
 
@@ -39,13 +39,12 @@
 
   <header>
     <a class="brand" href="../" title="Headway"><span class="word">HEADWAY</span></a>
-    <nav class="nav" aria-label="Pages"><a class="on" href="./">GLOBE</a><a href="markets.html">MARKETS</a></nav>
     <span class="live off tag" id="sysLive"><b id="sysShips">—</b> SHIPS UNDERWAY</span>
     <form class="search" id="search" autocomplete="off">
       <input id="q" placeholder="Find a ship: name, IMO or MMSI" aria-label="Find a ship">
       <span class="err" id="qerr"></span>
     </form>
-    <button class="pill" id="mtoggle" aria-expanded="true" title="Show or hide the market list on the left">SIDE LIST</button>
+    <button class="pill" id="mtoggle" aria-expanded="true">MARKETS</button>
     <button class="pill icon" id="theme" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
     <button class="pill" id="wallet">CONNECT WALLET</button>
   </header>
@@ -59,6 +58,8 @@
         <button data-g="live" class="on">LIVE</button>
         <button data-g="route">ROUTES</button>
         <button data-g="weekly">STRAITS</button>
+        <button data-g="collapse">COLLAPSE</button>
+        <button data-g="vessel">VESSELS</button>
         <button data-g="trade">TRADE</button>
       </div>
     </div>
@@ -115,12 +116,13 @@
   </div>
 </div>
 
-<script src="js/util.js?v=20261115T2110"></script>
-<script src="js/data.js?v=20261115T2110"></script>
-<script src="js/logo.js?v=20261115T2110"></script>
-<script src="js/globe.js?v=20261115T2110"></script>
-<script src="js/ship.js?v=20261115T2110"></script>
-<script src="js/stats.js?v=20261115T2110"></script>
-<script type="module" src="js/main.js?v=20261115T2110"></script>
+<script src="js/util.js?v=20261115T2115"></script>
+<script src="js/data.js?v=20261115T2115"></script>
+<script src="js/logo.js?v=20261115T2115"></script>
+<script src="js/sky.js?v=20261115T2115"></script>
+<script src="js/globe.js?v=20261115T2115"></script>
+<script src="js/ship.js?v=20261115T2115"></script>
+<script src="js/stats.js?v=20261115T2115"></script>
+<script type="module" src="js/main.js?v=20261115T2115"></script>
 </body>
 </html>

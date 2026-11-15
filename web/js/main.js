@@ -174,7 +174,8 @@ const renderMarkets = () => {
     if (live) {
       // the server says when this window stops taking trades; fall back to the clock-aligned window
       const tr = m.live && m.live.trading, cn = m.live && m.live.counting, mins = +m.minutes || 30;
-      const end = tr && tr.trading_closes ? Date.parse(tr.trading_closes) : m.closes ? Date.parse(m.closes) : windowStart(mins).getTime() + mins * 60000;
+      // count down to closes (when positions close, from the server), then the window's trading close, then the clock
+      const end = m.closes ? Date.parse(m.closes) : tr && tr.trading_closes ? Date.parse(tr.trading_closes) : windowStart(mins).getTime() + mins * 60000;
       const left = Math.max(0, end - Date.now());
       const count = cn && cn.count_so_far != null ? cn.count_so_far + ' / ' + (cn.threshold ?? m.threshold) + ' CROSSED' : st ? st.count + ' / ' + m.threshold + ' CROSSED' : m.chainId == null ? 'NOT OPEN YET' : 'COUNTING…';
       meta = `<span class="tag">${count}</span><span class="tag">${m.chainId == null && !tr ? '' : left > 0 ? Math.floor(left / 60000) + ':' + String(Math.floor(left / 1000) % 60).padStart(2, '0') + ' LEFT' : 'CLOSED'}</span>`;
@@ -228,11 +229,42 @@ const pollLive = async () => {
 const syncChainOdds = async () => {
   if (!chain) return;
   const onchain = await chain.m.list();
-  // Xavi's findMarket: exact question first, since several markets share one series
-  for (const m of markets.list) { const c = chain.mk.findMarket(onchain, m); if (c) { m.chainId = c.id; m.probYes = c.probYes; } }
+  for (const m of markets.list) {
+    // The server already knows which onchain market each card is (Ben's keeper opens them),
+    // so its chainId wins. Matching by question/series is only a fallback for markets it hasn't
+    // paired, because several markets share a series and old live windows linger onchain.
+    if (m.serverChainId != null) {
+      const c = onchain.find(x => BigInt(x.id) === BigInt(m.serverChainId));
+      m.chainId = m.serverChainId;
+      if (c && c.probYes != null) m.probYes = c.probYes;
+      continue;
+    }
+    const c = chain.mk.findMarket(onchain, m);
+    if (c) { m.chainId = c.id; m.probYes = c.probYes; }
+  }
+};
+// Refresh the list from the server: live windows roll every 30 minutes into new onchain
+// markets, and the keeper opens new ones, so chainId, probYes and closes change under us.
+const remember = list => list.forEach(m => { if (m.chainId != null) m.serverChainId = m.chainId; });
+const refreshMarkets = async () => {
+  if (markets.source !== 'server') return;
+  try {
+    const fresh = await HW.loadMarkets(D.seeds);
+    if (fresh.source !== 'server') return;
+    remember(fresh.list);
+    const byId = new Map(markets.list.map(m => [m.id, m]));
+    markets.list = fresh.list.map(f => {
+      const old = byId.get(f.id);
+      // keep a newer onchain probability from the live feed if the server hasn't caught up
+      return old && f.serverChainId === old.serverChainId && f.probYes == null ? { ...f, probYes: old.probYes } : f;
+    });
+    await syncChainOdds().catch(() => {});
+    renderMarkets();
+  } catch { /* keep what we have */ }
 };
 (async () => {
   markets = await HW.loadMarkets(D.seeds);
+  remember(markets.list);
   chain = await loadChain();
   if (chain) {
     await syncChainOdds().catch(() => {}); $('wallet').textContent = 'WALLET';
@@ -250,6 +282,7 @@ const syncChainOdds = async () => {
   else $('wallet').title = 'Contracts are not deployed yet';
   renderMarkets(); pollLive();
   setInterval(pollLive, 20000);
+  setInterval(refreshMarkets, 30000);
   setInterval(() => { if (mGroup === 'live') renderMarkets(); }, 1000);
 })();
 $('wallet').addEventListener('click', async () => {
