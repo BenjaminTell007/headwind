@@ -1,9 +1,10 @@
 /* Weather overlay for the globe: live conditions over the whole planet, drawn in the
    same glyph language as the logo and loading screen.
 
-   Data: Open-Meteo (free, no key), current conditions on a 6° grid (about 1,400 points),
-   wind, gusts, rain and weather code from the forecast API, wave height from the marine
-   API. Fetched when the overlay is first switched on, then every 15 minutes.
+   Data: Open-Meteo (free, no key), current conditions on a 10° grid (504 points): wind,
+   gusts, rain and weather code from the forecast API first, then wave height from the
+   marine API a minute later (the free tier allows about 600 point-lookups a minute).
+   Kept in the browser for 15 minutes, refreshed after that while the overlay is on.
 
    Each point is a glyph:
      shape  = what kind of weather it is: filled circle rain, plus wind, ring waves,
@@ -18,9 +19,9 @@
 (() => {
   const HW = window.HW, RAD = Math.PI / 180;
   const vec = (lat, lon) => { const a = lat * RAD, b = lon * RAD; return [Math.cos(a) * Math.sin(b), Math.sin(a), Math.cos(a) * Math.cos(b)]; };
-  const STEP = 6;
+  const STEP = 10;
   const PTS = [];
-  for (let lat = -60; lat <= 72; lat += STEP) for (let lon = -180; lon < 180; lon += STEP) PTS.push({ lat, lon, v: vec(lat, lon), w: null });
+  for (let lat = -60; lat <= 70; lat += STEP) for (let lon = -180; lon < 180; lon += STEP) PTS.push({ lat, lon, v: vec(lat, lon), w: null });
 
   const SEV = ['rgba(242,242,240,0.28)', '#4c8dff', '#8f82f2', '#ea86b5', '#f08a3c'];
   const HALO = ['', '76,141,255', '143,130,242', '234,134,181', '240,138,60'];
@@ -30,32 +31,47 @@
 
   /* ---------- fetch ---------- */
   const chunk = (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };
+  const CACHE = 'hw-weather-grid-v1';
+  const getJSON = url => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
   const fetchAll = async () => {
     if (wx.loading) return;
+    // fresh enough copy in this browser? use it
+    try {
+      const c = JSON.parse(localStorage.getItem(CACHE) || 'null');
+      if (c && Date.now() - c.at < 15 * 60e3 && c.w.length === PTS.length) {
+        c.w.forEach((w, i) => { PTS[i].w = w; if (w) classify(PTS[i]); });
+        wx.loadedAt = c.at; summary(); return;
+      }
+    } catch { /* no storage: just fetch */ }
     wx.loading = true; status('LOADING LIVE WEATHER…');
-    const groups = chunk(PTS, 160);
-    let done = 0;
-    await Promise.all(groups.map(async (g, gi) => {
-      await new Promise(r => setTimeout(r, gi * 120));   // stagger so we stay polite to the API
-      const lat = g.map(p => p.lat).join(','), lon = g.map(p => p.lon).join(',');
+    const groups = chunk(PTS, 126);
+    // 1. wind, gusts, rain, weather code
+    for (const g of groups) {
       try {
-        const [f, m] = await Promise.all([
-          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=wind_speed_10m,wind_gusts_10m,precipitation,weather_code,cloud_cover&wind_speed_unit=kn`).then(r => r.json()),
-          fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height`).then(r => r.json()).catch(() => null),
-        ]);
-        const fa = Array.isArray(f) ? f : [f], ma = m ? (Array.isArray(m) ? m : [m]) : [];
-        g.forEach((p, i) => {
-          const c = fa[i] && fa[i].current, mc = ma[i] && ma[i].current;
-          if (!c) return;
-          p.w = { wind: c.wind_speed_10m, gust: c.wind_gusts_10m, rain: c.precipitation, code: c.weather_code, cloud: c.cloud_cover, wave: mc ? mc.wave_height : null };
-          classify(p);
+        const f = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${g.map(p => p.lat).join(',')}&longitude=${g.map(p => p.lon).join(',')}&current=wind_speed_10m,wind_gusts_10m,precipitation,weather_code,cloud_cover&wind_speed_unit=kn`);
+        (Array.isArray(f) ? f : [f]).forEach((r, i) => {
+          const c = r && r.current; if (!c) return;
+          g[i].w = { wind: c.wind_speed_10m, gust: c.wind_gusts_10m, rain: c.precipitation, code: c.weather_code, cloud: c.cloud_cover, wave: g[i].w ? g[i].w.wave : null };
+          classify(g[i]);
         });
       } catch { /* leave these points empty */ }
-      done++; status(`LOADING LIVE WEATHER… ${Math.round(done / groups.length * 100)}%`);
-    }));
-    wx.loading = false; wx.loadedAt = Date.now();
+    }
+    wx.loadedAt = Date.now(); summary(' · WAVES IN A MINUTE');
+    // 2. wave heights, a minute later so we stay inside the free rate limit
+    setTimeout(async () => {
+      for (const g of groups) {
+        try {
+          const m = await getJSON(`https://marine-api.open-meteo.com/v1/marine?latitude=${g.map(p => p.lat).join(',')}&longitude=${g.map(p => p.lon).join(',')}&current=wave_height`);
+          (Array.isArray(m) ? m : [m]).forEach((r, i) => { if (g[i].w && r && r.current) { g[i].w.wave = r.current.wave_height; classify(g[i]); } });
+        } catch { /* no waves for these */ }
+      }
+      wx.loading = false; summary();
+      try { localStorage.setItem(CACHE, JSON.stringify({ at: wx.loadedAt, w: PTS.map(p => p.w) })); } catch { /* fine */ }
+    }, 61000);
+  };
+  const summary = (extra = '') => {
     const n = PTS.filter(p => p.w).length, rough = PTS.filter(p => p.w && p.sev >= 0.5).length;
-    status(n ? `${n.toLocaleString('en-US')} POINTS · ${rough} ROUGH · OPEN-METEO, LIVE` : 'WEATHER UNAVAILABLE');
+    status(n ? `${n} POINTS · ${rough} ROUGH · OPEN-METEO, LIVE${extra}` : 'WEATHER UNAVAILABLE RIGHT NOW');
   };
 
   // what kind of weather, and how rough (0 calm .. 1 severe)
@@ -92,7 +108,7 @@
   };
   const style = document.createElement('style');
   style.textContent = `
-    .wx-legend { position:fixed; left:24px; bottom:24px; z-index:6; width:250px; background:rgba(14,14,15,.72); backdrop-filter:blur(12px); border:1px solid #2a2a2c; border-radius:14px; padding:14px 16px; opacity:0; transform:translateY(8px); transition:opacity .4s, transform .4s; pointer-events:none; font:300 10px/1.4 ui-monospace,"SF Mono",Menlo,monospace; letter-spacing:.14em; color:#a8a8a8; }
+    .wx-legend { position:fixed; right:24px; bottom:64px; z-index:6; width:250px; background:rgba(14,14,15,.72); backdrop-filter:blur(12px); border:1px solid #2a2a2c; border-radius:14px; padding:14px 16px; opacity:0; transform:translateY(8px); transition:opacity .4s, transform .4s; pointer-events:none; font:300 10px/1.4 ui-monospace,"SF Mono",Menlo,monospace; letter-spacing:.14em; color:#a8a8a8; }
     body.wx-on .wx-legend { opacity:1; transform:none; pointer-events:auto; }
     .wx-legend .wx-keys { display:flex; flex-wrap:wrap; gap:8px 14px; margin:10px 0 12px; color:#e6e6e4; }
     .wx-legend .wx-keys span { display:inline-flex; align-items:center; gap:6px; }
@@ -110,8 +126,9 @@
     document.body.classList.toggle('wx-on', wx.on);
     const b = document.getElementById('wxBtn'); if (b) b.classList.toggle('on', wx.on);
     if (wx.on && (!wx.loadedAt || Date.now() - wx.loadedAt > 15 * 60e3)) fetchAll();
+    else if (wx.on) summary();
   };
-  setInterval(() => { if (wx.on && Date.now() - wx.loadedAt > 15 * 60e3) fetchAll(); }, 60e3);
+  setInterval(() => { if (wx.on && !wx.loading && Date.now() - wx.loadedAt > 15 * 60e3) fetchAll(); }, 60e3);
   document.addEventListener('keydown', e => {
     if (e.key.toLowerCase() === 'w' && !e.target.closest('input, textarea') && !e.metaKey && !e.ctrlKey) wx.toggle();
   });
@@ -124,8 +141,8 @@
     t += dt;
     wx.fade += ((wx.on ? 1 : 0) - wx.fade) * (1 - Math.exp(-5 * dt));
     if (wx.fade < 0.01) { wx.hover = null; return; }
-    const base = 2.6 + 0.9 * Math.sqrt(zoom);
-    let best = null, bestD = 196;
+    const base = 3.4 + 1.2 * Math.sqrt(zoom);
+    let best = null, bestD = 400;
     const drawn = [];
     for (let i = 0; i < PTS.length; i++) {
       const p = PTS[i];
@@ -137,7 +154,7 @@
       // shimmer: rough cells pulse, every cell's level flickers a step now and then
       const sh = wave(p.lon / 6, p.lat / 6, t);
       const lvl = Math.max(0, Math.min(4, p.level + (sh > 2.6 && p.level < 4 ? 1 : 0)));
-      const s = base + p.sev * 7.5 * Math.sqrt(zoom) * (1 + 0.12 * Math.sin(t * 2 + i));
+      const s = base + p.sev * 9 * Math.sqrt(zoom) * (1 + 0.12 * Math.sin(t * 2 + i));
       if (p.level >= 2) {
         const r = s * (2.2 + p.sev * 1.4);
         const g = ctx.createRadialGradient(x, y, 0, x, y, r);

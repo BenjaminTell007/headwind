@@ -22,6 +22,8 @@ import { Sky } from 'three/addons/objects/Sky.js';
 const HW = window.HW;
 const NORMALS = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/waternormals.jpg';
 const RAD = Math.PI / 180;
+// ?hours=6 shifts the Sun six hours ahead (to show a daytime scene in a demo); 0 = real time
+const HOURS = +(new URLSearchParams(location.search).get('hours') || 0) || 0;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
 const ease = x => { x = clamp(x, 0, 1); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
@@ -261,11 +263,16 @@ HW.makeShipScene3D = canvas => {
   const drops = Array.from({ length: N_RAIN }, () => [Math.random() * 600 - 300, Math.random() * 300, Math.random() * 600 - 300]);
 
   // wake and spray: soft white particles left behind the stern and thrown off the bow
-  const N_FOAM = 1400, foamPos = new Float32Array(N_FOAM * 3), foamAge = new Float32Array(N_FOAM).fill(99), foamVel = new Float32Array(N_FOAM * 3);
+  const N_FOAM = 3200, foamPos = new Float32Array(N_FOAM * 3), foamAge = new Float32Array(N_FOAM).fill(99), foamVel = new Float32Array(N_FOAM * 3);
   const foamGeo = new THREE.BufferGeometry(); foamGeo.setAttribute('position', new THREE.BufferAttribute(foamPos, 3));
-  const foam = new THREE.Points(foamGeo, new THREE.PointsMaterial({ map: dotTex(), color: 0xffffff, size: 9, transparent: true, opacity: 0.8, depthWrite: false }));
+  const foam = new THREE.Points(foamGeo, new THREE.PointsMaterial({ map: dotTex(), color: 0xffffff, size: 4.5, transparent: true, opacity: 0.8, depthWrite: false }));
   foam.frustumCulled = false; scene.add(foam);
   let foamNext = 0;
+
+  // night lighting: a cool moonlight and warm floodlights on the ship
+  const moon = new THREE.DirectionalLight(0x9fb4d8, 0); moon.position.set(-600, 900, 400); scene.add(moon);
+  const flood = new THREE.PointLight(0xffd9a0, 0, 600, 1.4); scene.add(flood);
+  const flood2 = new THREE.PointLight(0xffe4b8, 0, 500, 1.4); scene.add(flood2);
 
   // lightning flash
   const flash = new THREE.AmbientLight(0xdfe8ff, 0); scene.add(flash);
@@ -292,7 +299,7 @@ HW.makeShipScene3D = canvas => {
 
   const applySky = () => {
     if (!shipData) return;
-    const { el, az } = sunAt(+shipData.lat, +shipData.lon);
+    const { el, az } = sunAt(+shipData.lat, +shipData.lon, new Date(Date.now() + HOURS * 3600e3));
     // sky sits around the ship: x east, z south (three.js: -z is north)
     const phi = Math.PI / 2 - el, theta = Math.PI - az;   // az from north clockwise
     sun.setFromSphericalCoords(1, Math.max(0.02, Math.min(Math.PI - 0.02, phi)), theta);
@@ -306,7 +313,9 @@ HW.makeShipScene3D = canvas => {
     night = clamp((-el / RAD + 2) / 10, 0, 1);              // 0 = day, 1 = full night (sun 8° below)
     sunLight.position.copy(sun).multiplyScalar(1500);
     sunLight.intensity = lerp(2.4, 0.05, night) * (1 - 0.6 * env.cloud);
-    hemi.intensity = lerp(0.7, 0.12, night);
+    hemi.intensity = lerp(0.7, 0.28, night);
+    moon.intensity = night * 0.9 * (1 - env.cloud * 0.5);
+    water.material.uniforms.sunColor.value.setScalar(lerp(1, 0.08, night));
     renderer.toneMappingExposure = lerp(0.55, 0.25, night) * (1 - 0.25 * env.cloud);
     stars.material.opacity = night * (1 - env.cloud * 0.8) * (1 - env.fog);
     if (envRT) envRT.dispose();
@@ -348,9 +357,12 @@ HW.makeShipScene3D = canvas => {
 
   const modeTargets = () => {
     const L = ship ? ship.userData.L : 200;
+    // camera azimuth is measured in the x-z plane: az = atan2(z, x)
+    const behind = Math.atan2(Math.cos(heading), -Math.sin(heading));     // astern of the ship
+    const beam = Math.atan2(Math.sin(heading), Math.cos(heading));        // off the starboard side
     return S.mode === 'side'
-      ? { el: 0.06, dist: L * 1.25, az: heading + Math.PI / 2 + 0.18 }    // low, beside the hull
-      : { el: 0.72, dist: L * 1.75, az: heading + Math.PI * 0.82 };       // drone, from behind and above
+      ? { el: 0.06, dist: L * 1.25, az: beam - 0.18 }      // low, beside the hull
+      : { el: 0.72, dist: L * 1.75, az: behind + 0.55 };   // drone, from behind and above
   };
 
   const frame = now => {
@@ -383,9 +395,9 @@ HW.makeShipScene3D = canvas => {
     water.material.uniforms.time.value += dt * (0.5 + env.wind / 22);
 
     // wake: emit at the stern quarters and bow, drift aft, spread, fade
-    const fwd = new THREE.Vector3(Math.cos(-heading), 0, Math.sin(-heading)), side = new THREE.Vector3(-fwd.z, 0, fwd.x);
+    const fwd = new THREE.Vector3(Math.sin(heading), 0, -Math.cos(heading)), side = new THREE.Vector3(Math.cos(heading), 0, Math.sin(heading));
     const kn = Math.max(1.5, env.speed);
-    foamNext -= dt * (40 + kn * 14);
+    foamNext -= dt * (90 + kn * 30);
     while (foamNext < 0) {
       foamNext += 1;
       const i = (Math.random() * N_FOAM) | 0, bow = Math.random() < 0.3;
@@ -416,7 +428,7 @@ HW.makeShipScene3D = canvas => {
         const d = drops[i];
         d[1] -= fall * dt; d[0] += wx * dt; d[2] += wz * dt;
         if (d[1] < 0) { d[1] = 300; d[0] = Math.random() * 600 - 300; d[2] = Math.random() * 600 - 300; }
-        const x = camera.position.x * 0 + d[0], y = d[1], z = d[2];
+        const x = d[0], y = d[1], z = d[2];   // the rain box sits around the ship
         const o = i * 6, vis = i < nShow ? 1 : 0;
         rainPos[o] = x; rainPos[o + 1] = vis ? y : -999; rainPos[o + 2] = z;
         rainPos[o + 3] = x - wx * 0.03; rainPos[o + 4] = vis ? y + len : -999; rainPos[o + 5] = z - wz * 0.03;
@@ -443,8 +455,13 @@ HW.makeShipScene3D = canvas => {
       c.material.opacity = c.userData.base * clamp(near / 220, 0.15, 1) * (1 - env.fog * 0.5);
     });
 
-    // night: the ship's own lights
-    ship.children.forEach(m => { if (m.userData.lamp) m.visible = night > 0.3 || env.fog > 0.5; });
+    // night: the ship's own lights, and floodlights over the deck and superstructure
+    const lit = night > 0.3 || env.fog > 0.5;
+    ship.children.forEach(m => { if (m.userData.lamp) m.visible = lit; });
+    const ud = ship.userData;
+    flood.position.set(-fwd.x * L * 0.38, ship.position.y + ud.accomTop + 12, -fwd.z * L * 0.38);
+    flood2.position.set(fwd.x * L * 0.15, ship.position.y + ud.D + 22, fwd.z * L * 0.15);
+    flood.intensity = lit ? 9000 : 0; flood2.intensity = lit ? 6000 : 0;
 
     renderer.render(scene, camera);
   };
@@ -457,11 +474,11 @@ HW.makeShipScene3D = canvas => {
       const L = clamp(+s.length >= 60 ? +s.length : ({ tanker: 230, cargo: 300, bulk: 225, passenger: 200, general: 130 })[S.kind], 60, 400);
       if (ship) { scene.remove(ship); ship.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
       ship = buildShip(S.kind, L);
-      heading = (s.cog != null ? +s.cog : 0) * RAD - Math.PI / 2;   // course from north -> rotation about y
-      ship.rotation.y = 0;
-      const holder = new THREE.Group(); holder.add(ship); holder.rotation.y = -heading - Math.PI / 2 + Math.PI / 2;
+      // course is clockwise from north; in the scene north is -z and east is +x, and the
+      // ship model points along +x, so turning it by (90° - course) points it on its course
+      heading = (s.cog != null ? +s.cog : 0) * RAD;
       ship.rotation.order = 'YXZ';
-      ship.rotation.y = -heading;
+      ship.rotation.y = Math.PI / 2 - heading;
       scene.add(ship);
       env = envFrom(w, s);
       orbit.user = false; S.intro = 0; S.on = true; S.mode = S.mode || 'top';
