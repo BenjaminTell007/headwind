@@ -1,16 +1,130 @@
 # Contracts
 
-Two contracts on Monad: `Markets.sol` (prediction markets priced by a fixed-product market maker) and `Faucet.sol` (gas for burner wallets). Everything is in native MON, and every trade, sale, settlement and payout is a Monad transaction. The server never holds anyone's money.
+Shipping-delay markets on Monad. A trade manager whose cargo is on a ship can hedge against it arriving late. Anyone can open a market on a ship, a port or a strait. A pricing model sets the starting odds from the ship and trade data. Trading moves the price after that, and an AIS port arrival settles the market.
+
+Everything is in native MON. Every trade, payout and vault deposit is a Monad transaction. The server prices markets and reports outcomes, but never holds anyone's money.
 
 | File | What it is |
 |---|---|
-| `src/Markets.sol` | Markets: create, buy, sell, add and remove liquidity, resolve, redeem, claim fees |
+| `src/Markets.sol` | Markets and the underwriter vault: create from a signed quote, buy, sell, settle, redeem, deposit, withdraw |
 | `src/Faucet.sol` | Gives each new burner wallet a little MON for gas |
-| `test/Markets.t.sol` | Foundry tests, including a fuzz test for solvency |
-| `script/Deploy.s.sol` | Deploys both contracts and funds the faucet |
-| `model/fpmm.py` | The same math in Python integers. The server and page can quote with it; `python3 model/fpmm.py` checks the invariants |
+| `test/Markets.t.sol` | Foundry tests: quotes, caps, hedging, early and invalid settlement, the vault, solvency fuzzing |
+| `script/Deploy.s.sol` | Deploys both, seeds the vault, funds the faucet |
+| `pricing/model.py` | The pricing model: P(late) for a ship and port, from live and processed data |
+| `pricing/quote.py` | Builds and signs quotes (EIP-712) for `createMarket`. The server serves this as `POST /api/quote` |
+| `pricing/arrival.py` | The settlement rule: when a ship has arrived, and what the oracle posts |
+| `model/fpmm.py` | The market maker math in Python integers, with invariant checks |
+| `markets/` | 65 example strait, route, trade and live-gate markets built from current data |
+| `script/*.mjs` | Write deployment addresses for the page; open the example markets |
 
-## Setup
+## How a market works
+
+1. **Quote.** A trade manager picks a ship, a port and a deadline. The server runs `pricing/model.py` and signs a quote: the question, terms, starting price, size and caps. The quote is valid for 10 minutes and can be used once.
+2. **Open.** Anyone sends the quote to `createMarket`. The contract checks the pricer's signature, so nobody can open a market at a price the model didn't give. The underwriter vault seeds the pool at that price. In the same transaction the hedger can buy YES ("late") and is covered immediately.
+3. **Trade.** Speculators buy and sell YES and NO. Every trade moves the price, so the odds become the market's forecast.
+4. **Settle.** The server watches the ship's AIS position:
+   - Arrived before the deadline: it posts the arrival time, even before trading closes, and the market settles NO (on time).
+   - Still at sea at the deadline: it posts the deadline, and the market settles YES (late).
+   - Ship went silent: it calls the market invalid.
+
+   If the server never settles a market, anyone can call it invalid after `resolveBy`, so money is never stuck.
+5. **Redeem.** Each winning share pays 1 MON. In an invalid market, every share pays 0.5 MON. `settleVault` brings the vault's share back into the vault.
+
+## Market kinds
+
+| Kind | Example | Settles on | Priced by |
+|---|---|---|---|
+| Ship arrival | Will COSCO SAGITTARIUS arrive at Rotterdam after Nov 16, 19:45 UTC? | AIS arrival at the port (`pricing/arrival.py`) | `pricing/model.py`, live |
+| Strait, weekly | Will fewer than 269 ships transit the Suez Canal in the week ending Nov 22? | IMF PortWatch | share of the last 12 weeks (`markets/`) |
+| Strait by vessel type | Will at least 6 tankers transit Hormuz that week? | IMF PortWatch | same |
+| Route | Will East Asia to North Europe take at least 35 days? | route efficiency index | last 8 weeks |
+| Trade | Will US imports from China be at least $28.2B in October? | Census monthly release | last 3 months |
+| Live gate | Will at least 11 cargo ships and tankers cross the Singapore Strait gate in the next 30 minutes? | server's gate counter | logger history |
+
+Series strings (what the oracle and page key on):
+- `arrival:{IMO}:{LOCODE}`
+- `portwatch:{strait}:weekly_transits`, or `:weekly_tanker`, `:weekly_container` and the other types
+- `route_efficiency:{corridor}:expected_days` or `:efficiency`
+- `comtrade:US:imports:{partner}:monthly`
+- `gate:{gate}:{minutes}min`
+
+Values onchain are integers: arrival times and deadlines in unix seconds, days and efficiency times 1000, dollars whole, counts as they are.
+
+## The starting price (`pricing/model.py`)
+
+For "Will ship S arrive at port P after deadline D?", YES means late. The model forecasts the arrival time:
+
+```
+hours to go = sea distance / (speed × (1 − weather slowdown))
+            + strait delay       for straits on the way that are running below normal
+            + port wait          the destination's congestion
+```
+
+| Input | Source | Effect |
+|---|---|---|
+| Position, speed, vessel type, crew ETA | live AIS through the server's `/api/ship` | distance and speed; the crew ETA is blended in half-weight when it's within 3 days of the model |
+| Sea distance | `searoute` if installed, else great circle × 1.2 | sailing time |
+| Waves and wind at the ship | Open-Meteo marine and forecast APIs | slows the ship by up to 35% (4% per metre of wave over 2 m) and widens the uncertainty |
+| Straits on the way | `chokepoint_status.json`, traffic against the 2023 baseline | if a strait is below normal, adds the shortfall × reroute days (Suez and Bab el-Mandeb: 9.2 days around the Cape) |
+| Port congestion | `port_baselines.json`, `port_calls_weekly.json` | waiting time grows with calls above the baseline |
+| Cargo mix | Comtrade lane mix (`lane_cargo_mix.json`) | doesn't move the odds: sets the cost of a day of delay (Hummels & Schaur, 0.6 to 2.1% per day) for the suggested hedge size |
+
+Arrival time is treated as normally distributed around the forecast, with a spread that grows with distance, rough seas, disrupted straits and port congestion:
+
+```
+P(late) = 1 − Φ((deadline − expected arrival) / σ)
+```
+
+The result is clamped to 2% to 98% and becomes `priorYesBps`.
+
+Example, live on Nov 15: COSCO SAGITTARIUS, 182 nm from Rotterdam at 10 knots, crew ETA Nov 16 12:00. The model expects arrival around 16:00 ± 4.3 h. A deadline 18 hours out prices at 71% late; 24 hours out, 20%. For $500k of cargo the suggested cover is about $4,000.
+
+Try it:
+
+```bash
+python3 -I contracts/pricing/model.py "COSCO SAGITTARIUS" Rotterdam 24
+```
+
+## The market maker
+
+Each market's pool holds `y` YES and `n` NO shares and keeps `y · n = k`. The price of YES is `n / (y + n)`.
+- **Buying with `A` MON:** the fee comes off first, then `x = A(1 − f)` mints `x` complete sets. You get `y + x − k/(n + x)` YES shares.
+- **Selling `s` shares:** you get `r = (B − √(B² − 4·s·n)) / 2` MON, where `B = y + s + n`, minus the fee.
+- **Seeding at a starting price `p₀`:** with seed `L`, set `n = L, y = L(1 − p₀)/p₀` when `p₀ ≥ 0.5`. Otherwise mirror it.
+- **Sizing a hedge:** `costForShares` returns the MON needed to buy enough cover.
+
+All rounding favours the pool, so `k` never falls. `model/fpmm.py` reproduces the integer math and checks it over 5,000 random trades.
+
+Example: a 10 MON pool at 30%. Buying 1 MON of YES gets 2.87 shares and moves the price to 39%. Selling them straight back returns 0.98 MON, so a round trip loses only the fees.
+
+## The underwriter vault
+
+Underwriters `deposit()` MON and get vault shares. The vault seeds every new market and is the liquidity provider in all of them. It earns:
+- the 1 to 2% trading fees
+- creation fees
+- the premiums hedgers pay when shipments arrive on time
+
+It loses when ships are late. `withdraw(shares)` pays out at the vault's value, but only from MON not tied up in open markets.
+
+The vault's value is idle MON plus seeds in open markets, counted at cost. Gains and losses land when `settleVault` runs after each market settles. That keeps the accounting simple, but someone could time a deposit or withdrawal around a market whose outcome is already obvious. For the demo that's acceptable. A real version would value open positions at the market price, or lock withdrawals for a period.
+
+## Caps against manipulation
+
+Someone who controls a ship could slow it down and win "late" bets. Three limits make that not worth it:
+- **Per subject:** `subjectCap` limits the vault's total seed across all markets on one ship, port or strait (default 3 MON).
+- **Per market:** `maxCollateral` limits the MON in one market, so no single bet can be large (ship markets: 8 MON).
+- **Close before the deadline:** trading closes before the deadline (6 hours, or a quarter of the time left if that's sooner). Nobody can trade on a ship already visible at the berth, and an arrival settles the market immediately anyway.
+
+## Monad
+
+- **Native MON everywhere.** No token approvals. A burner wallet with gas money can trade.
+- **Parallel execution.** A trade writes only its market's struct and the trader's account, never vault totals or global counters. Trades on different markets don't conflict. Vault totals change only on create and settle. Each market's struct sits in consecutive storage, so a trade pays few cold-storage reads under Monad's per-page pricing.
+- **Gas is charged on the gas limit, not gas used.** All senders estimate the gas and add 12%.
+- **Testnet base fee is about 100 gwei** (measured Nov 15). A trade costs about 0.012 MON. The faucet drips 0.25 MON per burner.
+- **Blocks every ~300 ms.** Events arrive once per commit state (Proposed, Voted, Finalized), and public RPCs keep about 30 seconds of log history. The page reads state with the helpers in `web/chain/` and follows live changes over the websocket.
+- Testnet: chain ID `10143`, RPC `https://testnet-rpc.monad.xyz`, explorer `https://testnet.monadvision.com`.
+
+## Setup and deploy
 
 ```bash
 curl -L https://foundry.paradigm.xyz | bash
@@ -29,25 +143,22 @@ forge install foundry-rs/forge-std --no-git
 ```
 
 ```bash
-forge test -vv
+forge test -vv --gas-report
 ```
-
-## Deploy to Monad testnet
 
 Put these in `PRIVATE.md` (never committed) and export them:
 
 ```
 MONAD_RPC_URL=https://testnet-rpc.monad.xyz
-DEPLOYER_PRIVATE_KEY=0x...      # the 50 MON test wallet
-ORACLE_ADDRESS=0x...            # the server's key: resolves markets and drips the faucet
-FAUCET_FUND=5000000000000000000 # 5 MON for the faucet
+DEPLOYER_PRIVATE_KEY=0x...   # the 50 MON wallet
+ORACLE_ADDRESS=0x...         # server key: settles markets, drips the faucet
+PRICER_ADDRESS=0x...         # server key that signs quotes (can be the same)
+PRICER_PRIVATE_KEY=0x...     # for script/seed_markets.mjs and the server's /api/quote
 ```
 
 ```bash
 forge script script/Deploy.s.sol --rpc-url monad_testnet --broadcast
 ```
-
-Then write the addresses and ABIs to `contracts/deployments.json`, which the page and server read:
 
 ```bash
 npm install
@@ -57,192 +168,27 @@ npm install
 node script/write_deployments.mjs
 ```
 
-## Open the example markets
-
-`markets/examples.json` holds 65 markets built from the current data by `markets/build_examples.py`:
-- **weekly** (27): total transits next week, every PortWatch strait
-- **collapse** (8): traffic falling below its bad-week level, the hedge markets for Suez, Bab el-Mandeb, Hormuz, Panama, Malacca, Taiwan, Bosporus and Gibraltar
-- **vessel** (8): one vessel type through one strait, such as Hormuz tankers or Cape container ships
-- **route** (10): corridor transit times and the world index
-- **trade** (6): US imports in October 2026, the next month with no data yet
-- **live** (6): gate crossings in the next 30 to 60 minutes
-
-Each market's starting price is the smoothed share of the last 12 weeks that would have settled YES, so it opens near fair odds. Its `why` field says where the threshold and price came from. Rebuild after the data updates with `python3 -I markets/build_examples.py`.
-
 ```bash
 node script/seed_markets.mjs
 ```
 
-That's a dry run of the 7 featured markets. Add `--groups all` (or `weekly,collapse,...`) to pick others, and `--send` to open them. Opened markets are recorded in `markets/created.json`, so a rerun skips them. Live markets get their close time when opened, so open those just before you need them.
+`write_deployments.mjs` writes `contracts/deployments.json` and `web/chain/deployments.js`. `seed_markets.mjs` is a dry run of the featured example markets. Add `--send` to open them, and `--groups all` for every example market.
 
-Network: chain ID `10143`, RPC `https://testnet-rpc.monad.xyz`, websocket `wss://testnet-rpc.monad.xyz`, explorer `https://testnet.monadvision.com`, faucet `https://faucet.monad.xyz`. Mainnet is chain `143` if we ever need it.
-
-Gas on testnet is not free: the base fee was about 100 gwei on Nov 15, so a trade costs about 0.012 MON and opening a market about 0.03. A budget for the 50 MON wallet:
+Budget for the 50 MON wallet:
 
 | What | MON |
 |---|---|
-| Deploy both contracts | ~0.5 |
-| Faucet: 40 burner wallets at 0.25 | 10 |
-| Seeds for all 65 example markets (7 featured at 1, the rest at 0.2) | 18.6 |
-| Gas to open them | ~2 |
-| Your own test trades and spare | ~19 |
+| Vault seed at deploy (`VAULT_SEED`) | 20 |
+| Faucet, 40 burners at 0.25 (`FAUCET_FUND`) | 10 |
+| Deploy gas | ~0.5 |
+| Opening example markets: creation fees + gas | ~2 |
+| Your own test trades and spare | ~17 |
 
-## The pricing math
+The vault's 20 MON covers seeds of about 1 MON per ship market and 0.2 to 1 MON per example market.
 
-### Shares and collateral
+## What the server needs to do
 
-Every market is a YES/NO question. 1 MON mints one *complete set*: 1 YES share and 1 NO share. When the market resolves, each winning share redeems for 1 MON and each losing share is worth 0. A complete set is therefore always worth exactly 1 MON, so the contract is always fully backed: every share in existence came from 1 MON locked in the contract.
-
-All amounts are in wei: 10^18 shares pay 1 MON.
-
-### The market maker
-
-Each market has a pool holding `y` YES shares and `n` NO shares. Every trade keeps the product constant:
-
-```
-y · n = k
-```
-
-The price of YES, which you can read as the market's probability of YES, is
-
-```
-p = n / (y + n)
-```
-
-The scarcer YES is in the pool, the more it costs. Prices always lie strictly between 0 and 1, and YES and NO prices add to 1.
-
-This is the fixed-product market maker (FPMM) Gnosis built for prediction markets, which early Polymarket used. We picked it over the alternatives:
-- Parimutuel pools (our first spec) give no price at the moment you buy, and you can't exit early.
-- LMSR needs `exp` and `ln`, which Solidity doesn't have built in. FPMM needs only multiply, divide and one square root.
-- FPMM always has liquidity, so a hedger can buy at any time without waiting for a counterparty.
-
-### Buying
-
-You send `A` MON to buy YES. The fee `f` comes off first, leaving `x = A(1 − f)`:
-
-1. `x` MON mints `x` complete sets into the pool: `y → y + x`, `n → n + x`
-2. The pool gives you YES shares until the product is back to `k`:
-
-```
-y' = k / (n + x)
-shares out = y + x − y'
-n' = n + x
-```
-
-Buying NO is the same with `y` and `n` swapped. The contract rounds `y'` up, so rounding always favours the pool and `k` never falls.
-
-### Selling
-
-You hand back `s` YES shares. The pool takes them, burns `r` complete sets and pays you `r` MON. `r` is set so the product stays at `k`:
-
-```
-(y + s − r)(n − r) = y · n
-```
-
-That is a quadratic in `r`. We take the smaller root, which is always less than `n`:
-
-```
-B = y + s + n
-r = (B − √(B² − 4·s·n)) / 2
-```
-
-The fee then comes off `r`. The contract rounds the square root up and `r` down, again in the pool's favour.
-
-### Opening a market at a chosen price
-
-The creator sends a seed `L` (at least 0.01 MON) and a starting probability `p₀`. The seed mints `L` complete sets. The pool keeps them at the ratio that makes the price `p₀`:
-
-```
-if p₀ ≥ 0.5:  n = L,  y = L(1 − p₀)/p₀,  creator gets L − y YES shares
-if p₀ < 0.5:  y = L,  n = L·p₀/(1 − p₀),  creator gets L − n NO shares
-```
-
-The creator receives `L` LP shares. Their total exposure is exactly `L` MON.
-
-The keeper can set `p₀` from history: for a weekly strait market, use the share of the last 8 weeks in `market_seeds.json` that met the threshold, clamped to between 10% and 90%. For live gate markets the thresholds were already tuned to open near 50%.
-
-### Liquidity providers
-
-Anyone can add MON to a market's pool with `addLiquidity`. It goes in at the current ratio, so the price doesn't move. Shares the pool can't absorb at that ratio go to the provider as outcome shares, and they get LP shares in proportion to the pool:
-
-```
-w = max(y, n)
-y += x·y/w,  n += x·n/w,  LP minted = x · lpSupply / w
-```
-
-`removeLiquidity` gives back your fraction of `y` and `n` as outcome shares, at any time, including after resolution. Redeem them like anyone else's.
-
-Fees (`feeBps`, at most 5%, set per market by its creator) go to LPs in proportion to LP shares. They're tracked with a per-market accumulator (`feesPerLp`), so paying them never loops over LPs. `claimFees` withdraws them.
-
-The market maker's risk is that LPs end up holding the losing side. Fees and the creator's choice of `p₀` are what pay for that. The most an LP can lose is what they put in.
-
-### Worked example
-
-Seed 10 MON at `p₀ = 30%`, fee 1%:
-- Pool: `y = 10`, `n = 4.286`, price 0.30. The creator holds 5.71 NO shares and 10 LP shares.
-- Alice buys YES for 1 MON and gets 2.867 YES shares, an average price of 0.349. The price moves to 0.394.
-- If she sells them straight back she gets 0.980 MON. The 2% loss is the fee taken on the way in and again on the way out, so a round trip never makes money.
-- If YES wins, her 2.867 shares redeem for 2.867 MON.
-
-### Hedge sizing
-
-A shipper with cargo worth `V` expects a delay of `D` days if the strait is disrupted. Each day in transit costs about `c` = 0.6% to 2.1% of cargo value (Hummels and Schaur, 2013). Their loss if YES happens is
-
-```
-L = V · D · c
-```
-
-To cover it, they buy `L` YES shares (each pays 1 MON if disrupted, using a fixed demo rate from dollars to MON). `costForShares(id, true, L)` returns the exact MON to send, from solving
-
-```
-(y + x − S)(n + x) = y·n   →   x = (−(y + n − S) + √((y + n − S)² + 4·n·S)) / 2
-```
-
-and then dividing by `1 − f` for the fee. The premium as a share of cover is `cost / L`: roughly the price `p`, plus slippage on big orders, plus the fee. With the 10 MON pool above, covering 5 MON costs 1.93 MON, a premium of 39% against a price of 30%. On a thin pool, slippage is that large. Creators seeding deeper pools make hedging cheaper.
-
-### Settlement
-
-- `resolve(id, value)`: oracle only, after `closeTime`. YES wins if `value ≥ threshold` (when `isAbove`) or `value < threshold` (when not). Numbers are integers: days and efficiency times 1000, dollars in whole dollars, counts as they are.
-- `redeem(id)`: pays 1 MON per winning share and clears both balances.
-- Trading stops at `closeTime`.
-
-## Monad: what we use and why it matters
-
-**Everything is onchain, in MON.** Collateral is native MON (`msg.value`), not a wrapped token, so a burner wallet with only gas money can trade without any approvals. Buy, sell, add liquidity, resolve, redeem and claim fees are all Monad transactions from the user's own key. The server signs only three things: `createMarket` for the demo markets, `resolve`, and `Faucet.drip`.
-
-**Parallel execution.** Monad runs transactions in parallel and re-executes any that touched the same storage. `Markets.sol` is laid out for that:
-- A trade writes only its market's struct and the trader's own `accounts[id][trader]`. Two trades on different markets never touch the same slot, so markets on different gates trade fully in parallel.
-- No global counters on the trading path. `marketCount` changes only in `createMarket`. There's no global volume or fee total.
-- No global reentrancy lock (it would be one slot every trade writes). Checks-effects-interactions instead: every MON transfer happens after the state is updated.
-- Fees go into a per-market accumulator, not a contract-wide pot.
-
-**Storage pricing.** Monad charges the cold-access cost once per 128-slot page. Each market's struct is contiguous, and so is each `Account`, so a trade pays roughly two cold accesses.
-
-**Gas is charged on the gas limit, not gas used.** This is the most important difference for the page. Never send a transaction with the wallet library's default or a padded estimate. Measure each function once (`forge test --gas-report`), then hard-code the gas limit at about 10% above that in `web/chain/`. Burner wallets hold only 0.05 MON, so oversized limits would drain them fast.
-
-**Blocks every ~300 ms, near-instant finality.** That is faster than the 1 second in BRIEF.md. Odds update several times a second, so the page should animate between values instead of jumping.
-
-**Reading events.** Public RPCs cap `eth_getLogs` at about 100 blocks, which is roughly 30 seconds. So:
-- The page reads current state with `getMarket` and `priceYes` (that's why the question and series are stored onchain), not by replaying old logs.
-- Live updates come from a websocket subscription. `monadLogs` / `monadNewHeads` give each block's `commitState` (Proposed, Voted, Finalized). The block strip can show a trade landing as Proposed, then turning solid when Finalized.
-
-**Sending.** `eth_sendRawTransactionSync` is supported and returns the receipt in the same call, which is the simplest path for "position lands" animations. There is no global mempool and validation is asynchronous, so a nonce gap or low balance can be accepted and then fail. Burner wallets should track their nonce locally and send one transaction at a time.
-
-**Contract size.** The limit is 128 KB instead of 24 KB, so there's room to grow.
-
-## Events (the page draws from these)
-
-- `MarketCreated(id, creator, series, question, threshold, isAbove, closeTime, feeBps, seed, priceYes)`
-- `Trade(id, who, yes, isBuy, amount, shares, fee, yesReserve, noReserve, priceYes)`: one event for buys and sells. `priceYes` after the trade drives the odds bar.
-- `LiquidityAdded`, `LiquidityRemoved`, `MarketResolved(id, value, outcomeYes)`, `Redeemed`, `FeesClaimed`
-
-## Faucet.sol
-
-- Holds testnet MON, funded at deploy.
-- `drip(address to)`: relayer only (the server's key), sends `amount` (0.25 MON) once per address.
-- `setRelayer`, `setAmount`, `withdraw`: owner only.
-
-## Roadmap, not built
-
-- A dispute window before redemption opens, so anyone can challenge a posted number against the public PortWatch or Census data.
-- An `invalid` outcome that redeems YES and NO at 0.5 each, for a market whose data never arrives.
+These are server-side, so they're for whoever owns `server/`:
+- **`POST /api/quote`:** take `{ship, port, deadline, cargoUsd}`, call `pricing.quote.arrival_quote(...)` with the pricer key, and return the JSON. Needs `eth-account` in `requirements.txt`.
+- **Settle arrival markets:** for each open `arrival:` market, run `pricing.arrival.settle(positions, port_area, deadline, now)` on the ship's logged positions. Then call `resolve(id, value)` or `resolveInvalid(id)` with the oracle key, then `settleVault(id)`.
+- **Faucet:** `POST /api/faucet` calls `Faucet.drip(address)` with the oracle key.
