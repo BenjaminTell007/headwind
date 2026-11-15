@@ -184,39 +184,84 @@ const showHedge = async ship => {
   if (had && Number(had.quote.expiry) * 1000 > Date.now() + 30e3) { s.q = had; s.state = 'quoted'; return paintHedge(); }
   paintHedge();
   try { s.q = await priceShip(ship, port); quoteCache.set(key, s.q); s.state = 'quoted'; }
-  catch (e) { s.state = 'none'; s.msg = serverSays(e); }
+  catch (e) { const m = serverSays(e); s.state = 'none'; s.msg = /unknown port/i.test(m) ? `The pricing model doesn't cover ${port} yet. Pick the port yourself on the markets page.` : m; }
   if (hs === s) paintHedge();
 };
 window.addEventListener('headway:dive', e => showHedge(e.detail));
 
-/* ---------- the story card on the globe ---------- */
+/* ---------- the story card on the globe: a slow tour of what's happening ---------- */
 const ready = async () => { while (!window.__hw) await sleep(120); return window.__hw; };
 const { globe, dive } = await ready();
-// the most disrupted strait that still has ships (none at all this week is a data gap or a closed route, like Kerch)
+// straits that still have ships (none at all this week is a data gap or a closed route, like Kerch), worst first
 const lastWeek = s => { const w = s.weekly && s.weekly.total; return w ? w[w.length - 1] : 0; };
-const worst = globe.straits.filter(s => s.status.baseline_per_week >= 50 && lastWeek(s) > 0).map(s => ({ s, r: globe.straitRatio(s) })).filter(x => x.r > 0.005).sort((a, b) => a.r - b.r)[0];
-let story = null, demoShip = null;
-const paintStory = () => {
-  if (!story || !worst) return;
-  const s = worst.s, w = s.weekly && s.weekly.total, now = w ? w[w.length - 1] : null, base = s.status.baseline_per_week, drop = (worst.r - 1) * 100;
-  story.innerHTML = `<div class="tag"><span>${drop < -10 ? 'Biggest disruption this week' : 'Quietest strait this week'}</span><span class="x" data-x title="Hide">×</span></div>
-    <h3>${esc(s.name)}</h3>
-    <div class="big">${drop >= 0 ? '+' : '−'}${Math.abs(Math.round(drop))}%</div>
-    <p>${now != null ? `${HW.fInt(now)} ships went through this week. A normal 2023 week is ${HW.fInt(base)}.` : 'Ship transits against a normal 2023 week.'}</p>
-    <div class="go">OPEN THE STRAIT →</div>
-    ${demoShip ? `<div class="demo" data-demo><div class="tag"><span>Hedge a live ship</span></div><b>${esc(demoShip.name)} → ${esc(demoShip.portName)}</b><div class="go">DIVE TO THE SHIP →</div></div>` : ''}`;
+const ranked = globe.straits.filter(s => s.status.baseline_per_week >= 50 && lastWeek(s) > 0).map(s => ({ s, r: globe.straitRatio(s) })).filter(x => x.r > 0.005).sort((a, b) => a.r - b.r);
+const worst = ranked[0];
+let story = null, demoShip = null, at = 0, touring = true, tourT = null;
+const TOUR_MS = 9000;
+const straitItem = (x, tag) => {
+  const s = x.s, drop = (x.r - 1) * 100;
+  return { tag, title: s.name, big: `${drop >= 0 ? '+' : '−'}${Math.abs(Math.round(drop))}%`,
+    text: `${HW.fInt(lastWeek(s))} ships went through this week. A normal 2023 week is ${HW.fInt(s.status.baseline_per_week)}.`,
+    go: 'OPEN THE STRAIT →', lat: +s.lat, lon: +s.lon, zoom: 1.9, act: () => globe.select({ kind: 'strait', s }) };
 };
+const shipItem = (ship, tag) => ({ tag, title: ship.name || 'MMSI ' + ship.mmsi, big: ship.sog != null ? (+ship.sog).toFixed(1) + '<small> kn</small>' : '—',
+  text: `${ship.g === 'tanker' ? 'Tanker' : 'Cargo ship'}${ship.destination ? ', bound for ' + esc(ship.portName || ship.destination) : ''}. Live position from AIS.`,
+  go: 'DIVE TO THE SHIP AND HEDGE IT →', lat: +ship.lat, lon: +ship.lon, zoom: 3.2, act: () => dive(ship) });
+const liveShip = () => {   // a big ship that's moving and says where it's going
+  const list = (globe.S.ships || []).filter(s => s.name && s.destination && +s.length >= 250 && +s.sog >= 8);
+  return list.length ? list[(Math.random() * list.length) | 0] : null;
+};
+const items = () => {
+  const out = [];
+  if (demoShip) out.push(shipItem(demoShip, 'Hedge a live ship'));
+  if (ranked[0]) out.push(straitItem(ranked[0], ranked[0].r < 0.9 ? 'Biggest disruption this week' : 'Quietest strait this week'));
+  const ls = liveShip(); if (ls && !demoShip) out.push(shipItem(ls, 'Live right now'));
+  if (ranked[1] && ranked[1].r < 0.85) out.push(straitItem(ranked[1], 'Also disrupted'));
+  const top = ranked[ranked.length - 1]; if (top && top.r > 1.08) out.push(straitItem(top, 'Busier than normal'));
+  if (ranked[2] && ranked[2].r < 0.85) out.push(straitItem(ranked[2], 'Also disrupted'));
+  return out;
+};
+let list = [];
+const paintStory = () => {
+  if (!story) return;
+  if (!list.length) list = items();
+  const it = list[at % list.length]; if (!it) return;
+  story.innerHTML = `<div class="tag"><span>${esc(it.tag)}</span><span class="x" data-x title="Hide">×</span></div>
+    <h3>${esc(it.title)}</h3><div class="big">${it.big}</div><p>${it.text}</p>
+    <div class="go">${it.go}</div>
+    <div class="steps">${list.map((_, i) => `<i data-i="${i}" class="${i === at % list.length ? 'on' : ''}"></i>`).join('')}</div>
+    ${touring ? `<div class="prog"><i style="animation-duration:${TOUR_MS}ms"></i></div>` : ''}`;
+};
+const show = (i, fly = true) => {
+  list = items(); at = ((i % list.length) + list.length) % list.length; paintStory();
+  const it = list[at]; if (it && fly && !globe.S.sel && !document.querySelector('#dive.on')) globe.flyTo(it.lat, it.lon, it.zoom, null, 1.0);
+};
+const stopTour = () => { if (!touring) return; touring = false; clearInterval(tourT); paintStory(); };
 if (worst) {
+  const st = document.createElement('style');
+  st.textContent = `.story .big small { font-size:20px; color:#a8a8a8; letter-spacing:0; }
+    .story .steps { display:flex; gap:6px; margin-top:12px; } .story .steps i { width:14px; height:3px; border-radius:2px; background:rgba(236,236,236,.2); cursor:pointer; }
+    .story .steps i.on { background:var(--accent); width:26px; }
+    .story .prog { position:absolute; left:0; right:0; bottom:0; height:2px; overflow:hidden; border-radius:0 0 14px 14px; }
+    .story .prog i { display:block; height:100%; width:100%; background:var(--accent); opacity:.7; transform-origin:left; animation:story-prog linear forwards; }
+    @keyframes story-prog { from { transform:scaleX(0); } to { transform:scaleX(1); } }`;
+  document.head.appendChild(st);
   story = document.createElement('div'); story.className = 'story'; story.setAttribute('role', 'button');
   $('app') ? $('app').appendChild(story) : document.body.appendChild(story);
   paintStory();
   story.addEventListener('click', e => {
-    if (e.target.closest('[data-x]')) { story.remove(); story = null; return; }
-    if (e.target.closest('[data-demo]') && demoShip) { dive(demoShip); return; }
-    globe.select({ kind: 'strait', s: worst.s });
+    if (e.target.closest('[data-x]')) { stopTour(); story.remove(); story = null; return; }
+    const step = e.target.closest('[data-i]');
+    if (step) { stopTour(); show(+step.dataset.i); return; }
+    stopTour(); const it = list[at]; if (it) it.act();
   });
-  // once the intro has cleared: turn the globe to the strait, then show the card
-  const start = () => { globe.flyTo(+worst.s.lat, +worst.s.lon, 1.7, null, 1.1); setTimeout(() => story && story.classList.add('in'), 900); };
+  // the tour stops for good the moment you take the globe yourself
+  const g = $('globe'); if (g) { g.addEventListener('pointerdown', stopTour); g.addEventListener('wheel', stopTour, { passive: true }); }
+  // once the intro has cleared: turn the globe to the first stop, show the card, then move on every 9 s
+  const start = () => {
+    show(0); setTimeout(() => story && story.classList.add('in'), 900);
+    tourT = setInterval(() => { if (!story || !touring || document.hidden || story.matches(':hover') || globe.S.sel || document.querySelector('#dive.on')) return; show(at + 1); }, TOUR_MS);
+  };
   const intro = $('intro');
   if (!intro) start();
   else new MutationObserver((_, obs) => { if (!document.body.contains(intro) || intro.classList.contains('out')) { obs.disconnect(); setTimeout(start, 600); } }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
@@ -234,7 +279,7 @@ if (DEMO) (async () => {
       if (openPrice(q) > 0.05 && openPrice(q) < TOO_LATE) break;   // a price worth showing
     } catch { /* try the next ship */ }
   }
-  paintStory();
+  if (story) show(0, !!touring);
   // the test wallet and its faucet MON, and the contract address, before anyone clicks
   try { const c = await chain(); await wallet(); if (!c.m) c.m = await retry(() => c.mk.markets()); } catch (e) { console.warn('demo warm-up', e); }
 })();
