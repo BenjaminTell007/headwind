@@ -15,6 +15,8 @@
   // colour defaults to the theme's text colour (HW.C.fg), so light mode gets a dark logo.
   // Call it again after HW.setTheme() to redraw in the new colour.
   HW.drawLogo = (canvas, { colour = (HW.C && HW.C.fg) || '#f2f2f0', bg = null, weight = 300, spacing = 0.42 } = {}) => {
+    // the header logo is plain HTML text now, so callers may pass a canvas that no longer exists
+    if (!canvas || !canvas.getContext) return;
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
     const word = 'HEADWAY';
