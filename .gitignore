@@ -37,3 +37,6 @@ contracts/lib/
 
 # local editor and tool settings
 .claude/
+
+# has the API key, share privately
+SHARE.md
