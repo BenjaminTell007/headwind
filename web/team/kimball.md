@@ -1,5 +1,9 @@
 # kimball
 
+## Status (Nov 15, 12:20)
+- `frontend` is merged into `main` and live on GitHub Pages: landing page, white logo, your restyle (up to the merge of 5a2d70d).
+- Your newer commit `222a969` (simpler dashboard, globe controls, light mode, static routes) is only on `sam's-branch`. Merge it into `frontend` when it's ready; it isn't live yet.
+
 ## Working on now
 - New landing page at the site root (`/Headway/`): a real drone clip of a ship rendered live as the glyph matrix, resolving into the footage, then "Enter" into `web/`.
 - Logo: plain white HEADWAY in the site's monospace, no animation (`js/logo.js`).
