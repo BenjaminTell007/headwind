@@ -45,11 +45,11 @@
     for (const p of ports) {
       const q = view(p.v); if (q[2] < 0.05) continue;
       const x = cx + q[0] * R, y = cy - q[1] * R, fade = q[2] < 0.3 ? q[2] / 0.3 : 1;
-      const big = p.rank < 10, s = (big ? 5 : 4) + Math.min(2.5, Math.sqrt(zoom));
+      const big = p.rank < 10, s = (big ? 7 : 5.5) + Math.min(3, Math.sqrt(zoom));
       ctx.globalAlpha = 0.9 * fade;
-      ctx.strokeStyle = C.fg; ctx.lineWidth = 1.2;
+      ctx.strokeStyle = C.fg; ctx.lineWidth = 1.5;
       ctx.strokeRect(x - s / 2, y - s / 2, s, s);
-      ctx.fillStyle = C.accent; ctx.fillRect(x - s * 0.18, y - s * 0.18, s * 0.36, s * 0.36);
+      ctx.fillStyle = '#ffd23f'; ctx.fillRect(x - s * 0.24, y - s * 0.24, s * 0.48, s * 0.48);   // amber centre, like the straits
       if ((zoom > 1.9 || (big && zoom > 1.25)) && p !== hover) HW.label(ctx, p.name.toUpperCase(), x + s, y - s, C.dim, 'left', 9.5);
       if (P.inside && !P.down) { const d = (x - P.x) ** 2 + (y - P.y) ** 2; if (d < bestD) { bestD = d; best = { p, x, y }; } }
     }

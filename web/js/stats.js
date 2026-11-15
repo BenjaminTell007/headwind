@@ -87,9 +87,9 @@
       </section>
 
       <section>
-        <div class="tag rv">EVERY WEEK SINCE 2019 · DRAG TO TURN</div>
+        <div class="tag rv">EVERY WEEK SINCE 2019 · DRAG TO ORBIT · MOVE TO MAKE WAVES · CLICK TO SPLASH</div>
         <h2 class="rv">Sixteen straits, <em>three crises.</em></h2>
-        <p class="lede rv">Weekly ships through the sixteen busiest straits, each scaled to its own peak. The Ever Given blockage, the Red Sea attacks and the Hormuz closure cut through them as vertical scars.</p>
+        <p class="lede rv">Weekly ships through the sixteen busiest straits, each scaled to its own peak. Blue marks every week a strait ran under 60% of a normal 2023 week, so the Ever Given blockage, the Red Sea attacks and the Hormuz closure show as scars across the surface.</p>
         <div class="ridgeWrap rv"><canvas id="ridge"></canvas><div class="readout" id="ridgeRead"></div></div>
       </section>
 
@@ -345,130 +345,190 @@
   };
   const animateDots = () => root.querySelectorAll('.dots i[data-l]').forEach(i => { i.style.left = i.dataset.l + '%'; });
 
-  /* ---------- the ridgeline, in 3D ---------- */
-  const ridge = {
-    yaw: -0.16, pitch: 0.48, vy: 0, drag: null, hover: null, t: 0, running: false,
-  };
+  /* ---------- the ridgeline as a dotted 3D surface on springs ----------
+     Same idea as the surface on my ECON 423 page: every strait is a curtain of dots, and the
+     heights sit on springs joined to their neighbours. Moving the cursor across it leaves a
+     wake, a click makes a splash, and the rows rise as a front that runs from 2019 to now.
+     Dots turn accent blue in weeks when the strait ran under 60% of its normal 2023 traffic,
+     so the crises show as blue scars. Drag to orbit (it keeps a little momentum). */
+  const ridge = { yaw: -0.3, pitch: 0.62, yawV: 0, pitchV: 0, drag: null, mx: null, my: null, shownAt: 0 };
   const setupRidge = () => {
     const cv = $('#ridge', root), ctx = cv.getContext('2d'), read = $('#ridgeRead', root);
     const names = Object.keys(F.ridge.series), weeks = F.ridge.weeks, nW = weeks.length;
-    // each strait scaled to its own peak, lightly smoothed
-    const rows = names.map(n => {
-      const v = F.ridge.series[n], mx = Math.max(...v) || 1;
-      return v.map((x, i) => {
-        let s = 0, c = 0;
-        for (let k = -1; k <= 1; k++) { const y = v[i + k]; if (y != null) { s += y; c++; } }
-        return s / c / mx;
-      });
+    const R = names.length, C = Math.min(130, nW), N = R * C;
+    const wk = c => Math.round(c * (nW - 1) / (C - 1));   // the week a column stands for
+    const val = new Float32Array(N), low = new Uint8Array(N);
+    const i23 = weeks.map((w, i) => w.startsWith('2023') ? i : -1).filter(i => i >= 0);
+    names.forEach((n, r) => {
+      const v = F.ridge.series[n], mx = Math.max(...v) || 1, base = (i23.reduce((a, i) => a + v[i], 0) / (i23.length || 1)) || mx;
+      for (let c = 0; c < C; c++) {
+        const i = wk(c); let sum = 0, k = 0;
+        for (let j = -3; j <= 3; j++) { const y = v[i + j]; if (y != null) { sum += y; k++; } }
+        val[r * C + c] = sum / k / mx; low[r * C + c] = sum / k / base < 0.6 ? 1 : 0;
+      }
     });
+    const h = new Float32Array(N), vel = new Float32Array(N), tg = new Float32Array(N), E = new Float32Array(N);
+    const PX = new Float32Array(N), PY = new Float32Array(N);
     const evIdx = EVENTS.map(([d, l]) => [weeks.findIndex(w => w >= d), l]).filter(([i]) => i >= 0);
     let W = 0, H = 0, DPR = 1;
-    const resize = () => {
-      DPR = Math.min(2, window.devicePixelRatio || 1);
-      W = cv.clientWidth; H = cv.clientHeight;
-      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-    };
-    resize();
-    window.addEventListener('resize', resize);
+    const resize = () => { DPR = Math.min(2, window.devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); };
+    resize(); window.addEventListener('resize', resize);
 
-    // world: x across time [-1.3, 1.3], z across straits [-1, 1] (back to front), y up
-    const proj = (x, y, z) => {
-      const cyw = Math.cos(ridge.yaw), syw = Math.sin(ridge.yaw), cp = Math.cos(ridge.pitch), sp = Math.sin(ridge.pitch);
-      const x1 = x * cyw + z * syw, z1 = -x * syw + z * cyw;
-      // looking down from above: farther rows (z1 > 0) rise up the screen
-      const y2 = y * cp + z1 * sp, z2 = -y * sp + z1 * cp;
-      const d = 3.6, f = Math.min(W * 0.98, H * 1.9);
-      const k = f / (z2 + d);
-      return [W * 0.56 + x1 * k, H * 0.47 - y2 * k, z2];
+    const SX = 1.35, SZ = 1.12, HY = 0.58;
+    let cyw = 1, syw = 0, cp = 1, sp = 0, f = 1;
+    const proj = (x, y, z, out) => {
+      const x1 = x * cyw + z * syw, z1 = -x * syw + z * cyw, y2 = y * cp + z1 * sp, z2 = -y * sp + z1 * cp, k = f / (z2 + 3.7);
+      out[0] = W * 0.53 + x1 * k; out[1] = H * 0.47 - y2 * k; return z2;
+    };
+    const xOf = c => -SX + 2 * SX * c / (C - 1), zOf = r => SZ - 2 * SZ * r / (R - 1);
+
+    const kick = (node, amount, rad) => {
+      const r0 = (node / C) | 0, c0 = node % C, rc = Math.ceil(rad * 2.5);
+      for (let r = Math.max(0, r0 - 1); r <= Math.min(R - 1, r0 + 1); r++) for (let c = Math.max(0, c0 - rc); c <= Math.min(C - 1, c0 + rc); c++) {
+        const dc = (c - c0) / rad, dr = r - r0;
+        vel[r * C + c] += amount * Math.exp(-(dc * dc + dr * dr * 2.2));
+      }
+    };
+    const step = dt => {
+      for (let i = 0; i < N; i++) E[i] = h[i] - tg[i];
+      for (let r = 0; r < R; r++) {
+        const up = r > 0 ? -C : 0, dn = r < R - 1 ? C : 0;
+        for (let c = 0; c < C; c++) {
+          const i = r * C + c, e = E[i];
+          const along = E[c > 0 ? i - 1 : i] + E[c < C - 1 ? i + 1 : i] - 2 * e, across = E[i + up] + E[i + dn] - 2 * e;
+          vel[i] += (-46 * e + 520 * along + 60 * across - 3.4 * vel[i]) * dt;
+        }
+      }
+      for (let i = 0; i < N; i++) h[i] += vel[i] * dt;
     };
 
-    cv.addEventListener('pointerdown', e => { ridge.drag = { x: e.clientX, y: e.clientY, yaw: ridge.yaw, pitch: ridge.pitch }; cv.setPointerCapture(e.pointerId); });
-    cv.addEventListener('pointerup', () => { ridge.drag = null; });
+    let near = -1, lastMx = 0, lastMy = 0, moved = 0;
+    cv.addEventListener('pointerdown', e => { ridge.drag = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY }; ridge.yawV = ridge.pitchV = 0; cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener('pointerup', e => {
+      const d = ridge.drag; ridge.drag = null;
+      if (d && Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy) < 5 && near >= 0) kick(near, 2.6, 5);   // a click: a splash
+    });
     cv.addEventListener('pointermove', e => {
       const r = cv.getBoundingClientRect();
       ridge.mx = e.clientX - r.left; ridge.my = e.clientY - r.top;
       if (ridge.drag) {
-        ridge.yaw = ridge.drag.yaw + (e.clientX - ridge.drag.x) * 0.006;
-        ridge.pitch = clamp(ridge.drag.pitch + (e.clientY - ridge.drag.y) * 0.004, 0.08, 1.2);
+        const dx = e.clientX - ridge.drag.x, dy = e.clientY - ridge.drag.y; ridge.drag.x = e.clientX; ridge.drag.y = e.clientY;
+        ridge.yaw += dx * 0.0055; ridge.pitch = clamp(ridge.pitch + dy * 0.004, 0.14, 1.25);
+        ridge.yawV = dx * 0.0055 * 60; ridge.pitchV = dy * 0.004 * 60;
       }
     });
-    cv.addEventListener('pointerleave', () => { ridge.mx = null; read.style.opacity = 0; });
+    cv.addEventListener('pointerleave', () => { ridge.mx = null; near = -1; read.style.opacity = 0; });
 
+    const tmp = [0, 0], order = Array.from({ length: R }, (_, r) => r), depthOf = new Float32Array(R);
+    let last = 0, front = -0.1;
     const frame = now => {
-      ridge.running = open && isVisible(cv);
-      if (!ridge.running) { requestAnimationFrame(frame); return; }
-      ridge.t = now / 1000;
-      if (!ridge.drag) ridge.yaw += Math.sin(ridge.t * 0.25) * 0.0006;   // a slow sway
-      const fg = cssVar('--fg') || '#f2f2f0', bg = cssVar('--bg') || '#0a0a0a', acc = cssVar('--accent') || '#4c8dff', dim = cssVar('--dim') || '#8a8a8a';
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      ctx.clearRect(0, 0, W, H);
-      const nR = rows.length, HY = 0.7;
-      const labels = [];
-      const zOf = r => 1 - 2 * r / (nR - 1);   // row 0 at the back, drawn first
-      const xOf = i => -1.3 + 2.6 * i / (nW - 1);
-      // rows rise once the chart has been scrolled into view
-      ridge.g = (ridge.g || 0) + ((ridge.shownAt ? 1 : 0) - (ridge.g || 0)) * 0.045;
-      const grow = ease(ridge.g);
-
-      // rows from back to front, each filled with the background so nearer rows hide farther ones
-      let hov = null, hovD = 400;
-      for (let r = 0; r < nR; r++) {
-        const z = zOf(r), v = rows[r];
-        const depth = r / (nR - 1);
-        // the ridge as a classic joyplot: fill with the background to hide rows behind,
-        // then stroke only the top line
-        const start = proj(xOf(0), 0, z);
-        const top = new Path2D();
-        const step = 2;
-        for (let i = 0; i < nW; i += step) {
-          const p = proj(xOf(i), v[i] * HY * grow, z);
-          if (i === 0) top.moveTo(p[0], p[1]); else top.lineTo(p[0], p[1]);
-          if (ridge.mx != null && !ridge.drag) {
-            const d = (p[0] - ridge.mx) ** 2 + (p[1] - ridge.my) ** 2;
-            if (d < hovD) { hovD = d; hov = { r, i, x: p[0], y: p[1] }; }
-          }
-        }
-        const end = proj(xOf(nW - 1), 0, z);
-        const body = new Path2D(top);
-        body.lineTo(end[0], end[1]);
-        body.lineTo(start[0], start[1]);
-        body.closePath();
-        ctx.globalAlpha = 1; ctx.fillStyle = bg; ctx.fill(body);
-        ctx.globalAlpha = 0.25 + 0.65 * depth;
-        ctx.strokeStyle = hov && hov.r === r ? acc : fg;
-        ctx.lineWidth = hov && hov.r === r ? 1.6 : 1;
-        ctx.stroke(top);
-        labels.push([r, start, depth]);
+      requestAnimationFrame(frame);
+      if (!(open && isVisible(cv))) { last = 0; return; }
+      const dt = Math.min(0.033, last ? (now - last) / 1000 : 0.016); last = now;
+      // orbit: momentum after a drag, and a slow sway when left alone
+      if (!ridge.drag) {
+        ridge.yaw += ridge.yawV * dt; ridge.pitch = clamp(ridge.pitch + ridge.pitchV * dt, 0.14, 1.25);
+        ridge.yawV *= Math.exp(-2.6 * dt); ridge.pitchV *= Math.exp(-2.6 * dt);
+        ridge.yaw += Math.sin(now / 1000 * 0.22) * 0.0005;
       }
-      // event scars: a dashed line across the floor and a post at the back, on top of the rows
-      evIdx.forEach(([i, label]) => {
-        const a = proj(xOf(i), 0, -1.08), b = proj(xOf(i), 0, 1.05), top = proj(xOf(i), HY * 0.85, 1.05);
-        ctx.globalAlpha = 0.55; ctx.strokeStyle = acc; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
-        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(top[0], top[1]); ctx.stroke();
-        ctx.setLineDash([]); ctx.globalAlpha = 0.9; ctx.fillStyle = acc; ctx.font = `300 10px ${HW.MONO}`; ctx.textAlign = 'center';
-        ctx.fillText(label, top[0], top[1] - 6);
+      // the rows rise as a front that runs from 2019 to now
+      if (ridge.shownAt && front < 1.2) {
+        front += dt / 2.2;
+        for (let c = 0; c < C; c++) { const k = clamp((front - c / (C - 1)) * 6 + 1, 0, 1); if (k > 0) for (let r = 0; r < R; r++) tg[r * C + c] = val[r * C + c] * k; }
+      }
+      step(dt / 2); step(dt / 2);
+
+      const fg = cssVar('--fg') || '#f2f2f0', acc = cssVar('--accent') || '#4c8dff', dim = cssVar('--dim') || '#8a8a8a';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+      cyw = Math.cos(ridge.yaw); syw = Math.sin(ridge.yaw); cp = Math.cos(ridge.pitch); sp = Math.sin(ridge.pitch); f = Math.min(W * 0.86, H * 1.62);
+
+      // tops of every column, the node under the cursor, and the rows from far to near
+      let nd = 26 * 26, hit = -1;
+      for (let r = 0; r < R; r++) {
+        const z = zOf(r);
+        for (let c = 0; c < C; c++) {
+          const i = r * C + c; proj(xOf(c), Math.max(0, h[i]) * HY, z, tmp); PX[i] = tmp[0]; PY[i] = tmp[1];
+          if (ridge.mx != null) { const d = (tmp[0] - ridge.mx) ** 2 + (tmp[1] - ridge.my) ** 2; if (d < nd) { nd = d; hit = i; } }
+        }
+        depthOf[r] = proj(0, 0, z, tmp);
+      }
+      near = ridge.drag ? -1 : hit;
+      // the cursor's wake: moving across the surface pushes it down a little where it passes
+      if (near >= 0 && ridge.mx != null) { const sp2 = Math.hypot(ridge.mx - lastMx, ridge.my - lastMy); moved = Math.min(40, sp2); if (moved > 1.5) kick(near, -0.012 * moved, 3); }
+      lastMx = ridge.mx || 0; lastMy = ridge.my || 0;
+      order.sort((a, b) => depthOf[b] - depthOf[a]);
+      const hr = near >= 0 ? (near / C) | 0 : -1, hc = near >= 0 ? near % C : -1;
+
+      // floor: the crisis lines, under everything
+      evIdx.forEach(([i]) => {
+        const x = -SX + 2 * SX * i / (nW - 1);
+        proj(x, 0, -SZ - 0.06, tmp); const ax = tmp[0], ay = tmp[1]; proj(x, 0, SZ + 0.06, tmp);
+        ctx.globalAlpha = 0.4; ctx.strokeStyle = acc; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(tmp[0], tmp[1]); ctx.stroke(); ctx.setLineDash([]);
       });
 
-      // strait names at the left foot of each row, drawn last so no row covers them
+      const rowLabels = [];
+      for (const r of order) {
+        const z = zOf(r), nearK = 1 - clamp((depthOf[r] + 1.1) / 2.2, 0, 1), isH = r === hr;
+        const a0 = 0.35 + 0.65 * nearK, size = 1.1 + 1.1 * nearK;
+        // hide what's behind this row (a joyplot), then hang its curtain of dots
+        ctx.globalAlpha = 0.86; ctx.fillStyle = cssVar('--bg') || '#0a0a0a'; ctx.beginPath();
+        for (let c = 0; c < C; c++) { const i = r * C + c; if (c) ctx.lineTo(PX[i], PY[i]); else ctx.moveTo(PX[i], PY[i]); }
+        proj(xOf(C - 1), 0, z, tmp); ctx.lineTo(tmp[0], tmp[1]); proj(xOf(0), 0, z, tmp); ctx.lineTo(tmp[0], tmp[1]); ctx.closePath(); ctx.fill();
+        const DY = 0.04;
+        ctx.fillStyle = isH ? acc : fg; ctx.globalAlpha = (isH ? 0.42 : 0.2) * a0; ctx.beginPath();
+        for (let c = 0; c < C; c++) {
+          const i = r * C + c, top = Math.max(0, h[i]) * HY;
+          for (let y = DY; y < top - 0.02; y += DY) { proj(xOf(c), y, z, tmp); ctx.rect(tmp[0] - 0.6, tmp[1] - 0.6, 1.3, 1.3); }
+        }
+        ctx.fill();
+        // weeks under 60% of normal: the curtain in blue
+        ctx.fillStyle = acc; ctx.globalAlpha = 0.5 * a0; ctx.beginPath();
+        for (let c = 0; c < C; c++) {
+          const i = r * C + c; if (!low[i] || tg[i] === 0) continue;
+          const top = Math.max(0, h[i]) * HY;
+          for (let y = 0; y < top + 0.03; y += DY * 0.7) { proj(xOf(c), y, z, tmp); ctx.rect(tmp[0] - 0.8, tmp[1] - 0.8, 1.7, 1.7); }
+        }
+        ctx.fill();
+        // the tops: the ridge itself, a line with a dot on every week
+        ctx.strokeStyle = isH ? acc : fg; ctx.globalAlpha = (isH ? 0.95 : 0.5) * a0; ctx.lineWidth = isH ? 1.6 : 1; ctx.beginPath();
+        for (let c = 0; c < C; c++) { const i = r * C + c; if (c) ctx.lineTo(PX[i], PY[i]); else ctx.moveTo(PX[i], PY[i]); }
+        ctx.stroke();
+        ctx.fillStyle = isH ? acc : fg; ctx.globalAlpha = (isH ? 1 : 0.85) * a0; ctx.beginPath();
+        for (let c = 0; c < C; c++) { const i = r * C + c; if (low[i]) continue; ctx.rect(PX[i] - size / 2, PY[i] - size / 2, size, size); }
+        ctx.fill();
+        ctx.fillStyle = acc; ctx.globalAlpha = a0; ctx.beginPath();
+        for (let c = 0; c < C; c++) { const i = r * C + c; if (!low[i]) continue; ctx.rect(PX[i] - size * 0.7, PY[i] - size * 0.7, size * 1.4, size * 1.4); }
+        ctx.fill();
+        proj(xOf(0), 0, z, tmp); rowLabels.push([r, tmp[0], tmp[1], nearK]);
+      }
+      // strait names at the 2019 end of each row, drawn after the rows so none is covered
       ctx.font = `300 10px ${HW.MONO}`; ctx.textAlign = 'right';
-      labels.forEach(([r, p, depth]) => {
-        ctx.globalAlpha = 0.5 + 0.5 * depth; ctx.fillStyle = hov && hov.r === r ? acc : dim;
-        ctx.fillText(short(names[r]).toUpperCase(), p[0] - 8, p[1] + 3);
+      for (const [r, x, y, nearK] of rowLabels) {
+        ctx.globalAlpha = r === hr ? 1 : 0.45 + 0.5 * nearK; ctx.fillStyle = r === hr ? acc : dim;
+        ctx.fillText(short(names[r]).toUpperCase(), x - 9, y + 3);
+      }
+      // crisis names on posts at the back, and years along the front
+      ctx.font = `300 10px ${HW.MONO}`; ctx.textAlign = 'center';
+      const backZ = depthOf[0] > depthOf[R - 1] ? SZ + 0.06 : -SZ - 0.06, frontZ = -backZ;
+      evIdx.forEach(([i, label]) => {
+        const x = -SX + 2 * SX * i / (nW - 1);
+        proj(x, 0, backZ, tmp); const ax = tmp[0], ay = tmp[1]; proj(x, HY * 1.08, backZ, tmp);
+        ctx.globalAlpha = 0.55; ctx.strokeStyle = acc; ctx.setLineDash([2, 4]); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(tmp[0], tmp[1]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.globalAlpha = 0.95; ctx.fillStyle = acc; ctx.fillText(label, tmp[0], tmp[1] - 6);
       });
-      // year ticks along the front edge
-      ctx.globalAlpha = 0.6; ctx.fillStyle = dim; ctx.textAlign = 'center';
-      weeks.forEach((w, i) => {
-        if (w.slice(5, 7) === '01' && w.slice(8) <= '07') { const p = proj(xOf(i), 0, -1.12); ctx.fillText(w.slice(0, 4), p[0], p[1] + 14); }
-      });
+      ctx.globalAlpha = 0.6; ctx.fillStyle = dim;
+      weeks.forEach((w, i) => { if (w.slice(5, 7) === '01' && w.slice(8) <= '07') { proj(-SX + 2 * SX * i / (nW - 1), 0, frontZ * 1.07, tmp); ctx.fillText(w.slice(0, 4), tmp[0], tmp[1] + 14); } });
       ctx.globalAlpha = 1;
 
-      if (hov) {
-        ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(hov.x, hov.y, 3.5, 0, 6.2832); ctx.fill();
-        const name = names[hov.r], raw = F.ridge.series[name][hov.i];
-        read.innerHTML = `<span style="color:var(--dim)">${name.toUpperCase()} · ${fDay(weeks[hov.i])} ${weeks[hov.i].slice(0, 4)}</span><br><b>${fInt(raw)} SHIPS</b>`;
-        read.style.left = Math.min(W - 200, hov.x + 14) + 'px'; read.style.top = Math.max(0, hov.y - 52) + 'px'; read.style.opacity = 1;
+      if (near >= 0) {
+        const x = PX[near], y = PY[near], i = wk(hc), name = names[hr], raw = F.ridge.series[name][i];
+        proj(xOf(hc), 0, zOf(hr), tmp);
+        ctx.strokeStyle = acc; ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tmp[0], tmp[1]); ctx.stroke(); ctx.globalAlpha = 1;
+        ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 6.2832); ctx.fill();
+        read.innerHTML = `<span style="color:var(--dim)">${name.toUpperCase()} · ${fDay(weeks[i])} ${weeks[i].slice(0, 4)}</span><br><b>${fInt(raw)} SHIPS</b>${low[near] ? '<br><span style="color:var(--accent)">UNDER 60% OF A NORMAL WEEK</span>' : ''}`;
+        read.style.left = Math.min(W - 210, x + 14) + 'px'; read.style.top = Math.max(0, y - 58) + 'px'; read.style.opacity = 1;
       } else if (!ridge.drag) read.style.opacity = 0;
-      requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
   };
