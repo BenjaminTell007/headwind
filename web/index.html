@@ -10,7 +10,7 @@
    whenever you come back to the tab, check the published version (never cached) and,
    if it's newer than this copy, reload once onto it. web/tools/stamp.sh sets both. */
 (function () {
-  var SITE_VERSION = '20261115T2131', URL_ = 'version.json';
+  var SITE_VERSION = '20261115T2134', URL_ = 'version.json';
   function check() {
     fetch(URL_ + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       if (!d.v || d.v === SITE_VERSION) return;
@@ -24,8 +24,8 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
 })();
 </script>
-<link rel="stylesheet" href="app.css?v=20261115T2131">
-<link rel="stylesheet" href="stats.css?v=20261115T2131">
+<link rel="stylesheet" href="app.css?v=20261115T2134">
+<link rel="stylesheet" href="stats.css?v=20261115T2134">
 </head>
 <body>
 
@@ -39,12 +39,13 @@
 
   <header>
     <a class="brand" href="../" title="Headway"><span class="word">HEADWAY</span></a>
+    <nav class="nav" aria-label="Switch between the globe and the markets"><a class="on" aria-current="page" href="./"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><ellipse cx="8" cy="8" rx="2.7" ry="6.3"/><path d="M1.7 8h12.6"/></svg>GLOBE</a><a href="markets.html"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.8 12.2l3.6-4 2.8 2.4 5.6-6.4"/><path d="M10.2 4.2h3.6v3.6"/></svg>MARKETS</a></nav>
     <span class="live off tag" id="sysLive"><b id="sysShips">—</b> SHIPS UNDERWAY</span>
     <form class="search" id="search" autocomplete="off">
       <input id="q" placeholder="Find a ship: name, IMO or MMSI" aria-label="Find a ship">
       <span class="err" id="qerr"></span>
     </form>
-    <button class="pill" id="mtoggle" aria-expanded="true">MARKETS</button>
+    <button class="pill" id="mtoggle" aria-expanded="true" title="Show or hide the quick market list on the left">SIDE LIST</button>
     <button class="pill icon" id="theme" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
     <button class="pill" id="wallet">CONNECT WALLET</button>
   </header>
@@ -116,14 +117,14 @@
   </div>
 </div>
 
-<script src="js/util.js?v=20261115T2131"></script>
-<script src="js/data.js?v=20261115T2131"></script>
-<script src="js/logo.js?v=20261115T2131"></script>
-<script src="js/brand.js?v=20261115T2131"></script>
-<script src="js/sky.js?v=20261115T2131"></script>
-<script src="js/globe.js?v=20261115T2131"></script>
-<script src="js/ship.js?v=20261115T2131"></script>
-<script src="js/stats.js?v=20261115T2131"></script>
-<script type="module" src="js/main.js?v=20261115T2131"></script>
+<script src="js/util.js?v=20261115T2134"></script>
+<script src="js/data.js?v=20261115T2134"></script>
+<script src="js/logo.js?v=20261115T2134"></script>
+<script src="js/brand.js?v=20261115T2134"></script>
+<script src="js/sky.js?v=20261115T2134"></script>
+<script src="js/globe.js?v=20261115T2134"></script>
+<script src="js/ship.js?v=20261115T2134"></script>
+<script src="js/stats.js?v=20261115T2134"></script>
+<script type="module" src="js/main.js?v=20261115T2134"></script>
 </body>
 </html>
