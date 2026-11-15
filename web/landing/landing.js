@@ -21,10 +21,13 @@
   // Glyph colours. Greys for the sea, white and tanker purple for the ship and wake
   // (the ship in the clip is a tanker, so its hue is the tanker hue).
   const GREYS = ['#1d2024', '#26292e', '#30343a', '#3c4047', '#4b4f56', '#5f6369', '#787b80', '#96989b'];
-  const BRIGHT = ['#f2f2f0', '#d6d6d4', '#ffffff', '#bdbdbb', '#f2f2f0'];   // black and white only
+  // the ship is a tanker, so its bright glyphs mix white with the tanker orange
+  const BRIGHT = ['#f2f2f0', '#f08a3c', '#ffffff', '#f26b1d', '#f2f2f0'];
   // a little of the accent blue, only in the glyphs riding on the ships
   const BLUE = ['#4c8dff', '#8fb6ff'];
-  const COLOURS = GREYS.concat(BRIGHT, BLUE);
+  // under the cursor the glyphs light up in every vessel colour, like the loading screen
+  const VIVID = ['#46b36f', '#f08a3c', '#8f82f2', '#ea86b5', '#e9c84b', '#4c8dff', '#f26b1d', '#6f62d8'];
+  const COLOURS = GREYS.concat(BRIGHT, BLUE, VIVID);
   const N_SHAPES = 10;
 
   let W = 0, H = 0, DPR = 1, cell = 10, cols = 0, rows = 0;
@@ -149,7 +152,8 @@
   // Act 2: at SWITCH_AT the matrix closes over the tanker while the camera pulls back,
   //        then reopens on the fleet at anchor with HEADWAY over route arcs.
   const REVEAL_AT = 1.6, REVEAL_FOR = 2.6;
-  const SWITCH_AT = 9.5, CLOSE_FOR = 1.0, OPEN2_FOR = 2.8;
+  // the second act (fleet clip) is switched off: the tanker is the whole landing page
+  const SWITCH_AT = Infinity, CLOSE_FOR = 1.0, OPEN2_FOR = 2.8;
   let act = 1;
 
   const frame = now => {
@@ -184,7 +188,9 @@
     const ready = src.readyState >= 2 && src.videoWidth > 0;
 
     // smooth the cursor lens in and out
-    mouse.s = 0;   // the cursor lens is off (too noisy); kept in the code in case we want it back
+    // the cursor doesn't open a lens any more; it only colours the glyphs near it
+    mouse.h = (mouse.h || 0) + ((mouse.x > -999 ? 1 : 0) - (mouse.h || 0)) * 0.12;
+    mouse.s = 0;
 
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ctx.fillStyle = '#0a0a0a';
@@ -201,10 +207,12 @@
       const [x, y, w, h] = coverRect(src.videoWidth, src.videoHeight, W, H, zoom);
       if (R > 1) {
         ctx.drawImage(src, x, y, w, h);
-        // black and white: knock the colour out of the footage
+        // mostly muted: take about half the colour out of the footage
         ctx.globalCompositeOperation = 'saturation';
+        ctx.globalAlpha = 0.5;
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 1;
         ctx.globalCompositeOperation = 'source-over';
       }
       // one pixel per cell (clear first, so a pulled-back frame has black edges)
@@ -253,7 +261,9 @@
         let ship = 0;
         if (lumL && R > 1) {
           ship = smooth(0.07, 0.2, Math.abs(lumL[idx] - blurB[idx]));
-          m = Math.max(m, ship * 0.85);
+          // only a few glyphs ride on the ship: about 1 in 12 of its cells, changing slowly
+          const few = ((r * 977 + Math.floor(t * 0.25)) % 1) < 0.08;
+          if (few) m = Math.max(m, ship * 0.85); else ship = 0;
         }
         m *= appear;
         if (m < 0.03) continue;
@@ -285,6 +295,15 @@
         if (Math.sin(t * 2.3 + r * 60) > 0.992) ci = GREYS.length;   // the odd glint
         // on the ships, small patches drift through the accent blue
         if (ship > 0.4 && wave(i + 90, j - 40, t, 0.09, 0.45) > 1.3) ci = GREYS.length + BRIGHT.length + (r > 0.5 ? 1 : 0);
+        // near the cursor: patches of every vessel colour, shifting in place (Gaussian falloff)
+        if (mouse.h > 0.02) {
+          const dx = x - mouse.x, dy = y - mouse.y, d2 = dx * dx + dy * dy;
+          if (d2 < 9000 && Math.exp(-d2 / 2600) * mouse.h > 0.25 + 0.5 * r) {   // a small patch
+            const cw = wave(i - 200, j + 50, t, 0.13, 0.5);
+            ci = GREYS.length + BRIGHT.length + BLUE.length + clamp(Math.floor(((cw + 4) / 8) * VIVID.length), 0, VIVID.length - 1);
+            k = Math.max(k, 3);
+          }
+        }
 
         // black out the footage under the glyph, then draw it
         if (R > 1) {
@@ -364,11 +383,11 @@
     lfill.style.width = (p * 100).toFixed(0) + '%';
     lpct.textContent = Math.round(p * 100) + '%';
     lmsg.textContent = MSGS[Math.floor(waited / 900) % MSGS.length];
-    if ((video.readyState >= 4 || p >= 0.98) && waited > 900) begin();
-    else if (waited > 9000 && video.readyState >= 2) begin();
+    if ((video.readyState >= 4 || p >= 0.98) && waited > 3500) begin();
+    else if (waited > 10000 && video.readyState >= 2) begin();
     else setTimeout(tickLoader, 120);
   };
-  video.addEventListener('canplaythrough', () => { if (performance.now() - shownAt > 900) begin(); });
+  video.addEventListener('canplaythrough', () => { if (performance.now() - shownAt > 3500) begin(); });
   tickLoader();
 
   /* ---------- live numbers in the readout ---------- */

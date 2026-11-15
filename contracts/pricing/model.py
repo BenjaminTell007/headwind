@@ -56,23 +56,187 @@ def _load(name):
     return json.loads((DATA / name).read_text())
 
 
+# ------------------------------------------------------------------ ports: name resolution
+#
+# People and ship crews write ports many ways. The AIS destination field is typed by the crew
+# ("ULSAN,KOREA", "DEHAM > BEANR", "NL RTM", "ROTTERDAM ANCH", "ANTWERPEN", "ST PETERSBURG"),
+# and PortWatch names have their own forms ("Houston (US-TX)", "Qingdao Port", "Genova",
+# "Mumbai-Jawaharlal Nehru (Nhava Sheva)"). find_port() tries these rules in order, stopping at
+# the first that matches. Where several ports fit, the busiest (most vessel calls) wins.
+#
+#   1. UN/LOCODE, with or without the space: "KR USN", "KRUSN", "nlrtm"
+#   2. Several stops ("A > B", "A TO B", "A/B", "A <> B"): only the last stop counts, it's the destination.
+#      An earlier stop is only used when the last one is nothing but noise ("HAMBURG > OFF").
+#   3. Exact name, ignoring case, accents and punctuation: "göteborg" = "GOTEBORG"
+#   4. Any piece of a PortWatch name: "Long Beach" -> "Los Angeles-Long Beach",
+#      "Houston" -> "Houston (US-TX)", "Nhava Sheva" -> "Mumbai-Jawaharlal Nehru (Nhava Sheva)"
+#   5. Alias table for English vs local names and common codes: "Genoa", "Gothenburg", "NYC", "JNPT"
+#   6. Abbreviations expanded: ST -> saint, STE -> sainte, PT -> port, PTO -> puerto
+#   7. A country or region after a comma is dropped: "ULSAN,KOREA", "Rotterdam, Netherlands"
+#   8. AIS noise words dropped: PORT OF, ANCH(ORAGE), OPL, PILOT, OUTER, ROADS, FOR ORDERS...
+#   9. A name that starts with what was typed: "New York" -> "New York-New Jersey"
+#  9b. Leading words: AIS cuts destinations at 20 characters, so "ROTTERDAM 3E PETROHA" and
+#      "AMSTERDAM JAN VAN RI" are a port plus a cut-off terminal name: the longest leading run of
+#      words that is a port wins
+#  10. Close spelling (typos): "ROTTERDM" -> Rotterdam
+# If nothing matches, the error suggests the closest names ("did you mean ...?").
+
+import difflib  # noqa: E402
+import unicodedata  # noqa: E402
+
+GENERIC = {"port", "harbour", "harbor", "terminal", "lng", "oil", "container", "new", "anchorage", "us", "tx"}
+NOISE = {"port", "of", "harbour", "harbor", "anch", "anchorage", "anchor", "opl", "pilot", "pilots", "pbg",
+         "outer", "inner", "roads", "road", "terminal", "berth", "for", "orders", "bound", "eta", "arrival",
+         "area", "off", "via", "pls", "pst", "eosp"}
+ABBREV = {"st": "saint", "ste": "sainte", "pt": "port", "pto": "puerto", "ft": "fort", "mt": "mount"}
+# English or other common names -> the PortWatch name. Targets that aren't in the data are ignored.
+ALIASES = {
+    "gothenburg": "Göteborg", "goteborg": "Göteborg", "genoa": "Genova", "antwerpen": "Antwerp",
+    "anvers": "Antwerp", "europoort": "Rotterdam", "maasvlakte": "Rotterdam", "tianjin": "Tianjin Xin Gang",
+    "xingang": "Tianjin Xin Gang", "ho chi minh": "Saigon", "ho chi minh city": "Saigon", "hcmc": "Saigon",
+    "nyc": "New York-New Jersey", "ny nj": "New York-New Jersey", "newark": "New York-New Jersey",
+    "lalb": "Los Angeles-Long Beach", "jnpt": "Mumbai-Jawaharlal Nehru (Nhava Sheva)",
+    "pusan": "Busan", "qingdao": "Qingdao Port", "sankt peterburg": "Saint Petersburg",
+    "leningrad": "Saint Petersburg", "fos": "Marseille", "fos sur mer": "Marseille",
+    "long beach": "Los Angeles-Long Beach", "las palmas": "Las Palmas (de Gran Canaria)",
+    # LOCODEs PortWatch has no code for (compact form, as crews type them)
+    "uslgb": "Los Angeles-Long Beach", "uslax": "Los Angeles-Long Beach", "usnyc": "New York-New Jersey",
+    "usewr": "New York-New Jersey", "eslpa": "Las Palmas (de Gran Canaria)", "ptlei": "Leixoes",
+    "aejea": "Jebel Ali", "aekhl": "Khalifa Port", "aefjr": "Fujairah", "aeauh": "Abu Dhabi",
+    # districts and terminals inside big ports
+    "botlek": "Rotterdam", "pernis": "Rotterdam", "dintelhaven": "Rotterdam", "waalhaven": "Rotterdam",
+    "eemhaven": "Rotterdam", "vondelingenplaat": "Rotterdam", "petroleumhaven": "Rotterdam",
+    "kallo": "Antwerp", "doel": "Antwerp", "zandvliet": "Antwerp", "deurganckdok": "Antwerp",
+    "waaslandhaven": "Antwerp", "berendrecht": "Antwerp", "khalifa": "Khalifa Port",
+}
+
+
+def _norm(text):
+    """Lower case, accents removed, punctuation to spaces: 'Göteborg' -> 'goteborg'."""
+    text = unicodedata.normalize("NFKD", str(text)).encode("ascii", "ignore").decode()
+    return " ".join("".join(c if c.isalnum() else " " for c in text.lower()).split())
+
+
+def _expand(text):
+    return " ".join(ABBREV.get(w, w) for w in text.split())
+
+
 @lru_cache(maxsize=None)
-def ports():
-    """Ports by normalised name and by LOCODE (no space), from PortWatch."""
-    out = {}
-    for p in _load("portwatch_ports.json"):
-        out.setdefault(p["name"].lower(), p)
+def _port_index():
+    """(names, pieces, codes, aliases): normalised text -> port, busiest first."""
+    all_ports = sorted(_load("portwatch_ports.json"), key=lambda p: -(p.get("vessels") or 0))
+    names, pieces, codes = {}, {}, {}
+    for p in all_ports:
+        n = _norm(p["name"])
+        names.setdefault(n, p)
         if p.get("locode"):
-            out.setdefault(p["locode"].replace(" ", "").upper(), p)
-    return out
+            codes.setdefault(p["locode"].replace(" ", "").upper(), p)
+        # pieces of the name: split on - ( ) / , and drop generic words ("Qingdao Port" -> "qingdao")
+        raw = p["name"]
+        for sep in "()/,":
+            raw = raw.replace(sep, "|")
+        for piece in raw.replace("-", "|").split("|"):
+            k = _norm(piece)
+            core = " ".join(w for w in k.split() if w not in GENERIC)
+            for key in {k, core}:
+                if len(key) >= 3 and key not in GENERIC:
+                    pieces.setdefault(key, p)
+    aliases = {_norm(a): names[_norm(t)] for a, t in ALIASES.items() if _norm(t) in names}
+    return names, pieces, codes, aliases
+
+
+def ports():
+    """Name and LOCODE lookup table (kept for callers that used it directly)."""
+    names, _, codes, _ = _port_index()
+    return {**names, **codes}
+
+
+def _split_stops(q):
+    s = f" {q} "
+    for sep in ("<>", ">", "<", "/", "|", " TO ", " to ", " -> ", "=>"):
+        s = s.replace(sep, "|")
+    return [x.strip() for x in s.split("|") if x.strip()]
+
+
+def _match(text):
+    """Rules 1 and 3 to 9 on one stop. Returns a port or None."""
+    names, pieces, codes, aliases = _port_index()
+    compact = text.replace(" ", "").upper()
+    if compact in codes:                                   # 1. LOCODE
+        return codes[compact]
+    candidates = [text]
+    if "," in text or " - " in text or ";" in text:        # 7. "ULSAN,KOREA": the first part is the port
+        parts = [x for x in text.replace(";", ",").replace(" - ", ",").split(",") if x.strip()]
+        candidates += parts
+    for cand in candidates:
+        n = _norm(cand)
+        if not n:
+            continue
+        variants = [n, _expand(n)]                         # 6. ST -> saint ...
+        cleaned = " ".join(w for w in _expand(n).split() if w not in NOISE and not w.isdigit())
+        if cleaned and cleaned not in variants:
+            variants.append(cleaned)                       # 8. noise words dropped
+        for v in variants:
+            if v.replace(" ", "").upper() in codes:
+                return codes[v.replace(" ", "").upper()]
+            for table in (names, pieces, aliases):          # 3, 4, 5
+                if v in table:
+                    return table[v]
+        for v in variants:                                 # 9. name starts with it
+            if len(v) >= 4:
+                hits = [p for k, p in names.items() if k.startswith(v + " ") or k.startswith(v + "-")]
+                if hits:
+                    return hits[0]                         # names are busiest-first
+        words = _expand(n).split()                         # 9b. longest leading run of words
+        for k in range(len(words) - 1, 0, -1):
+            lead = " ".join(words[:k])
+            if len(lead) < 4:
+                break
+            for table in (names, aliases, pieces):
+                if lead in table:
+                    return table[lead]
+    return None
 
 
 def find_port(query):
-    q = query.strip()
-    p = ports().get(q.replace(" ", "").upper()) or ports().get(q.lower())
-    if not p:
-        raise KeyError(f"unknown port: {query}")
-    return p
+    """The PortWatch port for whatever a person or a ship's crew typed. Rules above."""
+    q = (query or "").strip()
+    if not q:
+        raise KeyError("no port given")
+    stops = _split_stops(q) or [q]
+    # 2. only the destination (last stop) counts; skip trailing stops that are pure noise ("> OFF")
+    while len(stops) > 1 and not " ".join(w for w in _norm(stops[-1]).split() if w not in NOISE):
+        stops.pop()
+    stops = stops[-1:]
+    p = _match(stops[0])
+    if p:
+        return p
+    # 10. typos: closest spelling across every name, piece and alias
+    names, pieces, _, aliases = _port_index()
+    keys = {**pieces, **names, **aliases}
+    for stop in reversed(stops):
+        n = _norm(stop.split(",")[0])
+        if len(n) >= 5:
+            close = difflib.get_close_matches(n, keys.keys(), n=1, cutoff=0.85)
+            if close:
+                return keys[close[0]]
+    suggestions = port_suggestions(q)
+    hint = f" Did you mean {', '.join(suggestions)}?" if suggestions else ""
+    raise KeyError(f"unknown port: {query}.{hint}")
+
+
+def port_suggestions(query, n=3):
+    """Closest port names, for 'did you mean' and autocomplete."""
+    names, pieces, _, aliases = _port_index()
+    keys = {**pieces, **names, **aliases}
+    q = _norm((_split_stops(query) or [query])[-1].split(",")[0])
+    seen, out = set(), []
+    for k in difflib.get_close_matches(q, keys.keys(), n=n * 3, cutoff=0.6):
+        name = keys[k]["name"]
+        if name not in seen:
+            seen.add(name)
+            out.append(name)
+    return out[:n]
 
 
 def port_code(p):
