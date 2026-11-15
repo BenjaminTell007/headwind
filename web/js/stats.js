@@ -53,6 +53,16 @@
         </aside>
       </section>
 
+      <section class="wheelSec">
+        <div class="wheelText">
+          <div class="tag">THE FORECAST WHEEL · HOVER A STRAIT, CLICK TO OPEN IT</div>
+          <h2>Every strait, <em>at once.</em></h2>
+          <p class="lede">Each slice is one strait: the last six months of weekly ships drawn outward from the ring, then the model's eight-week forecast as a cone beyond it. Green is heading up, red is heading down.</p>
+          <div class="wheelRead" id="wheelRead"></div>
+        </div>
+        <canvas id="wheel"></canvas>
+      </section>
+
       <section>
         <div class="tag rv" id="sTag">FORECASTS</div>
         <h2 class="rv">The next eight weeks, <em>strait by strait.</em></h2>
@@ -84,6 +94,13 @@
       </section>
 
       <section>
+        <div class="tag rv">THE DISRUPTION TAPE · EVERY WEEK SINCE 2019 VS A NORMAL 2023 WEEK</div>
+        <h2 class="rv">Seven years of traffic, <em>one strip.</em></h2>
+        <p class="lede rv">One row per strait, one cell per week. Red is traffic below normal, green above. The crises read as red bands: move across it for the numbers.</p>
+        <div class="tapeWrap rv"><canvas id="tape"></canvas><div class="readout" id="tapeRead"></div></div>
+      </section>
+
+      <section style="display:none">
         <div class="two">
           <div class="rv">
             <div class="tag">WHAT THE MODEL LOOKS AT</div>
@@ -580,6 +597,128 @@
     }));
   };
 
+  /* ---------- the forecast wheel: every strait around one turning ring ---------- */
+  const setupWheel = () => {
+    const cv = $('#wheel', root), ctx = cv.getContext('2d'), read = $('#wheelRead', root);
+    const names = Object.keys(F.straits).filter(n => F.straits[n].total[F.straits[n].total.length - 1] >= 20)
+      .sort((a, b) => F.straits[b].total.slice(-1)[0] - F.straits[a].total.slice(-1)[0]);
+    const N = names.length, HIST = 26;
+    const items = names.map(n => {
+      const s = F.straits[n], h = s.total.slice(-HIST), fc = s.forecast;
+      const all = h.concat(fc.map(f => f.q[4]), fc.map(f => f.q[0]));
+      const lo = Math.min(...all), hi = Math.max(...all), sp = hi - lo || 1;
+      const now = h[h.length - 1], nx = fc[0].q[2], end = fc[7].q[2];
+      return { n, s, h, fc, lo, sp, now, nx, end, up: end >= now };
+    });
+    let W = 0, H = 0, DPR = 1, rot = 0, hover = -1, mx = null, my = null, grow = 0, lastT = 0;
+    const resize = () => { DPR = Math.min(2, window.devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * DPR; cv.height = H * DPR; };
+    resize(); window.addEventListener('resize', resize);
+    cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; });
+    cv.addEventListener('pointerleave', () => { mx = null; });
+    cv.addEventListener('click', () => { if (hover >= 0) { sel = items[hover].n; renderHero(); renderFeature(); root.scrollTo({ top: 0, behavior: 'smooth' }); } });
+    const UP = [53, 201, 123], DN = [255, 93, 93];
+    const showRead = it => {
+      if (!it) { read.innerHTML = `<b>${N}</b><span>straits forecast</span><em>${items.filter(i => i.up).length} heading up · ${items.filter(i => !i.up).length} heading down over 8 weeks</em>`; return; }
+      const d = (it.end / Math.max(1, it.now) - 1) * 100;
+      read.innerHTML = `<b style="color:${it.up ? 'var(--up)' : 'var(--down)'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}%</b><span>${it.n}</span><em>${fInt(it.now)} ships this week → ${fInt(it.end)} in 8 weeks · ${Math.round(it.s.p_up_next_week * 100)}% chance it rises next week</em>`;
+    };
+    showRead(null);
+    let lastHover = -2;
+    const frame = now => {
+      requestAnimationFrame(frame);
+      if (!open || !isVisible(cv)) return;
+      const dt = Math.min(0.05, (now - lastT) / 1000 || 0.016); lastT = now;
+      grow += (1 - grow) * 0.03;
+      if (mx == null) rot += dt * 0.035;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+      const cx = W / 2, cy = H / 2, R0 = Math.min(W, H) * 0.2, R1 = Math.min(W, H) * 0.36, R2 = Math.min(W, H) * 0.47;
+      const slot = 6.2832 / N, gap = slot * 0.14;
+      // which slice is the cursor in
+      hover = -1;
+      if (mx != null) {
+        const dx = mx - cx, dy = my - cy, rr = Math.hypot(dx, dy);
+        if (rr > R0 * 0.7 && rr < R2 * 1.08) { let a = (Math.atan2(dy, dx) - rot) % 6.2832; if (a < 0) a += 6.2832; hover = Math.floor(a / slot); }
+      }
+      if (hover !== lastHover) { lastHover = hover; showRead(hover >= 0 ? items[hover] : null); cv.style.cursor = hover >= 0 ? 'pointer' : 'default'; }
+      // the "now" ring and a faint inner ring
+      ctx.strokeStyle = 'rgba(242,242,240,0.16)'; ctx.lineWidth = 1; ctx.setLineDash([2, 5]);
+      ctx.beginPath(); ctx.arc(cx, cy, R1, 0, 6.2832); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = 'rgba(242,242,240,0.07)'; ctx.beginPath(); ctx.arc(cx, cy, R0, 0, 6.2832); ctx.stroke();
+      items.forEach((it, i) => {
+        const a0 = rot + i * slot + gap / 2, a1 = rot + (i + 1) * slot - gap / 2, am = (a0 + a1) / 2;
+        const c = it.up ? UP : DN, hot = i === hover, dim = hover >= 0 && !hot ? 0.3 : 1;
+        // history: radius is time (inner = 6 months ago, R1 = now), swing across the slice is the value
+        const A = v => a0 + ((v - it.lo) / it.sp) * (a1 - a0);
+        ctx.beginPath();
+        it.h.forEach((v, k) => { const r = R0 + (R1 - R0) * (k / (HIST - 1)) * grow, a = A(v); k ? ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r) : ctx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); });
+        ctx.strokeStyle = `rgba(${c},${(hot ? 1 : 0.85) * dim})`; ctx.lineWidth = hot ? 2.2 : 1.4;
+        ctx.shadowColor = `rgba(${c},0.8)`; ctx.shadowBlur = hot ? 14 : 5; ctx.stroke(); ctx.shadowBlur = 0;
+        // forecast cone beyond the ring: 5–95% band, then the median dotted
+        const rf = k => R1 + (R2 - R1) * ((k + 1) / it.fc.length) * grow;
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(A(it.now)) * R1, cy + Math.sin(A(it.now)) * R1);
+        it.fc.forEach((f, k) => { const a = Math.min(a1, A(f.q[4])); ctx.lineTo(cx + Math.cos(a) * rf(k), cy + Math.sin(a) * rf(k)); });
+        for (let k = it.fc.length - 1; k >= 0; k--) { const a = Math.max(a0, A(it.fc[k].q[0])); ctx.lineTo(cx + Math.cos(a) * rf(k), cy + Math.sin(a) * rf(k)); }
+        ctx.closePath(); ctx.fillStyle = `rgba(${c},${(hot ? 0.3 : 0.14) * dim})`; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(A(it.now)) * R1, cy + Math.sin(A(it.now)) * R1);
+        it.fc.forEach((f, k) => { const a = A(f.q[2]); ctx.lineTo(cx + Math.cos(a) * rf(k), cy + Math.sin(a) * rf(k)); });
+        ctx.setLineDash([2, 4]); ctx.strokeStyle = `rgba(${c},${dim})`; ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]);
+        // the live dot on the ring, pulsing
+        const pa = A(it.now), pr = 2.6 + (hot ? 2 : 0) + Math.sin(now / 400 + i) * 0.6;
+        ctx.fillStyle = `rgba(${c},${dim})`; ctx.beginPath(); ctx.arc(cx + Math.cos(pa) * R1, cy + Math.sin(pa) * R1, pr, 0, 6.2832); ctx.fill();
+        // name outside, turned to read along the spoke
+        ctx.save(); ctx.translate(cx + Math.cos(am) * (R2 + 10), cy + Math.sin(am) * (R2 + 10));
+        const flip = Math.cos(am) < 0; ctx.rotate(am + (flip ? Math.PI : 0));
+        ctx.font = `${hot ? 500 : 300} 10px ${HW.MONO}`; ctx.textAlign = flip ? 'right' : 'left'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = hot ? '#f2f2f0' : `rgba(170,170,168,${dim})`;
+        ctx.fillText(short(it.n).toUpperCase(), 0, 0); ctx.restore();
+      });
+    };
+    requestAnimationFrame(frame);
+  };
+
+  /* ---------- the disruption tape: week x strait heat strip vs a normal 2023 week ---------- */
+  const setupTape = () => {
+    const cv = $('#tape', root), ctx = cv.getContext('2d'), read = $('#tapeRead', root);
+    const names = Object.keys(F.ridge.series), weeks = F.ridge.weeks, nW = weeks.length, nR = names.length;
+    const i23 = weeks.map((w, i) => w.startsWith('2023') ? i : -1).filter(i => i >= 0);
+    const ratio = names.map(n => { const v = F.ridge.series[n], base = i23.reduce((a, i) => a + v[i], 0) / i23.length || 1; return v.map(x => x / base); });
+    const LAB = 96, ROW = 22, TOP = 26;
+    let W = 0, DPR = 1, reveal = 0, hx = -1, hy = -1;
+    const resize = () => { DPR = Math.min(2, window.devicePixelRatio || 1); W = cv.clientWidth; cv.style.height = (TOP + nR * ROW + 8) + 'px'; cv.width = W * DPR; cv.height = (TOP + nR * ROW + 8) * DPR; };
+    resize(); window.addEventListener('resize', resize);
+    cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); hx = e.clientX - r.left; hy = e.clientY - r.top; });
+    cv.addEventListener('pointerleave', () => { hx = -1; read.style.opacity = 0; });
+    const colour = r => {   // 1 = normal (dark), below = red, above = green
+      const d = clamp(r - 1, -1, 1), k = Math.pow(Math.abs(d), 0.6);
+      return d < 0 ? `rgb(${Math.round(24 + 231 * k)},${Math.round(26 + 67 * k * 0.6)},${Math.round(30 + 63 * k * 0.6)})` : `rgb(${Math.round(24 + 29 * k)},${Math.round(26 + 175 * k)},${Math.round(30 + 93 * k)})`;
+    };
+    const frame = () => {
+      requestAnimationFrame(frame);
+      if (!open || !isVisible(cv)) return;
+      reveal = Math.min(1, reveal + 0.012);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, cv.height);
+      const cw = (W - LAB) / nW, shown = Math.floor(nW * ease(reveal));
+      for (let r = 0; r < nR; r++) {
+        const y = TOP + r * ROW;
+        for (let i = 0; i < shown; i++) { ctx.fillStyle = colour(ratio[r][i]); ctx.fillRect(LAB + i * cw, y, Math.ceil(cw), ROW - 3); }
+        ctx.fillStyle = '#a8a8a6'; ctx.font = `300 10px ${HW.MONO}`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillText(short(names[r]).toUpperCase(), LAB - 10, y + (ROW - 3) / 2);
+      }
+      ctx.textAlign = 'center'; ctx.fillStyle = '#8a8a8a';
+      weeks.forEach((w, i) => { if (w.slice(5, 7) === '01' && w.slice(8) <= '07') ctx.fillText(w.slice(0, 4), LAB + i * cw, 12); });
+      EVENTS.forEach(([d, l]) => { const i = weeks.findIndex(w => w >= d); if (i < 0 || i > shown) return; const x = LAB + i * cw; ctx.strokeStyle = 'rgba(242,242,240,0.7)'; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(x, TOP - 4); ctx.lineTo(x, TOP + nR * ROW); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#f2f2f0'; ctx.textAlign = 'left'; ctx.fillText(l, x + 5, 12); });
+      if (hx > LAB && hy > TOP) {
+        const i = clamp(Math.floor((hx - LAB) / cw), 0, nW - 1), r = clamp(Math.floor((hy - TOP) / ROW), 0, nR - 1);
+        ctx.strokeStyle = '#f2f2f0'; ctx.lineWidth = 1; ctx.strokeRect(LAB + i * cw - 1, TOP + r * ROW - 1, Math.max(4, cw + 2), ROW - 1);
+        ctx.strokeStyle = 'rgba(242,242,240,0.25)'; ctx.beginPath(); ctx.moveTo(LAB + i * cw + cw / 2, TOP); ctx.lineTo(LAB + i * cw + cw / 2, TOP + nR * ROW); ctx.stroke();
+        const v = F.ridge.series[names[r]][i], q = ratio[r][i];
+        read.innerHTML = `<span style="color:var(--dim)">${names[r].toUpperCase()} · ${fDay(weeks[i])} ${weeks[i].slice(0, 4)}</span><br><b>${fInt(v)} SHIPS</b> · <b style="color:${q >= 1 ? 'var(--up)' : 'var(--down)'}">${q >= 1 ? '+' : '−'}${Math.abs((q - 1) * 100).toFixed(0)}% VS 2023</b>`;
+        read.style.left = Math.min(W - 230, hx + 14) + 'px'; read.style.top = Math.max(0, hy - 54) + 'px'; read.style.opacity = 1;
+      }
+    };
+    requestAnimationFrame(frame);
+  };
+
   /* ---------- load ---------- */
   fetch('data/forecast.json').then(r => r.json()).then(data => {
     F = data;
@@ -591,6 +730,8 @@
     renderSignals();
     renderDots();
     setupRidge();
+    setupWheel();
+    setupTape();
     // the kpis count up again the first time the screen opens
     let counted = false;
     const obs = new MutationObserver(() => { if (open && !counted) { counted = true; renderKpis(); } });
