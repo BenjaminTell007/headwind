@@ -96,7 +96,7 @@ In `examples.json`, `threshold` is already the onchain integer, for example rout
 
 **Proposal:** `to_onchain()` is the only place values are scaled for anything the oracle posts, because it's Ben's code that calls `resolve`. Market thresholds come from the quote unchanged.
 
-- [ ] Ben: if the keeper reads `examples.json`, use `threshold` as is (agreed, building)
+- [x] Ben: if the keeper reads `examples.json`, use `threshold` as is (the keeper passes Xavi's quote through unchanged)
 - [ ] Ben: `unit_and_scale()` treats any `portwatch:*:weekly_*` series as a ship count (agreed, building)
 
 ### 4. Live windows
@@ -112,8 +112,8 @@ Nobody has built this yet, so there's no overlap. Xavi wrote the rule; Ben runs 
 
 After resolving, call `settleVault(id)` so the vault gets its money back.
 
-- [ ] Ben: keeper loop for open `arrival:` markets, every minute or so (agreed)
-- [ ] Ben: positions per ship for the market's window (the ship's MMSI from `/api/ship/{IMO}`)
+- [x] Ben: keeper loop for open `arrival:` markets, every 20 seconds (`server/keeper.py`, tested on anvil: moored in Rotterdam before the deadline resolves NO, then `settleVault`)
+- [x] Ben: positions per ship for the market's window (the keeper collects each report from the server's memory; `nav_status` now passed through)
 
 ### 6. Two `setting()` helpers that read `PRIVATE.md`
 One is in `server/chain.py` (Python) and one in `contracts/script/env.mjs` (Node). They run in different places, so this is fine. Just keep the key names the same as the Keys table above.
@@ -125,7 +125,7 @@ One is in `server/chain.py` (Python) and one in `contracts/script/env.mjs` (Node
 - [ ] Ben: `SERVER_PRIVATE_KEY` in Railway variables, and add `web3` and `eth-account` to `requirements.txt` (`web3==8.0.0` added, which brings `eth-account`; Railway variable still to do)
 - [ ] Ben: merge `chain.py` and `/api/faucet` to `main`, and check `/api/chain` shows `"on": true`
 - [x] Ben: `POST /api/quote` with body `{ship, port, deadline, cargoUsd}`. It calls `contracts.pricing.quote.arrival_quote()`, signs with `chain.sign_quote()`, and returns `{quote, signature, model, hedge}`. Numbers go out as strings; `web/chain/markets.js` `requestQuote()` already expects this shape.
-- [ ] Ben: the keeper opens the demo markets (decision 2) and settles them (5)
+- [x] Ben: the keeper opens the demo markets (decision 2) and settles them (5). Runs only where `HEADWAY_KEEPER=1`; `KEEPER_GROUPS` picks the examples (default `featured`). Xavi: don't run `seed_markets.mjs --send` against the demo deployment
 - [ ] Both: one full run on testnet: quote, create and hedge, trade, settle, redeem, `settleVault`
 
 ## Open questions

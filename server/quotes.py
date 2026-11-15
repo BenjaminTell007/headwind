@@ -56,7 +56,8 @@ def quote(req: QuoteRequest):
     try:
         out = pricing.arrival_quote(req.ship, req.port, deadline, cargo_usd=req.cargoUsd,
                                     usd_per_mon=req.usdPerMon)
-    except ValueError as err:  # unknown ship or port, deadline too soon
+    except (ValueError, KeyError) as err:  # unknown ship or port, deadline too soon
+        err = err.args[0] if isinstance(err, KeyError) and err.args else err
         raise HTTPException(400, str(err))
     try:
         out["signature"] = chain.sign_quote(chain.quote_from_json(out["quote"]))
