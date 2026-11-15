@@ -5,11 +5,31 @@
 const HW = window.HW = window.HW || {};
 
 HW.C = {
-  bg: '#0a0a0a', land: '#2c2f34', line: '#1c1c1e', fg: '#f2f2f0', dim: '#8a8a8a', faint: '#4a4a4a',
-  accent: '#4c8dff',   // Swiss watch site blue: routes, selection, hover, buttons
   container: '#f08a3c', tanker: '#8f82f2', bulk: '#46b36f', general: '#ea86b5', roro: '#e9c84b', other: '#f2f2f2',
   yes: '#f2f2f2', no: '#6b6b6b',
 };
+
+/* Light and dark themes for everything that isn't a vessel colour. The page CSS has the
+   same values under :root and :root[data-theme="light"]. Dark is the default. */
+HW.THEMES = {
+  dark: {
+    bg: '#0a0a0a', land: '#2c2f34', line: '#1c1c1e', fg: '#f2f2f0', dim: '#8a8a8a', faint: '#4a4a4a',
+    accent: '#4c8dff', laneHi: '#9cc0ff', glow: '76,141,255', halo: 'rgba(10,10,10,0.85)',
+    sphere: ['#16171a', '#111214', '#0d0d0f'], rim: 'rgba(242,242,240,0.16)', border: 'rgba(242,242,240,0.28)',
+  },
+  light: {
+    bg: '#f4f4f1', land: '#d6d9df', line: '#e2e2de', fg: '#141414', dim: '#6a6a6a', faint: '#a9a9a9',
+    accent: '#2f6fe0', laneHi: '#0b3fa8', glow: '47,111,224', halo: 'rgba(250,250,248,0.9)',
+    sphere: ['#ffffff', '#f1f4f8', '#e6ebf2'], rim: 'rgba(20,20,20,0.2)', border: 'rgba(20,20,20,0.3)',
+  },
+};
+HW.setTheme = t => {
+  if (!HW.THEMES[t]) t = 'dark';
+  Object.assign(HW.C, HW.THEMES[t]); HW.C.theme = t;
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem('hw-theme', t); } catch { /* private window: just don't remember */ }
+};
+HW.setTheme((() => { try { return localStorage.getItem('hw-theme'); } catch { return null; } })() || 'dark');
 HW.MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 HW.SANS = '-apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", Arial, sans-serif';
 
@@ -44,7 +64,7 @@ HW.label = (ctx, s, x, y, col, align, size, weight) => {
   ctx.globalAlpha = 1;
   ctx.font = (weight || 400) + ' ' + (size || 11) + 'px ' + HW.MONO;
   ctx.textAlign = align || 'left';
-  ctx.lineJoin = 'round'; ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(10,10,10,0.85)';
+  ctx.lineJoin = 'round'; ctx.lineWidth = 3.5; ctx.strokeStyle = HW.C.halo;
   ctx.strokeText(s, x, y);
   ctx.fillStyle = col || HW.C.dim;
   ctx.fillText(s, x, y);
@@ -119,7 +139,7 @@ HW.spark = (vals, w, h, opts = {}) => {
   let d = '';
   vals.forEach((x, i) => { if (x == null || !isFinite(x)) return; d += (d ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(x).toFixed(1); });
   const col = opts.colour || HW.C.fg;
-  const base = opts.base != null ? `<line x1="0" x2="${w}" y1="${Y(opts.base)}" y2="${Y(opts.base)}" stroke="#555" stroke-dasharray="2 3" stroke-width="1"/>` : '';
+  const base = opts.base != null ? `<line x1="0" x2="${w}" y1="${Y(opts.base)}" y2="${Y(opts.base)}" stroke="${HW.C.dim}" stroke-dasharray="2 3" stroke-width="1"/>` : '';
   const mark = opts.mark != null ? `<line x1="${X(opts.mark)}" x2="${X(opts.mark)}" y1="0" y2="${h}" stroke="${HW.C.fg}" stroke-width="1" opacity=".5"/>` : '';
   return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none">${base}<path d="${d}L${w} ${h}L0 ${h}Z" fill="${col}" opacity=".07"/><path d="${d}" fill="none" stroke="${col}" stroke-width="1.3" vector-effect="non-scaling-stroke"/>${mark}</svg>`;
 };
