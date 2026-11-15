@@ -29,6 +29,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_RPC = "https://testnet-rpc.monad.xyz"
 GAS_MARGIN = 1.12
+# createMarket writes two strings and per-subject totals, and right after another market on the
+# same subject the estimate can run on state that doesn't include it yet: one reverted out of
+# gas on testnet at +12% (collapse_suez_canal, Nov 15). About 0.015 MON more per market.
+CREATE_GAS_MARGIN = 1.3
 RECEIPT_TIMEOUT = 30
 
 
@@ -122,7 +126,7 @@ class Chain:
 
     # ---------- sending ----------
 
-    def send(self, fn, value=0):
+    def send(self, fn, value=0, margin=GAS_MARGIN):
         """Sign and send one contract call with the server key, wait for the receipt.
         Returns the receipt. Raises TxFailed if it reverts or doesn't land."""
         self._setup()
@@ -137,7 +141,7 @@ class Chain:
                     "chainId": self.chain_id,
                 })
                 # build_transaction estimates gas; Monad bills the whole limit, so keep it tight.
-                tx["gas"] = int(tx["gas"] * GAS_MARGIN)
+                tx["gas"] = int(tx["gas"] * margin)
                 signed = self.account.sign_transaction(tx)
                 tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
                 self._nonce += 1
@@ -210,7 +214,7 @@ class Chain:
         sig = self.sign_quote(quote)
         args = tuple(quote[n] for n, _ in QUOTE_FIELDS)
         receipt = self.send(self.markets.functions.createMarket(args, bytes.fromhex(sig[2:]), buy_yes, min_shares),
-                            value=quote["creationFee"] + stake)
+                            value=quote["creationFee"] + stake, margin=CREATE_GAS_MARGIN)
         events = self.markets.events.MarketCreated().process_receipt(receipt)
         return events[0]["args"]["id"]
 
