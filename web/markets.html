@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Headway · Markets</title>
+<meta name="description" content="Trade on shipping disruptions: straits, routes, trade flows and live gate crossings, settled onchain on Monad.">
+<script>
+/* Self-update: GitHub Pages lets browsers reuse this page for 10 minutes. On open and
+   whenever you come back to the tab, check the published version (never cached) and,
+   if it's newer than this copy, reload once onto it. web/tools/stamp.sh sets both. */
+(function () {
+  var SITE_VERSION = '20261115T2108', URL_ = 'version.json';
+  function check() {
+    fetch(URL_ + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.v || d.v === SITE_VERSION) return;
+      var key = 'hw-updated-' + d.v;
+      try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) {}
+      var q = new URLSearchParams(location.search); q.set('v', d.v);
+      location.replace(location.pathname + '?' + q.toString() + location.hash);
+    }).catch(function () {});
+  }
+  check();
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+})();
+</script>
+<link rel="stylesheet" href="app.css?v=20261115T2108">
+<link rel="stylesheet" href="markets.css?v=20261115T2108">
+</head>
+<body class="mk">
+
+<header class="mk-head">
+  <a class="brand" href="../" title="Headway"><span class="word">HEADWAY</span></a>
+  <nav class="nav" aria-label="Pages"><a href="./">GLOBE</a><a class="on" href="markets.html">MARKETS</a></nav>
+  <span class="spacer"></span>
+  <button class="pill icon" id="theme" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
+  <button class="pill" id="wallet">CONNECT WALLET</button>
+</header>
+
+<main class="mk-main">
+  <section class="mk-sum" id="sum"></section>
+
+  <div class="mk-bar">
+    <div class="tabs" id="tabs">
+      <button data-t="open" class="on">OPEN</button>
+      <button data-t="live">LIVE</button>
+      <button data-t="strait">STRAITS</button>
+      <button data-t="route">ROUTES</button>
+      <button data-t="trade">TRADE</button>
+      <button data-t="soon">COMING UP</button>
+      <button data-t="settled">SETTLED</button>
+      <button data-t="mine">MY POSITIONS</button>
+    </div>
+    <span class="spacer"></span>
+    <button class="pill hedge" id="hedgeBtn">HEDGE A SHIP</button>
+    <input id="find" class="mk-find" placeholder="Search markets" aria-label="Search markets">
+    <select id="sort" class="mk-sort" aria-label="Sort">
+      <option value="close">Closing soonest</option>
+      <option value="pool">Biggest pool</option>
+      <option value="yes">Highest YES</option>
+      <option value="no">Lowest YES</option>
+    </select>
+  </div>
+
+  <section class="mk-grid" id="grid"></section>
+  <p class="mk-note" id="note"></p>
+</main>
+
+<div class="mk-scrim" id="scrim"></div>
+<aside class="mk-drawer drawer" id="drawer" aria-hidden="true">
+  <button class="x" id="dx" aria-label="Close">✕</button>
+  <div id="dbody"></div>
+</aside>
+
+<script src="js/util.js?v=20261115T2108"></script>
+<script type="module" src="js/markets-page.js?v=20261115T2108"></script>
+</body>
+</html>
