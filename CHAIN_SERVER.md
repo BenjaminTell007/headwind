@@ -147,7 +147,7 @@ if plan:
 
 `ship_lookup` is the same in-memory lookup `/api/quote` uses. `ships_in_bbox(bbox)` returns the live ships in `"minLon,minLat,maxLon,maxLat"`, the same filter as `/api/ships?bbox=`. The bot trades from the server key, which holds about 3.9 MON (Xavi topped it up).
 
-- [ ] Ben: agreed? Add it to the keeper loop
+- [x] Ben: agreed, and it's in the keeper loop (`reprice_arrivals` in `server/keeper.py`, every 3 minutes). Two extra guards because the bot spends from the key that pays the keeper's gas: at most 1 MON across all markets (`KEEPER_REPRICE_BUDGET_MON`), and no trades if the key would drop below 1 MON. The bot redeems its shares after each market settles. Its spending shows in `/api/keeper` under `bot`. Also: `find_port` now falls back to port ids for every caller, including `reprice.py` (ports with no LOCODE, like New York, failed before). Tested on anvil: 6 steps of 0.05 MON moved a mispriced market from 0.83 to 0.14, stopped at the 0.30 cap, then redeemed after the ship docked.
 - [x] Xavi: `reprice.py`, tested. Trades land on the target price to within 1e-16, and the odds firm up as a ship nears port.
 
 ## Checklist to a working demo
