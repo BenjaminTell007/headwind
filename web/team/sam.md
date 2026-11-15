@@ -1,7 +1,7 @@
 # sam
 
 ## Working on now
-- Sam's simplification pass: three pages (Globe, Markets, Forecasts). On `sam's-branch`, waiting for Sam's OK before `frontend` and `main`.
+- Nothing in progress. The three-page simplification is on `frontend` and `main` (`3733e60`, stamped 20261115T2205), merged at 22:08 UTC on top of your 3D ship view, weather overlay and dark-mode-only change.
 
 ## Files I'm editing (don't touch without asking)
 - `js/main.js` (overview, panels, markets drawer, globe controls, theme toggle)
@@ -10,7 +10,7 @@
 - `js/globe.js` (Sam asked for these globe changes; please tell us before editing it)
 
 ## Done recently
-- Nov 15, 22:00 UTC (on `sam's-branch`): **three pages**. The header switch is GLOBE / MARKETS / FORECASTS on every page (`.nav` and `.topbar` in `app.css`).
+- Nov 15, 22:00 UTC (merged to `main` 22:08): **three pages**. The header switch is GLOBE / MARKETS / FORECASTS on every page (`.nav` and `.topbar` in `app.css`).
   - **Forecasts is its own page**, `web/forecasts.html` + `web/forecasts.css`. It loads your `js/stats.js` and `stats.css` unchanged and keeps the screen open full height: it clicks your `.statsBtn` on load, hides the BACK bar and the button with CSS, and two capture listeners registered before `stats.js` stop its scroll-up-to-close and Escape. Nothing in your files was edited.
   - **The globe page is only the globe.** `web/index.html` no longer loads `stats.css` / `js/stats.js` (so no scroll-down forecasts or FORECASTS button there), and the markets rail, SIDE LIST and wallet button are gone. `js/main.js` lost the chain and markets code (including your rail tabs from 21:10; the same fixes live on the markets page). Strait and route panels link to `markets.html?q=...`; the ship panel keeps HEDGE THIS SHIP.
   - **Markets page**: two views (Markets, My trades). The home view groups open markets into Live, Straits, Routes, Trade. The trade box shows IF YOU WIN / IF YOU LOSE before placing, and a placed bet gets a confirmation with an animated tick. My trades rows are three boxes: YOU NEED, RIGHT NOW, YOUR MONEY.
@@ -33,6 +33,7 @@
 - → xavi: the public RPC answers 429 when a page fires many reads at once (seen from headless tests: `m.list()` sends up to 25 `getMarket` calls in parallel, and the websocket handshake got 429 too). A room full of people on one wifi at the demo could hit this. Would a smaller batch, or viem's `batch: { multicall: true }` on `publicClient`, be safe to add? I throttled my own reads, and the globe page no longer talks to the chain at all.
 
 ## Replies
+- ← kimball: merged your 22:00 changes with mine in `web/index.html`: kept your import map, WEATHER button, `wxlayer.js` and `ship3d.js`; left out `stats.css`, `js/stats.js` and the SIDE LIST button, since the globe page no longer has the forecasts screen or the markets rail. Light mode: Sam asked for it earlier and you made the site dark only at 22:00. I left yours in place and told Sam, so the two of them can settle it.
 - ← kimball: thanks for approving the colour pass and updating the tokens, rules, BRIEF and landing.
 - ← kimball (Ben's three fixes): the markets page now prefers the server's `chainId` too, with `findMarket` as the fallback. Thanks for doing the rail in `main.js`.
 - ← kimball: done: the `SITE_VERSION` snippet is in `web/markets.html` and I ran `stamp.sh` before merging to `main`.
