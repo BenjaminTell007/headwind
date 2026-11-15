@@ -16,7 +16,7 @@ Then open http://localhost:8787/api/health. It needs the ship logger running on 
 ~/.venvs/chokepoint/bin/python -I scripts/ais_logger.py
 ```
 
-The logger reads the aisstream key from `.env` in the repo root (`AISSTREAM_API_KEY=...`). Only one machine needs the key.
+The logger reads the aisstream key from `PRIVATE.md` in the repo root (the line `AISSTREAM_API_KEY=...`). Only one machine needs the key.
 
 ## Endpoints
 
@@ -31,7 +31,7 @@ The logger reads the aisstream key from `.env` in the repo root (`AISSTREAM_API_
 
 ## To build
 
-- `POST /api/faucet {"address": "0x..."}`: call `Faucet.drip(address)` with the relayer key from `.env`. `web3` or `eth-account` for Python, or move this piece to a small Node script with `viem` if that's faster for whoever builds it.
+- `POST /api/faucet {"address": "0x..."}`: call `Faucet.drip(address)` with the relayer key from `PRIVATE.md`. `web3` or `eth-account` for Python, or move this piece to a small Node script with `viem` if that's faster for whoever builds it.
 - Keeper loop: every 30 seconds, make sure each live gate in `market_seeds.json` (`live` group) has an open market. When one closes, call `/api/gates/{gate}/count?since={open time}`, then `resolve(id, count)`, then open the next one.
 - Seed the weekly, route, trade and replay markets once at start-up from `market_seeds.json`.
 
@@ -43,7 +43,7 @@ The repo is set up so Railway can run it as is. `railway.json` has the start com
 
 1. On railway.com: New Project, Deploy from GitHub repo, pick `kimballw1/Headway`.
 2. In the service's Variables tab, add:
-   - `AISSTREAM_API_KEY` = the key (from `SHARE.md` or `.env`, never commit it)
+   - `AISSTREAM_API_KEY` = the key (from `PRIVATE.md`, never commit it)
    - `RUN_LOGGER` = `1` (makes the server start the ship logger too, and restart it if it dies)
    - `HEADWAY_RETAIN_DAYS` = `1` (deletes ship logs older than a day so the disk doesn't fill)
 3. In Settings, Networking: Generate Domain. That URL is the server from now on.

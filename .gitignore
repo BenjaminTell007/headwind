@@ -1,4 +1,5 @@
-# secrets
+# secrets: everything private lives in PRIVATE.md
+PRIVATE.md
 .env
 *.pem
 *.key
@@ -38,5 +39,3 @@ contracts/lib/
 # local editor and tool settings
 .claude/
 
-# has the API key, share privately
-SHARE.md

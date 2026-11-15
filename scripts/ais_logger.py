@@ -10,7 +10,8 @@ What it keeps:
 Files go to data/live/, one set per UTC day:
   gates_YYYYMMDD.csv, sample_YYYYMMDD.csv, static_YYYYMMDD.csv
 
-Needs a free aisstream API key in the environment:
+Needs a free aisstream API key, either in PRIVATE.md in the repo root
+(a line AISSTREAM_API_KEY=...) or in the environment:
   export AISSTREAM_API_KEY=...
   ~/.venvs/chokepoint/bin/python -I scripts/ais_logger.py
 
@@ -271,14 +272,17 @@ def main():
         return
     api_key = os.environ.get("AISSTREAM_API_KEY")
     if not api_key:
-        # Fall back to a local .env file in the project folder (not committed).
-        env_file = ROOT / ".env"
-        if env_file.exists():
-            for line in env_file.read_text().splitlines():
-                if line.startswith("AISSTREAM_API_KEY="):
+        # Fall back to PRIVATE.md in the project folder (git ignores it), then
+        # to an old-style .env if someone still has one.
+        for name in ["PRIVATE.md", ".env"]:
+            secrets_file = ROOT / name
+            if api_key or not secrets_file.exists():
+                continue
+            for line in secrets_file.read_text().splitlines():
+                if line.startswith("AISSTREAM_API_KEY=") and line.split("=", 1)[1].strip():
                     api_key = line.split("=", 1)[1].strip()
     if not api_key:
-        sys.exit("Set AISSTREAM_API_KEY, or put AISSTREAM_API_KEY=... in Chokepoint/.env (free key from aisstream.io).")
+        sys.exit("Set AISSTREAM_API_KEY, or put AISSTREAM_API_KEY=... in PRIVATE.md in the repo root (free key from aisstream.io).")
     logger = Logger()
     try:
         asyncio.run(run(logger, api_key))

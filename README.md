@@ -53,4 +53,4 @@ IMF PortWatch (daily transits for 28 straits and canals, port calls, the port ne
 
 ## Secrets
 
-The aisstream key and any private keys go in `.env` in the repo root, which git ignores. Never commit them.
+Everything private (the aisstream key, wallet keys, the shared server's address and password) goes in one file, `PRIVATE.md` in the repo root, which git ignores. Get it from Kimball directly. Never commit it.

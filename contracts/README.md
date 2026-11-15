@@ -18,7 +18,7 @@ Then from this folder:
 forge init --no-git --force .
 ```
 
-Monad testnet RPC, chain ID and faucet: check docs.monad.xyz on the day. Put them in a local `.env` (not committed):
+Monad testnet RPC, chain ID and faucet: check docs.monad.xyz on the day. Put them in `PRIVATE.md` in the repo root (not committed), and export them in your shell before running `forge`:
 
 ```
 MONAD_RPC_URL=...

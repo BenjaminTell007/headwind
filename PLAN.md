@@ -86,7 +86,7 @@ Cut in this order: vessel click, find your ship, trade ribbons, claim flow (reso
 
 ## Running it
 
-Kimball's laptop runs the ship logger (it needs the aisstream key, which is in `.env` and not in git) and the server. To let the other two reach the server, expose it with a tunnel, for example:
+Kimball's laptop runs the ship logger (it needs the aisstream key, which is in `PRIVATE.md` and not in git) and the server. To let the other two reach the server, expose it with a tunnel, for example:
 
 ```bash
 npx localtunnel --port 8787
@@ -100,5 +100,5 @@ localtunnel shows a warning page to browsers. Code that calls the server has to 
 
 - `main` always runs. Work on your own branch (`web`, `chain`, `server`) and merge small pieces often.
 - Pull before you start a new piece: `git pull origin main`.
-- Never commit `.env`, private keys or `data/live/`. The `.gitignore` already covers them.
+- Never commit `PRIVATE.md`, private keys or `data/live/`. The `.gitignore` already covers them.
 - If two people need to change the same file, say so in the chat first.
