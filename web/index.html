@@ -24,6 +24,7 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
 })();
 </script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <link rel="stylesheet" href="app.css?v=20261115T2134">
 <link rel="stylesheet" href="stats.css?v=20261115T2134">
 </head>
@@ -45,6 +46,7 @@
       <input id="q" placeholder="Find a ship: name, IMO or MMSI" aria-label="Find a ship">
       <span class="err" id="qerr"></span>
     </form>
+    <button class="pill" id="wxBtn" title="Show live weather over the globe (W)">WEATHER</button>
     <button class="pill" id="mtoggle" aria-expanded="true" title="Show or hide the quick market list on the left">SIDE LIST</button>
     <button class="pill icon" id="theme" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
     <button class="pill" id="wallet">CONNECT WALLET</button>
@@ -114,6 +116,8 @@
     <svg class="cross" id="cross" viewBox="0 0 54 54"><path d="M0 10V0h10M44 0h10v10M54 44v10H44M10 54H0V44" fill="none" stroke="#ececec" stroke-width="1"/></svg>
     <div class="card ident" id="ident"></div>
     <div class="card wx" id="wx"></div>
+    <div class="strip" id="strip"></div>
+    <div class="clock tag" id="hudClock"></div>
   </div>
 </div>
 
@@ -122,9 +126,11 @@
 <script src="js/logo.js?v=20261115T2134"></script>
 <script src="js/brand.js?v=20261115T2134"></script>
 <script src="js/sky.js?v=20261115T2134"></script>
+<script src="js/wxlayer.js?v=20261115T2134"></script>
 <script src="js/globe.js?v=20261115T2134"></script>
 <script src="js/ship.js?v=20261115T2134"></script>
 <script src="js/stats.js?v=20261115T2134"></script>
+<script type="module" src="js/ship3d.js?v=20261115T2134"></script>
 <script type="module" src="js/main.js?v=20261115T2134"></script>
 </body>
 </html>

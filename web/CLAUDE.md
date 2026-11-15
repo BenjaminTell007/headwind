@@ -90,3 +90,6 @@ Split work by file where you can. Two people editing `main.js` or `app.css` at t
 - Labels: light monospace, caps, wide letter spacing. Numbers: the sans stack. The header logo is the word HEADWAY in that monospace, plain text; the map page's intro is the animated glyph word.
 - The landing page (repo root `index.html`) is black and white footage and glyphs with a little accent blue.
 - Tokens live in `design/tokens.css`. Full rules: the Look and feel section of `BRIEF.md`.
+- Dark mode only (Kimball, Nov 15). `HW.setTheme` always picks dark and the `#theme` toggle is hidden.
+- The weather overlay (`js/wxlayer.js`, WEATHER button or the W key) has its own ramp for how rough the weather is: faint grey, blue, purple, pink, orange. It's the one place those hues mean something other than vessel type, and the legend says so.
+- The ship view is 3D (`js/ship3d.js`, three.js via the import map in `web/index.html`); `js/ship.js` is the 2D fallback when WebGL isn't available. `?hours=6` shifts the Sun six hours to show a daytime scene.

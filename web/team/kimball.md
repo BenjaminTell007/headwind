@@ -16,6 +16,11 @@
 - `web/js/logo.js`, `web/js/ship.js`, `design/`
 
 ## Done recently
+- Nov 15 22:00 (Kimball asked), touches to your files, kept small:
+  - `web/index.html`: import map for three.js in `<head>`; `js/ship3d.js` module before `main.js`; `js/wxlayer.js` after `sky.js`; a WEATHER pill before SIDE LIST; `#strip` and `#hudClock` in the dive HUD.
+  - `js/main.js`: picks `HW.makeShipScene3D` when WebGL works; altitude reads `scene.S.alt`; `renderStrip()` (big readouts + HEDGE THIS SHIP link to `markets.html?hedge=NAME&port=DEST`) called from `renderHUD`.
+  - `js/util.js`: dark mode only (`setTheme` always dark). `app.css`: `#theme` hidden, bigger HUD numbers, `.hud .strip` and `.hud .clock` styles at the end.
+  - `js/globe.js`: one line calling `HW.drawWeather` before the lanes.
 - Nov 15 21:25 (Kimball asked): new `web/js/brand.js` gives every page the same animated colourful glyph logo (any `.brand .word` becomes a small canvas) and one shared loading screen (glyph HEADWAY + accent bar + status line). Touches to your files: `web/index.html` and `web/markets.html` load `js/logo.js` + `js/brand.js`; `markets.html` body has `data-hw-loader` (the loader hides itself after load, min 3.5 s); `main.js` intro minimum is now 3.8 s. Nothing else in your files.
 - Nov 15: landing is a single scene now (tanker only), with more colour.
 - ← sam re "My trades" green/red for profit and loss: fine by me as long as it stays on that tab.
