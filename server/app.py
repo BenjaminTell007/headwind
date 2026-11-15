@@ -41,6 +41,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parent.parent
 LIVE = Path(os.environ.get("HEADWAY_LIVE_DIR", ROOT / "data" / "live"))
@@ -349,9 +350,52 @@ markets.gate_counter = gate_count
 app.include_router(markets.router)
 
 
+from server.chain import ChainOff, TxFailed, chain  # noqa: E402
+
+# The contract already allows one drip per address. This caps how fast new
+# addresses can drain the faucet. It's global, not per IP, because the whole
+# demo audience shares one venue wifi address.
+FAUCET_PER_MINUTE = 30
+_faucet_times = deque()
+_faucet_lock = threading.Lock()
+
+
+class FaucetRequest(BaseModel):
+    address: str
+
+
+@app.get("/api/chain")
+def chain_status():
+    """Is the server connected to the contracts, and how much MON do the server key and faucet hold."""
+    return chain.status()
+
+
 @app.post("/api/faucet")
-def faucet():
-    raise HTTPException(501, "Not built yet: the relayer should call Faucet.drip(address). See PLAN.md.")
+def faucet(req: FaucetRequest):
+    """Send a new burner wallet its gas money: Faucet.drip(address), once per address."""
+    if not chain.ready():
+        raise HTTPException(503, f"chain not set up: {chain.why_off}")
+    try:
+        if chain.already_dripped(req.address):
+            raise HTTPException(409, "this address already got its MON")
+    except ValueError as err:
+        raise HTTPException(400, str(err))
+    now = time.monotonic()
+    with _faucet_lock:
+        while _faucet_times and now - _faucet_times[0] > 60:
+            _faucet_times.popleft()
+        if len(_faucet_times) >= FAUCET_PER_MINUTE:
+            raise HTTPException(429, "faucet is busy, try again in a minute")
+        _faucet_times.append(now)
+    try:
+        tx_hash, amount = chain.drip(req.address)
+    except TxFailed as err:
+        # AlreadyDripped can still happen if two requests for one address race.
+        code = 409 if "AlreadyDripped" in str(err) else 502
+        raise HTTPException(code, f"drip failed: {err}")
+    except ChainOff as err:
+        raise HTTPException(503, f"chain not set up: {err}")
+    return {"address": req.address, "tx": tx_hash, "amount_wei": str(amount), "amount_mon": amount / 1e18}
 
 
 @app.get("/", response_class=HTMLResponse)

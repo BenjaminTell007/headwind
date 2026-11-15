@@ -39,7 +39,18 @@ The logger reads the aisstream key from `PRIVATE.md` in the repo root (the line 
 | `GET /data/{file}` | any file in `data/processed/`, plus `/data/gates.json` |
 | `GET /api/markets` | every market from `market_seeds.json` with close time, status, history and an onchain block (`chain`, nulls until the keeper runs). Filters: `group=live,weekly,route,trade,replay`, `status=open,closed,resolved,replay`. Live markets are clock-aligned windows (:00/:30 or on the hour) with `count_so_far`. Replay answers are never sent before resolution. Code in `server/markets.py` |
 | `GET /api/markets/{id}` | one market, same shape |
-| `POST /api/faucet` | not built yet |
+| `POST /api/faucet` | body `{"address": "0x..."}`: calls `Faucet.drip` with the server key, 0.25 MON once per address. 409 if already dripped, 429 past 30 drips a minute, 503 if the chain isn't set up |
+| `GET /api/chain` | whether the server is connected to the contracts, the server key's address and balance, the faucet's balance, market count |
+
+## Chain settings
+
+`server/chain.py` holds the server key's three jobs: faucet relayer, quote signer (pricer) and oracle. It reads, from the environment or `PRIVATE.md`:
+
+- `SERVER_PRIVATE_KEY`: the server key. On Railway, put it in Variables
+- `MONAD_RPC_URL`: defaults to `https://testnet-rpc.monad.xyz`
+- `HEADWAY_DEPLOYMENTS`: defaults to `contracts/deployments.json` (addresses and ABIs, written by `contracts/script/write_deployments.mjs`)
+
+Without the key or the file, the chain endpoints answer 503 and everything else runs as normal. The key's address must be the `ORACLE_ADDRESS` and `PRICER_ADDRESS` the contracts were deployed with.
 
 ## To build
 
