@@ -19,9 +19,9 @@ Live ships and gate counts come from the Railway server. Add `?local` to the URL
 - `js/util.js`: palette, number formatting, the canvas stage and the sparkline helper.
 - `js/data.js`: loads the processed data, live ships, markets and the weather at a ship (Open-Meteo, no key needed).
 - `js/logo.js`: the glyph-matrix HEADWAY logo, same design as `design/logo.html`.
-- `js/globe.js`: the globe. Dotted land, all 210 routes lit by their efficiency that week, flow particles coloured by vessel mix, strait valves whose gap is traffic vs 2023, and live ships as streaks when you're at the latest week.
+- `js/globe.js`: the globe. Filled countries, all 210 routes in blue lit by their efficiency this week, strait valves whose gap is traffic vs 2023, and live ships as dots that turn into pins when you zoom in. Drag sideways to spin, up and down to tilt, all the way over the poles.
 - `js/ship.js`: the ship scene you get when you dive into a ship. The ship's drawing depends on its type (tanker, container, bulk, passenger, general) and the sea, wind, rain, fog, clouds and day/night all come from the live weather at its position. Drone view from above and a side profile.
-- `js/main.js`: wires it together. Overview strip, markets rail, detail panel, replay timeline, ship search and the dive.
+- `js/main.js`: wires it together. Overview strip, markets rail, detail panel, ship search and the dive. The page only shows what's happening now (no replay).
 - `data/land.json`: land dots and borders for the globe, built by `tools/build_land.py` from `data/processed/countries.geojson`.
 
 ## Markets and the wallet
@@ -30,4 +30,4 @@ The markets rail uses `/api/markets` from the server if it exists, otherwise it 
 
 ## Colour rule
 
-Colour only ever means vessel type. Efficiency, odds and drops are shown with brightness, thickness or length, never hue. The rest is in the Look and feel section of `BRIEF.md`.
+Colour means vessel type, plus one accent blue (`--accent`, #4c8dff) for routes, selection, hover and buttons. Efficiency, odds and drops are shown with brightness, thickness or length. The rest is in the Look and feel section of `BRIEF.md`.
