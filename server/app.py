@@ -274,6 +274,7 @@ def ships(
     types: str | None = Query(None, description="comma list: cargo,tanker,passenger,other,unknown"),
     moving_only: bool = False,
     limit: int = Query(5000, ge=1, le=50000),
+    count_only: bool = Query(False, description="just the number of matching ships, no list or limit"),
 ):
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=max_age_minutes)
     box = [float(v) for v in bbox.split(",")] if bbox else None
@@ -290,10 +291,13 @@ def ships(
             item = state.describe(p)
             if wanted and item["type_group"] not in wanted:
                 continue
+            if count_only:
+                out.append(None)
+                continue
             out.append(item)
             if len(out) >= limit:
                 break
-    return {"count": len(out), "ships": out}
+    return {"count": len(out), "ships": [] if count_only else out}
 
 
 @app.get("/api/ship/{query}")

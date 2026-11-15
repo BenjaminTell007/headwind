@@ -8,7 +8,7 @@ const VESSELS = [['container', C.container, 'CONTAINER'], ['tanker', C.tanker, '
 
 /* ---------- intro and brand ---------- */
 // fall back to the static logo if an old cached logo.js has no glyphIntro
-const intro = (HW.glyphIntro || HW.glyphLogo)($('introcv'), { step: 12, bg: C.bg });
+const intro = (HW.glyphIntro || HW.glyphLogo)($('introcv'), { step: 16, bg: C.bg });   // same glyph size as the other pages' loaders
 const introStart = performance.now();
 
 /* ---------- boot ---------- */
@@ -263,4 +263,11 @@ const altTick = () => {
 altTick();
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (scene.S.on) $('back').click(); else globe.select(null); } });
 
+// the 3D scene lets you click another ship's name tag: show that ship's details and weather
+window.addEventListener('headway:shipfocus', async e => {
+  const s = { ...e.detail, g: e.detail.type_group || HW.vesselGroup(e.detail.type) };
+  renderHUD(s, null);
+  const w = await HW.weatherAt(+s.lat, +s.lon).catch(() => null);
+  if (w) renderHUD(s, w);
+});
 window.__hw = { D, globe, scene, dive };
