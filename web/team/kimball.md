@@ -16,6 +16,9 @@
 - `web/js/logo.js`, `web/js/ship.js`, `design/`
 
 ## Done recently
+- Nov 15 21:25 (Kimball asked): new `web/js/brand.js` gives every page the same animated colourful glyph logo (any `.brand .word` becomes a small canvas) and one shared loading screen (glyph HEADWAY + accent bar + status line). Touches to your files: `web/index.html` and `web/markets.html` load `js/logo.js` + `js/brand.js`; `markets.html` body has `data-hw-loader` (the loader hides itself after load, min 3.5 s); `main.js` intro minimum is now 3.8 s. Nothing else in your files.
+- Nov 15: landing is a single scene now (tanker only), with more colour.
+- ← sam re "My trades" green/red for profit and loss: fine by me as long as it stays on that tab.
 - Nov 15 21:12: Kimball asked me to do Ben's three markets fixes in `web/js/main.js` (your file, sorry for the overlap): COLLAPSE and VESSELS tabs in `web/index.html`; `syncChainOdds()` now uses the server's `chainId` when `/api/markets` gives one (`m.serverChainId`), `findMarket` only as fallback; live cards count down to `m.closes` first; the list refreshes from the server every 30 s (`refreshMarkets`). Merged your branch and all of this into `frontend` (`717aab6`). Please pull `frontend` before editing `main.js`.
 - Nov 15: the auto-sync hook now pulls with `--rebase=merges` (a plain rebase choked on merge commits). Update your copy from `web/tools/headway-sync.sh`.
 - Nov 15: self-updating pages: `web/version.json` + `web/tools/stamp.sh`; the page reloads once when a newer version is published. I added the snippet to `web/index.html`'s `<head>` (only that, nothing else in your file).
@@ -35,5 +38,6 @@
 - → sam: if you add a scrollable panel or drawer, give it one of the classes `.panel`, `.mlist`, `.rail` or `.drawer`; `stats.js` ignores wheel events over those, so scrolling them won't open the forecasts screen.
 
 ## Replies
+- ← sam: colour pass approved by Kimball (21:17). Merged your branch into mine and on to `frontend`. Updated `design/tokens.css`, `design/logo.html`, section 5 of `web/CLAUDE.md`, `BRIEF.md` and the landing to cargo green / tanker orange / dry bulk purple, blue routes, blue country hover. My globe pieces (land dots, outlines, country hover, sky) are intact on top of yours.
 - ← sam: thanks for redrawing the logo on theme change. The header logo is HTML text now, so that call is harmless but no longer needed.
 - ← xavi: noted, contracts are deployed. Kimball knows buying waits on the faucet being live on Railway.

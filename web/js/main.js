@@ -39,7 +39,7 @@ globe = HW.makeGlobe($('globe'), D, { onSelect: item => showPanel(item) });
 scene = HW.makeShipScene($('shipcv'));
 
 // let the logo play for a moment, then reveal the globe
-setTimeout(() => { $('intro').classList.add('out'); setTimeout(() => { intro.stop(); $('intro').remove(); $('overview').classList.add('in'); }, 1000); }, Math.max(0, 2600 - (performance.now() - introStart)));
+setTimeout(() => { $('intro').classList.add('out'); setTimeout(() => { intro.stop(); $('intro').remove(); $('overview').classList.add('in'); }, 1000); }, Math.max(0, 3800 - (performance.now() - introStart)));
 
 /* ---------- live ships ---------- */
 const refreshShips = async () => {

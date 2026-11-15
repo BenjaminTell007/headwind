@@ -4,7 +4,7 @@
   --bg:#0a0a0a; --bg-rgb:10,10,10; --land:#2c2f34; --line:#1c1c1e; --line2:#2a2a2c; --fg:#f2f2f0; --text2:#c4c4c2; --dim:#8a8a8a; --faint:#4a4a4a;
   --accent:#4c8dff; --on-accent:#ffffff;
   --glass:rgba(18,18,20,.86); --shadow:0 8px 30px rgba(0,0,0,.35);
-  --container:#f08a3c; --tanker:#8f82f2; --bulk:#46b36f; --general:#ea86b5; --roro:#e9c84b; --other:#f2f2f2;
+  --container:#46b36f; --tanker:#f08a3c; --bulk:#8f82f2; --general:#ea86b5; --roro:#e9c84b; --other:#f2f2f2;
   --yes:#f2f2f2; --no:#6b6b6b;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Inter","Helvetica Neue",Arial,sans-serif;
@@ -46,7 +46,7 @@ header > * { pointer-events:auto; }
 .nav a:hover { color:var(--fg); }
 .nav a.on { background:var(--fg); color:var(--bg); }
 .live b { color:var(--fg); font-weight:500; }
-.live::before { content:''; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--bulk); margin-right:8px; vertical-align:0; animation:pulse 2s infinite; }
+.live::before { content:''; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--container); margin-right:8px; vertical-align:0; animation:pulse 2s infinite; }
 .live.off::before { background:var(--faint); animation:none; }
 @keyframes pulse { 50% { opacity:.25; } }
 .search { margin-left:auto; display:flex; align-items:center; gap:8px; border:1px solid var(--line2); border-radius:20px; padding:7px 14px; background:rgba(var(--bg-rgb),.7); backdrop-filter:blur(8px); }
@@ -65,7 +65,7 @@ header > * { pointer-events:auto; }
 .overview .cell { min-width:190px; padding:12px 16px; background:var(--glass); backdrop-filter:blur(10px); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); }
 .overview .cell .num { margin:8px 0 4px; }
 .overview .cell .sub { color:var(--dim); font:12px/1.35 var(--sans); }
-.overview .cell.lead .num { color:var(--accent); }
+.overview .cell .num { color:var(--accent); }
 .overview .cell[data-strait] { cursor:pointer; }
 .overview .cell[data-strait]:hover { border-color:var(--accent); }
 
@@ -127,7 +127,7 @@ body.nomarkets .rail { transform:translateX(-360px); opacity:0; pointer-events:n
 
 .legend { position:absolute; right:128px; bottom:24px; z-index:4; display:flex; gap:16px; color:var(--dim); font-size:10.5px; letter-spacing:.12em; }
 .legend i { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:0; }
-.legend i.ln { width:16px; height:2px; border-radius:1px; background:var(--fg); opacity:.6; vertical-align:3px; }
+.legend i.ln { width:16px; height:2px; border-radius:1px; background:var(--accent); box-shadow:0 0 6px var(--accent); vertical-align:3px; }
 .legend i.ring { width:9px; height:9px; background:none; border:1.5px solid var(--fg); border-left-color:transparent; border-right-color:transparent; }
 
 /* intro */
