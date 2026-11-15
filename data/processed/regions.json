@@ -1,0 +1,194 @@
+{
+ "regions": {
+  "East Asia": {
+   "hub": "Shanghai",
+   "lon": 122.05,
+   "lat": 30.6
+  },
+  "Northeast Asia": {
+   "hub": "Busan",
+   "lon": 129.05,
+   "lat": 35.08
+  },
+  "Southeast Asia": {
+   "hub": "Singapore",
+   "lon": 103.8,
+   "lat": 1.25
+  },
+  "South Asia": {
+   "hub": "Nhava Sheva",
+   "lon": 72.95,
+   "lat": 18.95
+  },
+  "Middle East Gulf": {
+   "hub": "Jebel Ali",
+   "lon": 55.0,
+   "lat": 25.0
+  },
+  "Red Sea": {
+   "hub": "Jeddah",
+   "lon": 39.1,
+   "lat": 21.45
+  },
+  "East Mediterranean": {
+   "hub": "Piraeus",
+   "lon": 23.6,
+   "lat": 37.94
+  },
+  "West Mediterranean": {
+   "hub": "Valencia",
+   "lon": -0.3,
+   "lat": 39.45
+  },
+  "Black Sea": {
+   "hub": "Constanta",
+   "lon": 28.75,
+   "lat": 44.1
+  },
+  "North Europe": {
+   "hub": "Rotterdam",
+   "lon": 4.0,
+   "lat": 51.95
+  },
+  "Baltic": {
+   "hub": "Gdansk",
+   "lon": 18.75,
+   "lat": 54.45
+  },
+  "West Africa": {
+   "hub": "Lagos",
+   "lon": 3.38,
+   "lat": 6.43
+  },
+  "East Africa": {
+   "hub": "Mombasa",
+   "lon": 39.7,
+   "lat": -4.1
+  },
+  "Southern Africa": {
+   "hub": "Durban",
+   "lon": 31.05,
+   "lat": -29.87
+  },
+  "North America East": {
+   "hub": "New York",
+   "lon": -74.05,
+   "lat": 40.6
+  },
+  "US Gulf": {
+   "hub": "Houston",
+   "lon": -94.8,
+   "lat": 29.3
+  },
+  "North America West": {
+   "hub": "Los Angeles",
+   "lon": -118.27,
+   "lat": 33.73
+  },
+  "Caribbean": {
+   "hub": "Kingston",
+   "lon": -76.8,
+   "lat": 17.95
+  },
+  "South America East": {
+   "hub": "Santos",
+   "lon": -46.3,
+   "lat": -23.98
+  },
+  "South America West": {
+   "hub": "Callao",
+   "lon": -77.2,
+   "lat": -12.05
+  },
+  "Oceania": {
+   "hub": "Sydney",
+   "lon": 151.3,
+   "lat": -33.95
+  }
+ },
+ "passage_groups": {
+  "red_sea": {
+   "passages": [
+    "suez",
+    "babalmandab"
+   ],
+   "chokepoints": [
+    "Suez Canal",
+    "Bab el-Mandeb Strait"
+   ]
+  },
+  "panama": {
+   "passages": [
+    "panama"
+   ],
+   "chokepoints": [
+    "Panama Canal"
+   ]
+  },
+  "malacca": {
+   "passages": [
+    "malacca"
+   ],
+   "chokepoints": [
+    "Malacca Strait"
+   ]
+  },
+  "sunda": {
+   "passages": [
+    "sunda"
+   ],
+   "chokepoints": [
+    "Sunda Strait"
+   ]
+  },
+  "hormuz": {
+   "passages": [
+    "ormuz"
+   ],
+   "chokepoints": [
+    "Strait of Hormuz"
+   ]
+  },
+  "bosporus": {
+   "passages": [
+    "bosporus"
+   ],
+   "chokepoints": [
+    "Bosporus Strait"
+   ]
+  },
+  "gibraltar": {
+   "passages": [
+    "gibraltar"
+   ],
+   "chokepoints": [
+    "Gibraltar Strait"
+   ]
+  },
+  "cape": {
+   "passages": [
+    "south_africa"
+   ],
+   "chokepoints": [
+    "Cape of Good Hope"
+   ]
+  },
+  "magellan": {
+   "passages": [
+    "chili"
+   ],
+   "chokepoints": [
+    "Magellan Strait"
+   ]
+  },
+  "bering": {
+   "passages": [
+    "bering"
+   ],
+   "chokepoints": [
+    "Bering Strait"
+   ]
+  }
+ },
+ "speed_knots": 15
+}

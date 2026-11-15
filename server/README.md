@@ -1,0 +1,38 @@
+# Server
+
+A small FastAPI app that serves the processed data and the live ships, and will hold the faucet relayer and the market keeper.
+
+## Run it
+
+From the repo root:
+
+```bash
+~/.venvs/chokepoint/bin/python -m uvicorn server.app:app --port 8787 --reload
+```
+
+Then open http://localhost:8787/api/health. It needs the ship logger running on the same machine to have live ships:
+
+```bash
+~/.venvs/chokepoint/bin/python -I scripts/ais_logger.py
+```
+
+The logger reads the aisstream key from `.env` in the repo root (`AISSTREAM_API_KEY=...`). Only one machine needs the key.
+
+## Endpoints
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/health` | ships in memory, last read of the logger files |
+| `GET /api/ships` | latest position of every ship seen. Filters: `max_age_minutes`, `bbox=minLon,minLat,maxLon,maxLat`, `types=cargo,tanker,passenger,other,unknown`, `moving_only`, `limit` |
+| `GET /api/ship/{query}` | one ship by MMSI, IMO or name, with type, destination, ETA, draught, length |
+| `GET /api/gates/{gate_id}/count` | cargo ships and tankers that crossed the gate since `since` (ISO time) or in the last `minutes`. This is what resolves a live market |
+| `GET /data/{file}` | any file in `data/processed/`, plus `/data/gates.json` |
+| `POST /api/faucet` | not built yet |
+
+## To build
+
+- `POST /api/faucet {"address": "0x..."}`: call `Faucet.drip(address)` with the relayer key from `.env`. `web3` or `eth-account` for Python, or move this piece to a small Node script with `viem` if that's faster for whoever builds it.
+- Keeper loop: every 30 seconds, make sure each live gate in `market_seeds.json` (`live` group) has an open market. When one closes, call `/api/gates/{gate}/count?since={open time}`, then `resolve(id, count)`, then open the next one.
+- Seed the weekly, route, trade and replay markets once at start-up from `market_seeds.json`.
+
+Live counts only cover what the server has in memory: it reads the last ~12 MB of each log file when it starts, then follows them. Restarting the server mid-market can undercount that market, so don't restart during the demo.

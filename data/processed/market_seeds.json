@@ -1,0 +1,1131 @@
+{
+ "data_through": "2026-11-08",
+ "weekly": [
+  {
+   "id": "weekly_bab_el_mandeb_strait_20261122",
+   "question": "Will at least 190 ships transit the Bab el-Mandeb Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Bab el-Mandeb Strait:weekly_transits",
+   "threshold": 190,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    173,
+    190,
+    207,
+    198,
+    185,
+    202,
+    191,
+    184
+   ]
+  },
+  {
+   "id": "weekly_balabac_strait_20261122",
+   "question": "Will at least 68 ships transit the Balabac Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Balabac Strait:weekly_transits",
+   "threshold": 68,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    64,
+    62,
+    87,
+    56,
+    72,
+    87,
+    112,
+    64
+   ]
+  },
+  {
+   "id": "weekly_bering_strait_20261122",
+   "question": "Will at least 24 ships transit the Bering Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Bering Strait:weekly_transits",
+   "threshold": 24,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    28,
+    25,
+    47,
+    45,
+    22,
+    14,
+    13,
+    7
+   ]
+  },
+  {
+   "id": "weekly_bohai_strait_20261122",
+   "question": "Will at least 1096 ships transit the Bohai Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Bohai Strait:weekly_transits",
+   "threshold": 1096,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    1120,
+    1097,
+    1044,
+    1137,
+    1033,
+    1148,
+    1061,
+    1096
+   ]
+  },
+  {
+   "id": "weekly_bosporus_strait_20261122",
+   "question": "Will at least 336 ships transit the Bosporus Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Bosporus Strait:weekly_transits",
+   "threshold": 336,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    380,
+    347,
+    270,
+    406,
+    326,
+    376,
+    311,
+    318
+   ]
+  },
+  {
+   "id": "weekly_cape_of_good_hope_20261122",
+   "question": "Will at least 612 ships transit the Cape of Good Hope in the week ending Nov 22, 2026?",
+   "series": "portwatch:Cape of Good Hope:weekly_transits",
+   "threshold": 612,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    620,
+    617,
+    614,
+    588,
+    600,
+    610,
+    644,
+    545
+   ]
+  },
+  {
+   "id": "weekly_dover_strait_20261122",
+   "question": "Will at least 1194 ships transit the Dover Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Dover Strait:weekly_transits",
+   "threshold": 1194,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    1138,
+    1206,
+    1183,
+    1148,
+    1225,
+    901,
+    1292,
+    1241
+   ]
+  },
+  {
+   "id": "weekly_gibraltar_strait_20261122",
+   "question": "Will at least 926 ships transit the Gibraltar Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Gibraltar Strait:weekly_transits",
+   "threshold": 926,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    893,
+    931,
+    946,
+    934,
+    871,
+    815,
+    921,
+    952
+   ]
+  },
+  {
+   "id": "weekly_kerch_strait_20261122",
+   "question": "Will at least 0 ships transit the Kerch Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Kerch Strait:weekly_transits",
+   "threshold": 0,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    0,
+    0,
+    0,
+    2,
+    0,
+    1,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "weekly_korea_strait_20261122",
+   "question": "Will at least 1471 ships transit the Korea Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Korea Strait:weekly_transits",
+   "threshold": 1471,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    1583,
+    1464,
+    1510,
+    1478,
+    1371,
+    1389,
+    1508,
+    1388
+   ]
+  },
+  {
+   "id": "weekly_lombok_strait_20261122",
+   "question": "Will at least 262 ships transit the Lombok Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Lombok Strait:weekly_transits",
+   "threshold": 262,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    290,
+    252,
+    249,
+    255,
+    269,
+    281,
+    233,
+    286
+   ]
+  },
+  {
+   "id": "weekly_luzon_strait_20261122",
+   "question": "Will at least 685 ships transit the Luzon Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Luzon Strait:weekly_transits",
+   "threshold": 685,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    693,
+    610,
+    632,
+    705,
+    724,
+    436,
+    790,
+    677
+   ]
+  },
+  {
+   "id": "weekly_magellan_strait_20261122",
+   "question": "Will at least 32 ships transit the Magellan Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Magellan Strait:weekly_transits",
+   "threshold": 32,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    39,
+    38,
+    57,
+    33,
+    30,
+    30,
+    28,
+    25
+   ]
+  },
+  {
+   "id": "weekly_makassar_strait_20261122",
+   "question": "Will at least 389 ships transit the Makassar Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Makassar Strait:weekly_transits",
+   "threshold": 389,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    413,
+    392,
+    378,
+    378,
+    390,
+    410,
+    307,
+    388
+   ]
+  },
+  {
+   "id": "weekly_malacca_strait_20261122",
+   "question": "Will at least 1590 ships transit the Malacca Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Malacca Strait:weekly_transits",
+   "threshold": 1590,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    1608,
+    1525,
+    1584,
+    1631,
+    1506,
+    1596,
+    1419,
+    1651
+   ]
+  },
+  {
+   "id": "weekly_mindoro_strait_20261122",
+   "question": "Will at least 368 ships transit the Mindoro Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Mindoro Strait:weekly_transits",
+   "threshold": 368,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    364,
+    367,
+    375,
+    359,
+    396,
+    383,
+    334,
+    369
+   ]
+  },
+  {
+   "id": "weekly_mona_passage_20261122",
+   "question": "Will at least 80 ships transit the Mona Passage in the week ending Nov 22, 2026?",
+   "series": "portwatch:Mona Passage:weekly_transits",
+   "threshold": 80,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    87,
+    93,
+    77,
+    79,
+    79,
+    95,
+    81,
+    67
+   ]
+  },
+  {
+   "id": "weekly_ombai_strait_20261122",
+   "question": "Will at least 56 ships transit the Ombai Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Ombai Strait:weekly_transits",
+   "threshold": 56,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    58,
+    83,
+    70,
+    74,
+    54,
+    51,
+    48,
+    54
+   ]
+  },
+  {
+   "id": "weekly_oresund_strait_20261122",
+   "question": "Will at least 274 ships transit the Oresund Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Oresund Strait:weekly_transits",
+   "threshold": 274,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    269,
+    246,
+    272,
+    275,
+    290,
+    300,
+    271,
+    306
+   ]
+  },
+  {
+   "id": "weekly_panama_canal_20261122",
+   "question": "Will at least 190 ships transit the Panama Canal in the week ending Nov 22, 2026?",
+   "series": "portwatch:Panama Canal:weekly_transits",
+   "threshold": 190,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    183,
+    189,
+    190,
+    181,
+    194,
+    201,
+    191,
+    191
+   ]
+  },
+  {
+   "id": "weekly_strait_of_hormuz_20261122",
+   "question": "Will at least 24 ships transit the Strait of Hormuz in the week ending Nov 22, 2026?",
+   "series": "portwatch:Strait of Hormuz:weekly_transits",
+   "threshold": 24,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    22,
+    22,
+    19,
+    29,
+    26,
+    23,
+    31,
+    27
+   ]
+  },
+  {
+   "id": "weekly_suez_canal_20261122",
+   "question": "Will at least 297 ships transit the Suez Canal in the week ending Nov 22, 2026?",
+   "series": "portwatch:Suez Canal:weekly_transits",
+   "threshold": 297,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    293,
+    280,
+    302,
+    292,
+    310,
+    289,
+    301,
+    311
+   ]
+  },
+  {
+   "id": "weekly_sunda_strait_20261122",
+   "question": "Will at least 236 ships transit the Sunda Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Sunda Strait:weekly_transits",
+   "threshold": 236,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    237,
+    239,
+    239,
+    231,
+    235,
+    216,
+    208,
+    237
+   ]
+  },
+  {
+   "id": "weekly_taiwan_strait_20261122",
+   "question": "Will at least 1609 ships transit the Taiwan Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Taiwan Strait:weekly_transits",
+   "threshold": 1609,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    1559,
+    1626,
+    1631,
+    1609,
+    1591,
+    1330,
+    1729,
+    1609
+   ]
+  },
+  {
+   "id": "weekly_torres_strait_20261122",
+   "question": "Will at least 57 ships transit the Torres Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Torres Strait:weekly_transits",
+   "threshold": 57,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    54,
+    64,
+    57,
+    61,
+    57,
+    56,
+    64,
+    56
+   ]
+  },
+  {
+   "id": "weekly_tsugaru_strait_20261122",
+   "question": "Will at least 338 ships transit the Tsugaru Strait in the week ending Nov 22, 2026?",
+   "series": "portwatch:Tsugaru Strait:weekly_transits",
+   "threshold": 338,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    412,
+    356,
+    351,
+    365,
+    308,
+    326,
+    210,
+    260
+   ]
+  },
+  {
+   "id": "weekly_windward_passage_20261122",
+   "question": "Will at least 104 ships transit the Windward Passage in the week ending Nov 22, 2026?",
+   "series": "portwatch:Windward Passage:weekly_transits",
+   "threshold": 104,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    104,
+    97,
+    103,
+    105,
+    93,
+    106,
+    111,
+    101
+   ]
+  },
+  {
+   "id": "weekly_yucatan_channel_20261122",
+   "question": "Will at least 354 ships transit the Yucatan Channel in the week ending Nov 22, 2026?",
+   "series": "portwatch:Yucatan Channel:weekly_transits",
+   "threshold": 354,
+   "is_above": true,
+   "week": [
+    "2026-11-16",
+    "2026-11-22"
+   ],
+   "closes": "2026-11-16",
+   "settles_on": "IMF PortWatch daily transit counts, summed Monday to Sunday",
+   "last_8_weeks": [
+    352,
+    346,
+    336,
+    367,
+    356,
+    389,
+    324,
+    357
+   ]
+  }
+ ],
+ "route": [
+  {
+   "id": "route_days_east_asia__north_europe_20261122",
+   "question": "Will the expected transit time East Asia to North Europe be at least 35.0 days in the week ending Nov 22, 2026?",
+   "series": "route_efficiency:east_asia__north_europe:expected_days",
+   "threshold": 35.0,
+   "is_above": true,
+   "normal_days": 29.2,
+   "efficiency_now": 0.833,
+   "last_8_weeks": [
+    35.2,
+    35.2,
+    35.0,
+    35.0,
+    35.0,
+    34.9,
+    35.0,
+    35.0
+   ],
+   "settles_on": "Route efficiency index computed from IMF PortWatch transits (scripts/build_efficiency.py)"
+  },
+  {
+   "id": "route_days_east_asia__west_mediterranean_20261122",
+   "question": "Will the expected transit time East Asia to West Mediterranean be at least 32.3 days in the week ending Nov 22, 2026?",
+   "series": "route_efficiency:east_asia__west_mediterranean:expected_days",
+   "threshold": 32.3,
+   "is_above": true,
+   "normal_days": 24.7,
+   "efficiency_now": 0.766,
+   "last_8_weeks": [
+    32.5,
+    32.4,
+    32.3,
+    32.2,
+    32.2,
+    32.1,
+    32.2,
+    32.3
+   ],
+   "settles_on": "Route efficiency index computed from IMF PortWatch transits (scripts/build_efficiency.py)"
+  },
+  {
+   "id": "route_days_southeast_asia__north_europe_20261122",
+   "question": "Will the expected transit time Southeast Asia to North Europe be at least 29.5 days in the week ending Nov 22, 2026?",
+   "series": "route_efficiency:southeast_asia__north_europe:expected_days",
+   "threshold": 29.5,
+   "is_above": true,
+   "normal_days": 23.3,
+   "efficiency_now": 0.791,
+   "last_8_weeks": [
+    29.6,
+    29.6,
+    29.5,
+    29.4,
+    29.4,
+    29.3,
+    29.4,
+    29.5
+   ],
+   "settles_on": "Route efficiency index computed from IMF PortWatch transits (scripts/build_efficiency.py)"
+  },
+  {
+   "id": "route_days_south_asia__north_europe_20261122",
+   "question": "Will the expected transit time South Asia to North Europe be at least 25.6 days in the week ending Nov 22, 2026?",
+   "series": "route_efficiency:south_asia__north_europe:expected_days",
+   "threshold": 25.6,
+   "is_above": true,
+   "normal_days": 17.7,
+   "efficiency_now": 0.692,
+   "last_8_weeks": [
+    25.8,
+    25.8,
+    25.6,
+    25.5,
+    25.5,
+    25.4,
+    25.5,
+    25.6
+   ],
+   "settles_on": "Route efficiency index computed from IMF PortWatch transits (scripts/build_efficiency.py)"
+  },
+  {
+   "id": "route_days_east_asia__north_america_east_20261122",
+   "question": "Will the expected transit time East Asia to North America East be at least 30.2 days in the week ending Nov 22, 2026?",
+   "series": "route_efficiency:east_asia__north_america_east:expected_days",
+   "threshold": 30.2,
+   "is_above": true,
+   "normal_days": 29.6,
+   "efficiency_now": 0.981,
+   "last_8_weeks": [
+    29.6,
+    30.1,
+    30.2,
+    30.3,
+    30.3,
+    30.2,
+    30.2,
+    30.2
+   ],
+   "settles_on": "Route efficiency index computed from IMF PortWatch transits (scripts/build_efficiency.py)"
+  },
+  {
+   "id": "route_eff_east_asia__middle_east_gulf_20261122",
+   "question": "Will route efficiency East Asia to Middle East Gulf be at least 0.040 in the week ending Nov 22, 2026?",
+   "series": "route_efficiency:east_asia__middle_east_gulf:efficiency",
+   "threshold": 0.04,
+   "is_above": true,
+   "last_8_weeks": [
+    0.041,
+    0.038,
+    0.037,
+    0.034,
+    0.036,
+    0.036,
+    0.041,
+    0.04
+   ],
+   "settles_on": "Route efficiency index computed from IMF PortWatch transits (scripts/build_efficiency.py)"
+  },
+  {
+   "id": "route_eff_middle_east_gulf__north_europe_20261122",
+   "question": "Will route efficiency Middle East Gulf to North Europe be at least 0.027 in the week ending Nov 22, 2026?",
+   "series": "route_efficiency:middle_east_gulf__north_europe:efficiency",
+   "threshold": 0.027,
+   "is_above": true,
+   "last_8_weeks": [
+    0.028,
+    0.026,
+    0.025,
+    0.023,
+    0.024,
+    0.025,
+    0.028,
+    0.027
+   ],
+   "settles_on": "Route efficiency index computed from IMF PortWatch transits (scripts/build_efficiency.py)"
+  },
+  {
+   "id": "route_eff_black_sea__north_europe_20261122",
+   "question": "Will route efficiency Black Sea to North Europe be at least 0.488 in the week ending Nov 22, 2026?",
+   "series": "route_efficiency:black_sea__north_europe:efficiency",
+   "threshold": 0.488,
+   "is_above": true,
+   "last_8_weeks": [
+    0.564,
+    0.537,
+    0.5,
+    0.515,
+    0.495,
+    0.505,
+    0.521,
+    0.488
+   ],
+   "settles_on": "Route efficiency index computed from IMF PortWatch transits (scripts/build_efficiency.py)"
+  },
+  {
+   "id": "route_days_east_asia__us_gulf_20261122",
+   "question": "Will the expected transit time East Asia to US Gulf be at least 29.6 days in the week ending Nov 22, 2026?",
+   "series": "route_efficiency:east_asia__us_gulf:expected_days",
+   "threshold": 29.6,
+   "is_above": true,
+   "normal_days": 28.3,
+   "efficiency_now": 0.957,
+   "last_8_weeks": [
+    28.3,
+    29.4,
+    29.7,
+    30.0,
+    29.8,
+    29.7,
+    29.7,
+    29.6
+   ],
+   "settles_on": "Route efficiency index computed from IMF PortWatch transits (scripts/build_efficiency.py)"
+  },
+  {
+   "id": "route_world_index_20261122",
+   "question": "Will the world route efficiency index be at least 0.756 in the week ending Nov 22, 2026?",
+   "series": "route_efficiency:world:index",
+   "threshold": 0.756,
+   "is_above": true,
+   "last_8_weeks": [
+    0.77,
+    0.758,
+    0.756,
+    0.755,
+    0.755,
+    0.758,
+    0.758,
+    0.756
+   ],
+   "settles_on": "Plain average of corridor efficiency (scripts/build_efficiency.py)"
+  }
+ ],
+ "trade": [
+  {
+   "id": "trade_us_imports_china_202609",
+   "question": "Will US imports from China be at least $28.2B in September 2026?",
+   "series": "comtrade:US:imports:China:monthly",
+   "threshold": 28200000000.0,
+   "is_above": true,
+   "settles_on": "US-reported monthly imports (UN Comtrade / Census)",
+   "last_3_months": {
+    "2026-06": 26785519035,
+    "2026-07": 28856635423,
+    "2026-08": 29009609954
+   }
+  },
+  {
+   "id": "trade_us_imports_mexico_202609",
+   "question": "Will US imports from Mexico be at least $59.2B in September 2026?",
+   "series": "comtrade:US:imports:Mexico:monthly",
+   "threshold": 59200000000.0,
+   "is_above": true,
+   "settles_on": "US-reported monthly imports (UN Comtrade / Census)",
+   "last_3_months": {
+    "2026-06": 55643518522,
+    "2026-07": 60938177376,
+    "2026-08": 61021656442
+   }
+  },
+  {
+   "id": "trade_us_imports_canada_202609",
+   "question": "Will US imports from Canada be at least $36.3B in September 2026?",
+   "series": "comtrade:US:imports:Canada:monthly",
+   "threshold": 36300000000.0,
+   "is_above": true,
+   "settles_on": "US-reported monthly imports (UN Comtrade / Census)",
+   "last_3_months": {
+    "2026-06": 38049115450,
+    "2026-07": 34240267298,
+    "2026-08": 36713384226
+   }
+  },
+  {
+   "id": "trade_us_imports_viet_nam_202609",
+   "question": "Will US imports from Viet Nam be at least $26.8B in September 2026?",
+   "series": "comtrade:US:imports:Viet Nam:monthly",
+   "threshold": 26800000000.0,
+   "is_above": true,
+   "settles_on": "US-reported monthly imports (UN Comtrade / Census)",
+   "last_3_months": {
+    "2026-06": 26021005952,
+    "2026-07": 27160380118,
+    "2026-08": 27245537670
+   }
+  },
+  {
+   "id": "trade_us_imports_germany_202609",
+   "question": "Will US imports from Germany be at least $13.5B in September 2026?",
+   "series": "comtrade:US:imports:Germany:monthly",
+   "threshold": 13500000000.0,
+   "is_above": true,
+   "settles_on": "US-reported monthly imports (UN Comtrade / Census)",
+   "last_3_months": {
+    "2026-06": 13821018971,
+    "2026-07": 13451552789,
+    "2026-08": 13338024147
+   }
+  },
+  {
+   "id": "trade_us_imports_switzerland_202609",
+   "question": "Will US imports from Switzerland be at least $4.7B in September 2026?",
+   "series": "comtrade:US:imports:Switzerland:monthly",
+   "threshold": 4700000000.0,
+   "is_above": true,
+   "settles_on": "US-reported monthly imports (UN Comtrade / Census)",
+   "last_3_months": {
+    "2026-06": 3760701744,
+    "2026-07": 5131725866,
+    "2026-08": 5237381220
+   }
+  }
+ ],
+ "replay": [
+  {
+   "id": "replay_route_days_east_asia__north_europe_20240225",
+   "story": "Red Sea attacks",
+   "question": "Will the expected transit time East Asia to North Europe be at least 33.0 days in the week ending Feb 25, 2024?",
+   "series": "route_efficiency:east_asia__north_europe:expected_days",
+   "threshold": 33.0,
+   "is_above": true,
+   "normal_days": 29.2,
+   "actual": 34.1,
+   "outcome": "YES"
+  },
+  {
+   "id": "replay_route_days_east_asia__north_america_east_20240128",
+   "story": "Panama drought",
+   "question": "Will the expected transit time East Asia to North America East be at least 31.0 days in the week ending Jan 28, 2024?",
+   "series": "route_efficiency:east_asia__north_america_east:expected_days",
+   "threshold": 31.0,
+   "is_above": true,
+   "normal_days": 29.6,
+   "actual": 31.4,
+   "outcome": "YES"
+  },
+  {
+   "id": "replay_route_days_east_asia__north_europe_20210404",
+   "story": "Ever Given",
+   "question": "Will the expected transit time East Asia to North Europe be at least 30.0 days in the week ending Apr 04, 2021?",
+   "series": "route_efficiency:east_asia__north_europe:expected_days",
+   "threshold": 30.0,
+   "is_above": true,
+   "normal_days": 29.2,
+   "actual": 32.6,
+   "outcome": "YES"
+  },
+  {
+   "id": "replay_suez_canal_20240121",
+   "story": "Red Sea attacks",
+   "question": "Will at least 387 ships transit the Suez Canal in the week ending Jan 21, 2024?",
+   "series": "portwatch:Suez Canal:weekly_transits",
+   "threshold": 387,
+   "is_above": true,
+   "baseline_week": 515,
+   "baseline_window": [
+    "2023-01-01",
+    "2023-10-31"
+   ],
+   "actual": 355,
+   "outcome": "NO"
+  },
+  {
+   "id": "replay_cape_of_good_hope_20240121",
+   "story": "Red Sea attacks",
+   "question": "Will at least 428 ships transit the Cape of Good Hope in the week ending Jan 21, 2024?",
+   "series": "portwatch:Cape of Good Hope:weekly_transits",
+   "threshold": 428,
+   "is_above": true,
+   "baseline_week": 342,
+   "baseline_window": [
+    "2023-01-01",
+    "2023-10-31"
+   ],
+   "actual": 491,
+   "outcome": "YES"
+  },
+  {
+   "id": "replay_panama_canal_20231217",
+   "story": "Panama drought",
+   "question": "Will at least 169 ships transit the Panama Canal in the week ending Dec 17, 2023?",
+   "series": "portwatch:Panama Canal:weekly_transits",
+   "threshold": 169,
+   "is_above": true,
+   "baseline_week": 225,
+   "baseline_window": [
+    "2023-01-01",
+    "2023-06-30"
+   ],
+   "actual": 148,
+   "outcome": "NO"
+  },
+  {
+   "id": "replay_strait_of_hormuz_20260308",
+   "story": "Hormuz closure",
+   "question": "Will at least 297 ships transit the Strait of Hormuz in the week ending Mar 08, 2026?",
+   "series": "portwatch:Strait of Hormuz:weekly_transits",
+   "threshold": 297,
+   "is_above": true,
+   "baseline_week": 594,
+   "baseline_window": [
+    "2025-03-01",
+    "2026-02-27"
+   ],
+   "actual": 18,
+   "outcome": "NO"
+  },
+  {
+   "id": "replay_suez_canal_20210328",
+   "story": "Ever Given",
+   "question": "Will at least 288 ships transit the Suez Canal in the week ending Mar 28, 2021?",
+   "series": "portwatch:Suez Canal:weekly_transits",
+   "threshold": 288,
+   "is_above": true,
+   "baseline_week": 385,
+   "baseline_window": [
+    "2021-01-01",
+    "2021-03-22"
+   ],
+   "actual": 141,
+   "outcome": "NO"
+  },
+  {
+   "id": "replay_trade_us_imports_switzerland_202509",
+   "story": "39% US tariff on Swiss goods",
+   "question": "Will US imports from Switzerland be at least $5.3B in September 2025?",
+   "series": "comtrade:US:imports:Switzerland:monthly",
+   "threshold": 5300000000.0,
+   "is_above": true,
+   "baseline_month": 5333432879,
+   "baseline_window": [
+    "2024-01",
+    "2024-12"
+   ],
+   "actual": 4182337898,
+   "outcome": "NO"
+  },
+  {
+   "id": "replay_trade_us_imports_switzerland_202510",
+   "story": "39% US tariff on Swiss goods",
+   "question": "Will US imports from Switzerland be at least $5.3B in October 2025?",
+   "series": "comtrade:US:imports:Switzerland:monthly",
+   "threshold": 5300000000.0,
+   "is_above": true,
+   "baseline_month": 5333432879,
+   "baseline_window": [
+    "2024-01",
+    "2024-12"
+   ],
+   "actual": 3889511329,
+   "outcome": "NO"
+  }
+ ],
+ "live": [
+  {
+   "id": "live_singapore",
+   "question": "Will at least 11 cargo ships and tankers cross the Singapore Strait gate in the next 30 minutes?",
+   "gate": "singapore",
+   "minutes": 30,
+   "threshold": 11,
+   "is_above": true,
+   "ships_per_hour": 21.6,
+   "historical_yes_share": 0.57,
+   "settles_on": "Gate crossings counted from the live aisstream feed by my server (cargo AIS types 70-79 and tankers 80-89, one per ship per hour)"
+  },
+  {
+   "id": "live_scheldt",
+   "question": "Will at least 4 cargo ships and tankers cross the Western Scheldt (Antwerp) gate in the next 30 minutes?",
+   "gate": "scheldt",
+   "minutes": 30,
+   "threshold": 4,
+   "is_above": true,
+   "ships_per_hour": 8.7,
+   "historical_yes_share": 0.52,
+   "settles_on": "Gate crossings counted from the live aisstream feed by my server (cargo AIS types 70-79 and tankers 80-89, one per ship per hour)"
+  },
+  {
+   "id": "live_antwerp",
+   "question": "Will at least 6 cargo ships and tankers cross the Antwerp docks gate in the next 60 minutes?",
+   "gate": "antwerp",
+   "minutes": 60,
+   "threshold": 6,
+   "is_above": true,
+   "ships_per_hour": 7.2,
+   "historical_yes_share": 0.7,
+   "settles_on": "Gate crossings counted from the live aisstream feed by my server (cargo AIS types 70-79 and tankers 80-89, one per ship per hour)"
+  },
+  {
+   "id": "live_rotterdam",
+   "question": "Will at least 7 cargo ships and tankers cross the Rotterdam approach gate in the next 60 minutes?",
+   "gate": "rotterdam",
+   "minutes": 60,
+   "threshold": 7,
+   "is_above": true,
+   "ships_per_hour": 7.1,
+   "historical_yes_share": 0.5,
+   "settles_on": "Gate crossings counted from the live aisstream feed by my server (cargo AIS types 70-79 and tankers 80-89, one per ship per hour)"
+  },
+  {
+   "id": "live_gibraltar",
+   "question": "Will at least 7 cargo ships and tankers cross the Strait of Gibraltar gate in the next 60 minutes?",
+   "gate": "gibraltar",
+   "minutes": 60,
+   "threshold": 7,
+   "is_above": true,
+   "ships_per_hour": 6.6,
+   "historical_yes_share": 0.5,
+   "settles_on": "Gate crossings counted from the live aisstream feed by my server (cargo AIS types 70-79 and tankers 80-89, one per ship per hour)"
+  },
+  {
+   "id": "live_singapore_port",
+   "question": "Will at least 5 cargo ships and tankers cross the Singapore anchorages gate in the next 60 minutes?",
+   "gate": "singapore_port",
+   "minutes": 60,
+   "threshold": 5,
+   "is_above": true,
+   "ships_per_hour": 6.5,
+   "historical_yes_share": 0.7,
+   "settles_on": "Gate crossings counted from the live aisstream feed by my server (cargo AIS types 70-79 and tankers 80-89, one per ship per hour)"
+  }
+ ]
+}

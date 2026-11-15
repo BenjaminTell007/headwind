@@ -1,0 +1,11 @@
+{
+  "as_of": "2026-11-15T16:24:39.674069430+00:00",
+  "ships_tracked_last_hour": 20553,
+  "cargo_and_tankers_underway": 1520,
+  "avg_speed_knots": {
+    "cargo": 9.9,
+    "tanker": 9.3
+  },
+  "share_more_than_50nm_off_lane_pct": 18.2,
+  "method": "Latest position per ship in the last hour of the thinned sample. Underway = 3 to 40 knots. Off lane = more than 50 nm from every route I have geometry for (lanes, corridors, network legs). Free AIS coverage is patchy offshore."
+}

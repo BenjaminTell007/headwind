@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Headway</title>
+<link rel="stylesheet" href="../design/tokens.css">
+<style>
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 16px; }
+  h1 { font: 300 28px/1 var(--mono); letter-spacing: 0.4em; margin: 0 0 6px; }
+  .tag { color: var(--dim); font-size: 11px; letter-spacing: 0.18em; }
+  .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 28px 0; }
+  .stat { border-top: 1px solid var(--line); padding-top: 10px; }
+  .stat b { display: block; font: 500 22px/1.2 var(--sans); }
+  .stat span { color: var(--dim); font-size: 11px; letter-spacing: 0.14em; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>HEADWAY</h1>
+  <div class="tag" id="state">SYS.STATE: CONNECTING</div>
+
+  <div class="strip" id="strip"></div>
+  <div class="strip" id="types"></div>
+  <p class="tag">Starter page: proves the page can read the data files and the live server. The globe goes here.</p>
+</main>
+<script>
+// Where the server is. Change this to the tunnel URL when running on another laptop.
+const SERVER = "http://localhost:8787";
+
+const colours = { cargo: "var(--container)", tanker: "var(--tanker)", passenger: "var(--general)", other: "var(--other)", unknown: "var(--dim)" };
+
+function stat(label, value) {
+  return `<div class="stat"><b>${value}</b><span>${label}</span></div>`;
+}
+
+async function load() {
+  try {
+    const overview = await (await fetch(`${SERVER}/data/overview.json`)).json();
+    const index = await (await fetch(`${SERVER}/data/efficiency_index.json`)).json();
+    const suez = overview.chokepoints.find(c => c.chokepoint === "Suez Canal");
+    const hormuz = overview.chokepoints.find(c => c.chokepoint === "Strait of Hormuz");
+    document.getElementById("strip").innerHTML =
+      stat("WORLD ROUTE EFFICIENCY", index.world[index.world.length - 1].toFixed(2)) +
+      stat("SUEZ VS 2023", `${suez.pct_vs_2023_precrisis}%`) +
+      stat("HORMUZ VS 2023", `${hormuz.pct_vs_2023_precrisis}%`) +
+      stat("CAPE SHARE NOW", `${overview.cape_share.this_week_pct}%`) +
+      stat("EXTRA DAYS VIA CAPE", overview.reroute.extra_days);
+
+    const live = await (await fetch(`${SERVER}/api/ships?max_age_minutes=30&moving_only=true`)).json();
+    const byType = {};
+    for (const ship of live.ships) byType[ship.type_group] = (byType[ship.type_group] || 0) + 1;
+    document.getElementById("types").innerHTML = Object.entries(byType)
+      .sort((a, b) => b[1] - a[1])
+      .map(([t, n]) => `<div class="stat"><b><span class="dot" style="background:${colours[t]}"></span>${n.toLocaleString()}</b><span>${t.toUpperCase()} UNDERWAY</span></div>`)
+      .join("");
+    document.getElementById("state").textContent = `SYS.STATE: ACTIVE · ${live.count.toLocaleString()} SHIPS LIVE`;
+  } catch (err) {
+    document.getElementById("state").textContent = "SYS.STATE: SERVER NOT REACHABLE · start it with uvicorn (see server/README.md)";
+  }
+}
+load();
+setInterval(load, 15000);
+</script>
+</body>
+</html>

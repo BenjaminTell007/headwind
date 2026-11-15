@@ -1,0 +1,33 @@
+/* Headway colours and type. Hue only ever means vessel type. */
+:root {
+  /* background and neutrals */
+  --bg: #222222;          /* page and globe background */
+  --land: #3a3a3a;        /* land dots */
+  --line: #2e2e2e;        /* panel lines and dividers */
+  --fg: #ececec;          /* main text */
+  --dim: #8c8c8c;         /* secondary text and labels */
+
+  /* vessel types (PortWatch fields in brackets) */
+  --container: #f08a3c;   /* n_container */
+  --tanker: #8f82f2;      /* n_tanker */
+  --dry-bulk: #46b36f;    /* n_dry_bulk */
+  --general: #ea86b5;     /* n_general_cargo */
+  --roro: #e9c84b;        /* n_roro */
+  --other: #f2f2f2;       /* other or unknown */
+
+  /* darker and lighter shades, used in the logo patches */
+  --container-deep: #f26b1d;
+  --tanker-deep: #6f62d8;
+  --dry-bulk-deep: #1f7a45;
+  --roro-deep: #b39a2a;
+  --peach: #f3d0b4;
+  --mint: #e6f4ec;
+
+  /* markets */
+  --yes: #f2f2f2;
+  --no: #6b6b6b;
+
+  /* type */
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", Arial, sans-serif;
+}

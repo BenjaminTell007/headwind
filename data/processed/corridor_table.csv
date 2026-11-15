@@ -1,0 +1,211 @@
+corridor_id,region_a,region_b,hub_a,hub_b,nm,days,passage_groups,chokepoints
+east_asia__northeast_asia,East Asia,Northeast Asia,Shanghai,Busan,472,1.3,,Korea Strait
+east_asia__southeast_asia,East Asia,Southeast Asia,Shanghai,Singapore,2166,6.0,,Malacca Strait|Taiwan Strait
+east_asia__south_asia,East Asia,South Asia,Shanghai,Nhava Sheva,4676,13.0,malacca,Malacca Strait|Taiwan Strait
+east_asia__middle_east_gulf,East Asia,Middle East Gulf,Shanghai,Jebel Ali,5679,15.8,malacca|hormuz,Malacca Strait|Strait of Hormuz|Taiwan Strait
+east_asia__red_sea,East Asia,Red Sea,Shanghai,Jeddah,6552,18.2,red_sea|malacca,Bab el-Mandeb Strait|Malacca Strait|Taiwan Strait
+east_asia__east_mediterranean,East Asia,East Mediterranean,Shanghai,Piraeus,7828,21.7,red_sea|malacca,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Taiwan Strait
+east_asia__west_mediterranean,East Asia,West Mediterranean,Shanghai,Valencia,8899,24.7,red_sea|malacca,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Taiwan Strait
+east_asia__black_sea,East Asia,Black Sea,Shanghai,Constanta,8225,22.8,red_sea|malacca|bosporus,Suez Canal|Bosporus Strait|Bab el-Mandeb Strait|Malacca Strait|Taiwan Strait
+east_asia__north_europe,East Asia,North Europe,Shanghai,Rotterdam,10526,29.2,red_sea|malacca|gibraltar,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait|Taiwan Strait
+east_asia__baltic,East Asia,Baltic,Shanghai,Gdansk,11379,31.6,red_sea|malacca|gibraltar,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait|Oresund Strait|Taiwan Strait
+east_asia__west_africa,East Asia,West Africa,Shanghai,Lagos,10293,28.6,sunda|cape,Cape of Good Hope|Taiwan Strait|Sunda Strait
+east_asia__east_africa,East Asia,East Africa,Shanghai,Mombasa,6291,17.5,malacca,Malacca Strait|Taiwan Strait
+east_asia__southern_africa,East Asia,Southern Africa,Shanghai,Durban,6987,19.4,sunda,Taiwan Strait|Sunda Strait
+east_asia__north_america_east,East Asia,North America East,Shanghai,New York,10670,29.6,panama,Panama Canal|Korea Strait|Tsugaru Strait|Windward Passage
+east_asia__us_gulf,East Asia,US Gulf,Shanghai,Houston,10170,28.3,panama,Panama Canal|Korea Strait|Tsugaru Strait|Yucatan Channel
+east_asia__north_america_west,East Asia,North America West,Shanghai,Los Angeles,5763,16.0,,Korea Strait|Tsugaru Strait
+east_asia__caribbean,East Asia,Caribbean,Shanghai,Kingston,9281,25.8,panama,Panama Canal|Korea Strait|Tsugaru Strait
+east_asia__south_america_east,East Asia,South America East,Shanghai,Santos,11052,30.7,sunda|cape,Cape of Good Hope|Taiwan Strait|Sunda Strait
+east_asia__south_america_west,East Asia,South America West,Shanghai,Callao,9354,26.0,,Korea Strait|Tsugaru Strait
+east_asia__oceania,East Asia,Oceania,Shanghai,Sydney,4621,12.8,,
+northeast_asia__southeast_asia,Northeast Asia,Southeast Asia,Busan,Singapore,2548,7.1,,Malacca Strait|Taiwan Strait|Korea Strait
+northeast_asia__south_asia,Northeast Asia,South Asia,Busan,Nhava Sheva,5059,14.1,malacca,Malacca Strait|Taiwan Strait|Korea Strait
+northeast_asia__middle_east_gulf,Northeast Asia,Middle East Gulf,Busan,Jebel Ali,6061,16.8,malacca|hormuz,Malacca Strait|Strait of Hormuz|Taiwan Strait|Korea Strait
+northeast_asia__red_sea,Northeast Asia,Red Sea,Busan,Jeddah,6935,19.3,red_sea|malacca,Bab el-Mandeb Strait|Malacca Strait|Taiwan Strait|Korea Strait
+northeast_asia__east_mediterranean,Northeast Asia,East Mediterranean,Busan,Piraeus,8210,22.8,red_sea|malacca,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Taiwan Strait|Korea Strait
+northeast_asia__west_mediterranean,Northeast Asia,West Mediterranean,Busan,Valencia,9281,25.8,red_sea|malacca,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Taiwan Strait|Korea Strait
+northeast_asia__black_sea,Northeast Asia,Black Sea,Busan,Constanta,8607,23.9,red_sea|malacca|bosporus,Suez Canal|Bosporus Strait|Bab el-Mandeb Strait|Malacca Strait|Taiwan Strait|Korea Strait
+northeast_asia__north_europe,Northeast Asia,North Europe,Busan,Rotterdam,10908,30.3,red_sea|malacca|gibraltar,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait|Taiwan Strait|Korea Strait
+northeast_asia__baltic,Northeast Asia,Baltic,Busan,Gdansk,11761,32.7,red_sea|malacca|gibraltar,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait|Oresund Strait|Taiwan Strait|Korea Strait
+northeast_asia__west_africa,Northeast Asia,West Africa,Busan,Lagos,10676,29.7,sunda|cape,Cape of Good Hope|Taiwan Strait|Korea Strait|Sunda Strait
+northeast_asia__east_africa,Northeast Asia,East Africa,Busan,Mombasa,6673,18.5,malacca,Malacca Strait|Taiwan Strait|Korea Strait
+northeast_asia__southern_africa,Northeast Asia,Southern Africa,Busan,Durban,7370,20.5,sunda,Taiwan Strait|Korea Strait|Sunda Strait
+northeast_asia__north_america_east,Northeast Asia,North America East,Busan,New York,10215,28.4,panama,Panama Canal|Korea Strait|Tsugaru Strait|Windward Passage
+northeast_asia__us_gulf,Northeast Asia,US Gulf,Busan,Houston,9716,27.0,panama,Panama Canal|Korea Strait|Tsugaru Strait|Yucatan Channel
+northeast_asia__north_america_west,Northeast Asia,North America West,Busan,Los Angeles,5308,14.7,,Korea Strait|Tsugaru Strait
+northeast_asia__caribbean,Northeast Asia,Caribbean,Busan,Kingston,8826,24.5,panama,Panama Canal|Korea Strait|Tsugaru Strait
+northeast_asia__south_america_east,Northeast Asia,South America East,Busan,Santos,11434,31.8,sunda|cape,Cape of Good Hope|Taiwan Strait|Korea Strait|Sunda Strait
+northeast_asia__south_america_west,Northeast Asia,South America West,Busan,Callao,8900,24.7,,Korea Strait|Tsugaru Strait
+northeast_asia__oceania,Northeast Asia,Oceania,Busan,Sydney,4669,13.0,,Korea Strait
+southeast_asia__south_asia,Southeast Asia,South Asia,Singapore,Nhava Sheva,2521,7.0,malacca,Malacca Strait
+southeast_asia__middle_east_gulf,Southeast Asia,Middle East Gulf,Singapore,Jebel Ali,3524,9.8,malacca|hormuz,Malacca Strait|Strait of Hormuz
+southeast_asia__red_sea,Southeast Asia,Red Sea,Singapore,Jeddah,4397,12.2,red_sea|malacca,Bab el-Mandeb Strait|Malacca Strait
+southeast_asia__east_mediterranean,Southeast Asia,East Mediterranean,Singapore,Piraeus,5673,15.8,red_sea|malacca,Suez Canal|Bab el-Mandeb Strait|Malacca Strait
+southeast_asia__west_mediterranean,Southeast Asia,West Mediterranean,Singapore,Valencia,6744,18.7,red_sea|malacca,Suez Canal|Bab el-Mandeb Strait|Malacca Strait
+southeast_asia__black_sea,Southeast Asia,Black Sea,Singapore,Constanta,6070,16.9,red_sea|malacca|bosporus,Suez Canal|Bosporus Strait|Bab el-Mandeb Strait|Malacca Strait
+southeast_asia__north_europe,Southeast Asia,North Europe,Singapore,Rotterdam,8370,23.3,red_sea|malacca|gibraltar,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait
+southeast_asia__baltic,Southeast Asia,Baltic,Singapore,Gdansk,9224,25.6,red_sea|malacca|gibraltar,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait|Oresund Strait
+southeast_asia__west_africa,Southeast Asia,West Africa,Singapore,Lagos,8306,23.1,sunda|cape,Malacca Strait|Cape of Good Hope|Sunda Strait
+southeast_asia__east_africa,Southeast Asia,East Africa,Singapore,Mombasa,4136,11.5,malacca,Malacca Strait
+southeast_asia__southern_africa,Southeast Asia,Southern Africa,Singapore,Durban,4953,13.8,malacca,Malacca Strait
+southeast_asia__north_america_east,Southeast Asia,North America East,Singapore,New York,10183,28.3,red_sea|malacca|gibraltar,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait
+southeast_asia__us_gulf,Southeast Asia,US Gulf,Singapore,Houston,11737,32.6,red_sea|malacca|gibraltar,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait
+southeast_asia__north_america_west,Southeast Asia,North America West,Singapore,Los Angeles,7798,21.7,,Malacca Strait|Luzon Strait
+southeast_asia__caribbean,Southeast Asia,Caribbean,Singapore,Kingston,10968,30.5,red_sea|malacca|gibraltar,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Mona Passage
+southeast_asia__south_america_east,Southeast Asia,South America East,Singapore,Santos,9065,25.2,sunda|cape,Malacca Strait|Cape of Good Hope|Sunda Strait
+southeast_asia__south_america_west,Southeast Asia,South America West,Singapore,Callao,10889,30.2,,Malacca Strait|Ombai Strait|Torres Strait
+southeast_asia__oceania,Southeast Asia,Oceania,Singapore,Sydney,4229,11.7,,Malacca Strait|Ombai Strait|Torres Strait
+south_asia__middle_east_gulf,South Asia,Middle East Gulf,Nhava Sheva,Jebel Ali,1197,3.3,hormuz,Strait of Hormuz
+south_asia__red_sea,South Asia,Red Sea,Nhava Sheva,Jeddah,2400,6.7,red_sea,Bab el-Mandeb Strait
+south_asia__east_mediterranean,South Asia,East Mediterranean,Nhava Sheva,Piraeus,3676,10.2,red_sea,Suez Canal|Bab el-Mandeb Strait
+south_asia__west_mediterranean,South Asia,West Mediterranean,Nhava Sheva,Valencia,4747,13.2,red_sea,Suez Canal|Bab el-Mandeb Strait
+south_asia__black_sea,South Asia,Black Sea,Nhava Sheva,Constanta,4073,11.3,red_sea|bosporus,Suez Canal|Bosporus Strait|Bab el-Mandeb Strait
+south_asia__north_europe,South Asia,North Europe,Nhava Sheva,Rotterdam,6374,17.7,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait|Dover Strait
+south_asia__baltic,South Asia,Baltic,Nhava Sheva,Gdansk,7227,20.1,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait|Dover Strait|Oresund Strait
+south_asia__west_africa,South Asia,West Africa,Nhava Sheva,Lagos,7289,20.2,cape,Cape of Good Hope
+south_asia__east_africa,South Asia,East Africa,Nhava Sheva,Mombasa,2478,6.9,,
+south_asia__southern_africa,South Asia,Southern Africa,Nhava Sheva,Durban,3832,10.6,,
+south_asia__north_america_east,South Asia,North America East,Nhava Sheva,New York,8186,22.7,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait
+south_asia__us_gulf,South Asia,US Gulf,Nhava Sheva,Houston,9740,27.1,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait
+south_asia__north_america_west,South Asia,North America West,Nhava Sheva,Los Angeles,10308,28.6,malacca,Malacca Strait|Luzon Strait
+south_asia__caribbean,South Asia,Caribbean,Nhava Sheva,Kingston,8972,24.9,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait|Mona Passage
+south_asia__south_america_east,South Asia,South America East,Nhava Sheva,Santos,8048,22.4,cape,Cape of Good Hope
+south_asia__south_america_west,South Asia,South America West,Nhava Sheva,Callao,10788,30.0,red_sea|panama|gibraltar,Suez Canal|Panama Canal|Bab el-Mandeb Strait|Gibraltar Strait|Mona Passage
+south_asia__oceania,South Asia,Oceania,Nhava Sheva,Sydney,6283,17.5,,
+middle_east_gulf__red_sea,Middle East Gulf,Red Sea,Jebel Ali,Jeddah,2312,6.4,red_sea|hormuz,Bab el-Mandeb Strait|Strait of Hormuz
+middle_east_gulf__east_mediterranean,Middle East Gulf,East Mediterranean,Jebel Ali,Piraeus,3587,10.0,red_sea|hormuz,Suez Canal|Bab el-Mandeb Strait|Strait of Hormuz
+middle_east_gulf__west_mediterranean,Middle East Gulf,West Mediterranean,Jebel Ali,Valencia,4658,12.9,red_sea|hormuz,Suez Canal|Bab el-Mandeb Strait|Strait of Hormuz
+middle_east_gulf__black_sea,Middle East Gulf,Black Sea,Jebel Ali,Constanta,3984,11.1,red_sea|hormuz|bosporus,Suez Canal|Bosporus Strait|Bab el-Mandeb Strait|Strait of Hormuz
+middle_east_gulf__north_europe,Middle East Gulf,North Europe,Jebel Ali,Rotterdam,6285,17.5,red_sea|hormuz|gibraltar,Suez Canal|Bab el-Mandeb Strait|Strait of Hormuz|Gibraltar Strait|Dover Strait
+middle_east_gulf__baltic,Middle East Gulf,Baltic,Jebel Ali,Gdansk,7138,19.8,red_sea|hormuz|gibraltar,Suez Canal|Bab el-Mandeb Strait|Strait of Hormuz|Gibraltar Strait|Dover Strait|Oresund Strait
+middle_east_gulf__west_africa,Middle East Gulf,West Africa,Jebel Ali,Lagos,7516,20.9,hormuz|cape,Strait of Hormuz|Cape of Good Hope
+middle_east_gulf__east_africa,Middle East Gulf,East Africa,Jebel Ali,Mombasa,2513,7.0,hormuz,Strait of Hormuz
+middle_east_gulf__southern_africa,Middle East Gulf,Southern Africa,Jebel Ali,Durban,4059,11.3,hormuz,Strait of Hormuz
+middle_east_gulf__north_america_east,Middle East Gulf,North America East,Jebel Ali,New York,8098,22.5,red_sea|hormuz|gibraltar,Suez Canal|Bab el-Mandeb Strait|Strait of Hormuz|Gibraltar Strait
+middle_east_gulf__us_gulf,Middle East Gulf,US Gulf,Jebel Ali,Houston,9652,26.8,red_sea|hormuz|gibraltar,Suez Canal|Bab el-Mandeb Strait|Strait of Hormuz|Gibraltar Strait
+middle_east_gulf__north_america_west,Middle East Gulf,North America West,Jebel Ali,Los Angeles,11311,31.4,malacca|hormuz,Malacca Strait|Strait of Hormuz|Luzon Strait
+middle_east_gulf__caribbean,Middle East Gulf,Caribbean,Jebel Ali,Kingston,8883,24.7,red_sea|hormuz|gibraltar,Suez Canal|Bab el-Mandeb Strait|Strait of Hormuz|Gibraltar Strait|Mona Passage
+middle_east_gulf__south_america_east,Middle East Gulf,South America East,Jebel Ali,Santos,8275,23.0,hormuz|cape,Strait of Hormuz|Cape of Good Hope
+middle_east_gulf__south_america_west,Middle East Gulf,South America West,Jebel Ali,Callao,10699,29.7,red_sea|panama|hormuz|gibraltar,Suez Canal|Panama Canal|Bab el-Mandeb Strait|Strait of Hormuz|Gibraltar Strait|Mona Passage
+middle_east_gulf__oceania,Middle East Gulf,Oceania,Jebel Ali,Sydney,7185,20.0,hormuz,Strait of Hormuz
+red_sea__east_mediterranean,Red Sea,East Mediterranean,Jeddah,Piraeus,1320,3.7,red_sea,Suez Canal
+red_sea__west_mediterranean,Red Sea,West Mediterranean,Jeddah,Valencia,2390,6.6,red_sea,Suez Canal
+red_sea__black_sea,Red Sea,Black Sea,Jeddah,Constanta,1716,4.8,red_sea|bosporus,Suez Canal|Bosporus Strait
+red_sea__north_europe,Red Sea,North Europe,Jeddah,Rotterdam,4017,11.2,red_sea|gibraltar,Suez Canal|Gibraltar Strait|Dover Strait
+red_sea__baltic,Red Sea,Baltic,Jeddah,Gdansk,4871,13.5,red_sea|gibraltar,Suez Canal|Gibraltar Strait|Dover Strait|Oresund Strait
+red_sea__west_africa,Red Sea,West Africa,Jeddah,Lagos,5817,16.2,red_sea|gibraltar,Suez Canal|Gibraltar Strait
+red_sea__east_africa,Red Sea,East Africa,Jeddah,Mombasa,2431,6.8,red_sea,Bab el-Mandeb Strait
+red_sea__southern_africa,Red Sea,Southern Africa,Jeddah,Durban,3977,11.0,red_sea,Bab el-Mandeb Strait
+red_sea__north_america_east,Red Sea,North America East,Jeddah,New York,5830,16.2,red_sea|gibraltar,Suez Canal|Gibraltar Strait
+red_sea__us_gulf,Red Sea,US Gulf,Jeddah,Houston,7384,20.5,red_sea|gibraltar,Suez Canal|Gibraltar Strait
+red_sea__north_america_west,Red Sea,North America West,Jeddah,Los Angeles,9991,27.8,red_sea|panama|gibraltar,Suez Canal|Panama Canal|Gibraltar Strait|Mona Passage
+red_sea__caribbean,Red Sea,Caribbean,Jeddah,Kingston,6615,18.4,red_sea|gibraltar,Suez Canal|Gibraltar Strait|Mona Passage
+red_sea__south_america_east,Red Sea,South America East,Jeddah,Santos,7113,19.8,red_sea|gibraltar,Suez Canal|Gibraltar Strait
+red_sea__south_america_west,Red Sea,South America West,Jeddah,Callao,8432,23.4,red_sea|panama|gibraltar,Suez Canal|Panama Canal|Gibraltar Strait|Mona Passage
+red_sea__oceania,Red Sea,Oceania,Jeddah,Sydney,7692,21.4,red_sea,Bab el-Mandeb Strait
+east_mediterranean__west_mediterranean,East Mediterranean,West Mediterranean,Piraeus,Valencia,1185,3.3,,
+east_mediterranean__black_sea,East Mediterranean,Black Sea,Piraeus,Constanta,565,1.6,bosporus,Bosporus Strait
+east_mediterranean__north_europe,East Mediterranean,North Europe,Piraeus,Rotterdam,2821,7.8,gibraltar,Gibraltar Strait|Dover Strait
+east_mediterranean__baltic,East Mediterranean,Baltic,Piraeus,Gdansk,3675,10.2,gibraltar,Gibraltar Strait|Dover Strait|Oresund Strait
+east_mediterranean__west_africa,East Mediterranean,West Africa,Piraeus,Lagos,4621,12.8,gibraltar,Gibraltar Strait
+east_mediterranean__east_africa,East Mediterranean,East Africa,Piraeus,Mombasa,3707,10.3,red_sea,Suez Canal|Bab el-Mandeb Strait
+east_mediterranean__southern_africa,East Mediterranean,Southern Africa,Piraeus,Durban,5253,14.6,red_sea,Suez Canal|Bab el-Mandeb Strait
+east_mediterranean__north_america_east,East Mediterranean,North America East,Piraeus,New York,4634,12.9,gibraltar,Gibraltar Strait
+east_mediterranean__us_gulf,East Mediterranean,US Gulf,Piraeus,Houston,6188,17.2,gibraltar,Gibraltar Strait
+east_mediterranean__north_america_west,East Mediterranean,North America West,Piraeus,Los Angeles,8795,24.4,panama|gibraltar,Panama Canal|Gibraltar Strait|Mona Passage
+east_mediterranean__caribbean,East Mediterranean,Caribbean,Piraeus,Kingston,5419,15.1,gibraltar,Gibraltar Strait|Mona Passage
+east_mediterranean__south_america_east,East Mediterranean,South America East,Piraeus,Santos,5917,16.4,gibraltar,Gibraltar Strait
+east_mediterranean__south_america_west,East Mediterranean,South America West,Piraeus,Callao,7236,20.1,panama|gibraltar,Panama Canal|Gibraltar Strait|Mona Passage
+east_mediterranean__oceania,East Mediterranean,Oceania,Piraeus,Sydney,8968,24.9,red_sea,Suez Canal|Bab el-Mandeb Strait
+west_mediterranean__black_sea,West Mediterranean,Black Sea,Valencia,Constanta,1741,4.8,bosporus,Bosporus Strait
+west_mediterranean__north_europe,West Mediterranean,North Europe,Valencia,Rotterdam,1778,4.9,gibraltar,Gibraltar Strait|Dover Strait
+west_mediterranean__baltic,West Mediterranean,Baltic,Valencia,Gdansk,2631,7.3,gibraltar,Gibraltar Strait|Dover Strait|Oresund Strait
+west_mediterranean__west_africa,West Mediterranean,West Africa,Valencia,Lagos,3577,9.9,gibraltar,Gibraltar Strait
+west_mediterranean__east_africa,West Mediterranean,East Africa,Valencia,Mombasa,4778,13.3,red_sea,Suez Canal|Bab el-Mandeb Strait
+west_mediterranean__southern_africa,West Mediterranean,Southern Africa,Valencia,Durban,6324,17.6,red_sea,Suez Canal|Bab el-Mandeb Strait
+west_mediterranean__north_america_east,West Mediterranean,North America East,Valencia,New York,3591,10.0,gibraltar,Gibraltar Strait
+west_mediterranean__us_gulf,West Mediterranean,US Gulf,Valencia,Houston,5145,14.3,gibraltar,Gibraltar Strait
+west_mediterranean__north_america_west,West Mediterranean,North America West,Valencia,Los Angeles,7751,21.5,panama|gibraltar,Panama Canal|Gibraltar Strait|Mona Passage
+west_mediterranean__caribbean,West Mediterranean,Caribbean,Valencia,Kingston,4376,12.2,gibraltar,Gibraltar Strait|Mona Passage
+west_mediterranean__south_america_east,West Mediterranean,South America East,Valencia,Santos,4873,13.5,gibraltar,Gibraltar Strait
+west_mediterranean__south_america_west,West Mediterranean,South America West,Valencia,Callao,6192,17.2,panama|gibraltar,Panama Canal|Gibraltar Strait|Mona Passage
+west_mediterranean__oceania,West Mediterranean,Oceania,Valencia,Sydney,10039,27.9,red_sea,Suez Canal|Bab el-Mandeb Strait
+black_sea__north_europe,Black Sea,North Europe,Constanta,Rotterdam,3377,9.4,bosporus|gibraltar,Bosporus Strait|Gibraltar Strait|Dover Strait
+black_sea__baltic,Black Sea,Baltic,Constanta,Gdansk,4230,11.8,bosporus|gibraltar,Bosporus Strait|Gibraltar Strait|Dover Strait|Oresund Strait
+black_sea__west_africa,Black Sea,West Africa,Constanta,Lagos,5176,14.4,bosporus|gibraltar,Bosporus Strait|Gibraltar Strait
+black_sea__east_africa,Black Sea,East Africa,Constanta,Mombasa,4104,11.4,red_sea|bosporus,Suez Canal|Bosporus Strait|Bab el-Mandeb Strait
+black_sea__southern_africa,Black Sea,Southern Africa,Constanta,Durban,5650,15.7,red_sea|bosporus,Suez Canal|Bosporus Strait|Bab el-Mandeb Strait
+black_sea__north_america_east,Black Sea,North America East,Constanta,New York,5190,14.4,bosporus|gibraltar,Bosporus Strait|Gibraltar Strait
+black_sea__us_gulf,Black Sea,US Gulf,Constanta,Houston,6744,18.7,bosporus|gibraltar,Bosporus Strait|Gibraltar Strait
+black_sea__north_america_west,Black Sea,North America West,Constanta,Los Angeles,9350,26.0,panama|bosporus|gibraltar,Panama Canal|Bosporus Strait|Gibraltar Strait|Mona Passage
+black_sea__caribbean,Black Sea,Caribbean,Constanta,Kingston,5975,16.6,bosporus|gibraltar,Bosporus Strait|Gibraltar Strait|Mona Passage
+black_sea__south_america_east,Black Sea,South America East,Constanta,Santos,6473,18.0,bosporus|gibraltar,Bosporus Strait|Gibraltar Strait
+black_sea__south_america_west,Black Sea,South America West,Constanta,Callao,7791,21.6,panama|bosporus|gibraltar,Panama Canal|Bosporus Strait|Gibraltar Strait|Mona Passage
+black_sea__oceania,Black Sea,Oceania,Constanta,Sydney,9365,26.0,red_sea|bosporus,Suez Canal|Bosporus Strait|Bab el-Mandeb Strait
+north_europe__baltic,North Europe,Baltic,Rotterdam,Gdansk,885,2.5,,Oresund Strait
+north_europe__west_africa,North Europe,West Africa,Rotterdam,Lagos,4252,11.8,,Dover Strait
+north_europe__east_africa,North Europe,East Africa,Rotterdam,Mombasa,6404,17.8,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait|Dover Strait
+north_europe__southern_africa,North Europe,Southern Africa,Rotterdam,Durban,7026,19.5,cape,Cape of Good Hope|Dover Strait
+north_europe__north_america_east,North Europe,North America East,Rotterdam,New York,3306,9.2,,Dover Strait
+north_europe__us_gulf,North Europe,US Gulf,Rotterdam,Houston,5019,13.9,,Dover Strait
+north_europe__north_america_west,North Europe,North America West,Rotterdam,Los Angeles,7817,21.7,panama,Panama Canal|Dover Strait|Mona Passage
+north_europe__caribbean,North Europe,Caribbean,Rotterdam,Kingston,4441,12.3,,Dover Strait|Mona Passage
+north_europe__south_america_east,North Europe,South America East,Rotterdam,Santos,5487,15.2,,Dover Strait
+north_europe__south_america_west,North Europe,South America West,Rotterdam,Callao,6258,17.4,panama,Panama Canal|Dover Strait|Mona Passage
+north_europe__oceania,North Europe,Oceania,Rotterdam,Sydney,11666,32.4,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait|Dover Strait
+baltic__west_africa,Baltic,West Africa,Gdansk,Lagos,5106,14.2,,Dover Strait|Oresund Strait
+baltic__east_africa,Baltic,East Africa,Gdansk,Mombasa,7258,20.2,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait|Dover Strait|Oresund Strait
+baltic__southern_africa,Baltic,Southern Africa,Gdansk,Durban,7879,21.9,cape,Cape of Good Hope|Dover Strait|Oresund Strait
+baltic__north_america_east,Baltic,North America East,Gdansk,New York,3824,10.6,,Oresund Strait
+baltic__us_gulf,Baltic,US Gulf,Gdansk,Houston,5547,15.4,,Oresund Strait
+baltic__north_america_west,Baltic,North America West,Gdansk,Los Angeles,8531,23.7,panama,Panama Canal|Oresund Strait|Mona Passage
+baltic__caribbean,Baltic,Caribbean,Gdansk,Kingston,5045,14.0,,Oresund Strait|Windward Passage
+baltic__south_america_east,Baltic,South America East,Gdansk,Santos,6340,17.6,,Dover Strait|Oresund Strait
+baltic__south_america_west,Baltic,South America West,Gdansk,Callao,6972,19.4,panama,Panama Canal|Oresund Strait|Mona Passage
+baltic__oceania,Baltic,Oceania,Gdansk,Sydney,12519,34.8,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait|Dover Strait|Oresund Strait
+west_africa__east_africa,West Africa,East Africa,Lagos,Mombasa,5231,14.5,cape,Cape of Good Hope
+west_africa__southern_africa,West Africa,Southern Africa,Lagos,Durban,3473,9.6,cape,Cape of Good Hope
+west_africa__north_america_east,West Africa,North America East,Lagos,New York,5060,14.1,,
+west_africa__us_gulf,West Africa,US Gulf,Lagos,Houston,6101,16.9,,Windward Passage
+west_africa__north_america_west,West Africa,North America West,Lagos,Los Angeles,8251,22.9,panama,Panama Canal
+west_africa__caribbean,West Africa,Caribbean,Lagos,Kingston,5054,14.0,,Mona Passage
+west_africa__south_america_east,West Africa,South America East,Lagos,Santos,3779,10.5,,
+west_africa__south_america_west,West Africa,South America West,Lagos,Callao,6692,18.6,panama,Panama Canal
+west_africa__oceania,West Africa,Oceania,Lagos,Sydney,9119,25.3,cape,
+east_africa__southern_africa,East Africa,Southern Africa,Mombasa,Durban,1774,4.9,,
+east_africa__north_america_east,East Africa,North America East,Mombasa,New York,8217,22.8,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait
+east_africa__us_gulf,East Africa,US Gulf,Mombasa,Houston,9771,27.1,red_sea|gibraltar,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait
+east_africa__north_america_west,East Africa,North America West,Mombasa,Los Angeles,11923,33.1,malacca,Malacca Strait|Luzon Strait
+east_africa__caribbean,East Africa,Caribbean,Mombasa,Kingston,8854,24.6,cape,Cape of Good Hope
+east_africa__south_america_east,East Africa,South America East,Mombasa,Santos,5990,16.6,cape,Cape of Good Hope
+east_africa__south_america_west,East Africa,South America West,Mombasa,Callao,9206,25.6,cape|magellan,Cape of Good Hope|Magellan Strait
+east_africa__oceania,East Africa,Oceania,Mombasa,Sydney,6824,19.0,,
+southern_africa__north_america_east,Southern Africa,North America East,Durban,New York,7651,21.3,cape,Cape of Good Hope
+southern_africa__us_gulf,Southern Africa,US Gulf,Durban,Houston,8301,23.1,cape,Cape of Good Hope|Windward Passage|Mona Passage
+southern_africa__north_america_west,Southern Africa,North America West,Durban,Los Angeles,10280,28.6,panama|cape,Panama Canal|Cape of Good Hope
+southern_africa__caribbean,Southern Africa,Caribbean,Durban,Kingston,7097,19.7,cape,Cape of Good Hope
+southern_africa__south_america_east,Southern Africa,South America East,Durban,Santos,4232,11.8,cape,Cape of Good Hope
+southern_africa__south_america_west,Southern Africa,South America West,Durban,Callao,7449,20.7,cape|magellan,Cape of Good Hope|Magellan Strait
+southern_africa__oceania,Southern Africa,Oceania,Durban,Sydney,6153,17.1,,
+north_america_east__us_gulf,North America East,US Gulf,New York,Houston,1887,5.2,,
+north_america_east__north_america_west,North America East,North America West,New York,Los Angeles,4996,13.9,panama,Panama Canal|Windward Passage
+north_america_east__caribbean,North America East,Caribbean,New York,Kingston,1498,4.2,,Windward Passage
+north_america_east__south_america_east,North America East,South America East,New York,Santos,5034,14.0,,
+north_america_east__south_america_west,North America East,South America West,New York,Callao,3437,9.5,panama,Panama Canal|Windward Passage
+north_america_east__oceania,North America East,Oceania,New York,Sydney,9859,27.4,panama,Panama Canal|Windward Passage
+us_gulf__north_america_west,US Gulf,North America West,Houston,Los Angeles,4497,12.5,panama,Panama Canal|Yucatan Channel
+us_gulf__caribbean,US Gulf,Caribbean,Houston,Kingston,1253,3.5,,Yucatan Channel
+us_gulf__south_america_east,US Gulf,South America East,Houston,Santos,5593,15.5,,Windward Passage|Mona Passage
+us_gulf__south_america_west,US Gulf,South America West,Houston,Callao,2938,8.2,panama,Panama Canal|Yucatan Channel
+us_gulf__oceania,US Gulf,Oceania,Houston,Sydney,9360,26.0,panama,Panama Canal|Yucatan Channel
+north_america_west__caribbean,North America West,Caribbean,Los Angeles,Kingston,3607,10.0,panama,Panama Canal
+north_america_west__south_america_east,North America West,South America East,Los Angeles,Santos,7572,21.0,panama,Panama Canal
+north_america_west__south_america_west,North America West,South America West,Los Angeles,Callao,3685,10.2,,
+north_america_west__oceania,North America West,Oceania,Los Angeles,Sydney,6640,18.4,,
+caribbean__south_america_east,Caribbean,South America East,Kingston,Santos,4389,12.2,,
+caribbean__south_america_west,Caribbean,South America West,Kingston,Callao,2048,5.7,panama,Panama Canal
+caribbean__oceania,Caribbean,Oceania,Kingston,Sydney,8470,23.5,panama,Panama Canal
+south_america_east__south_america_west,South America East,South America West,Santos,Callao,4911,13.6,magellan,Magellan Strait
+south_america_east__oceania,South America East,Oceania,Santos,Sydney,7924,22.0,magellan,Magellan Strait
+south_america_west__oceania,South America West,Oceania,Callao,Sydney,7307,20.3,,

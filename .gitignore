@@ -1,0 +1,39 @@
+# secrets
+.env
+*.pem
+*.key
+
+# live ship logs (large, regenerate with scripts/ais_logger.py)
+data/live/
+data/live_selftest/
+
+# API caches and big raw files (regenerate with scripts/run_all.sh)
+data/raw/comtrade/calls/
+data/raw/comtrade/lane_cargo_calls/
+data/raw/portwatch/daily_country_trade.csv
+*.log
+
+# old render of the brief
+BRIEF.html
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# node / web
+node_modules/
+dist/
+.next/
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/
+
+# os
+.DS_Store
+
+# local editor and tool settings
+.claude/
