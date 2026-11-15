@@ -69,69 +69,26 @@ const renderOverview = force => {
   if (i === lastOverviewWeek && !force) return;
   lastOverviewWeek = i;
   const idx = D.index.world, iw = HW.clamp(i, 0, idx.length - 1), eff = idx[iw];
-  const startSpark = Math.max(0, iw - 156);
-  const suez = strait('Suez Canal'), hormuz = strait('Strait of Hormuz'), cape = strait('Cape of Good Hope');
+    const suez = strait('Suez Canal'), hormuz = strait('Strait of Hormuz'), cape = strait('Cape of Good Hope');
   const rS = globe.straitRatio(suez), rH = globe.straitRatio(hormuz);
   const capeShare = weeklyAt(cape, 'total', i) / (weeklyAt(cape, 'total', i) + weeklyAt(suez, 'total', i)) * 100;
   const ri = HW.clamp(i + globe.rOff, 0, EA_NE.r.expected_days.length - 1), days = EA_NE.r.expected_days[ri], extra = Math.max(0, days - EA_NE.r.normal_days);
-  const now = i >= nW - 1;
   const cells = [
-    ['lead', 'WORLD ROUTE EFFICIENCY', eff.toFixed(2), HW.spark(idx.slice(startSpark, iw + 1), 150, 24, { min: 0.6, max: 1.02, base: 1 }), '1.00 = EVERY ROUTE NORMAL'],
+    ['lead', 'WORLD ROUTE EFFICIENCY', eff.toFixed(2), '', '1.00 = EVERY ROUTE NORMAL'],
     ['', 'SUEZ VS 2023', HW.fPct((rS - 1) * 100), '', `${HW.fInt(weeklyAt(suez, 'total', i))} SHIPS THIS WEEK`],
     ['', 'HORMUZ VS 2023', HW.fPct((rH - 1) * 100), '', `${HW.fInt(weeklyAt(hormuz, 'total', i))} SHIPS THIS WEEK`],
     ['', 'CAPE SHARE OF SUEZ+CAPE', capeShare.toFixed(0) + '%', '', 'SHIPS GOING THE LONG WAY'],
     ['', 'ASIA → N. EUROPE', days.toFixed(1) + ' D', '', `NORMAL ${EA_NE.r.normal_days.toFixed(1)} · +${extra.toFixed(1)} DAYS`],
     ['', 'TIME COST PER $1M CARGO', extra > 0.05 ? HW.fUSD(extra * 0.006 * 1e6) + '–' + HW.fUSD(extra * 0.021 * 1e6) : '$0', '', 'HUMMELS & SCHAUR RANGE'],
-    ['', 'CARGO + TANKERS UNDERWAY', now && D.liveMain ? HW.fInt(D.liveMain) : '—', '', now ? 'LIVE · FREE AIS FEED' : 'LIVE ONLY AT NOW'],
+    ['', 'CARGO + TANKERS UNDERWAY', D.liveMain ? HW.fInt(D.liveMain) : '—', '', 'LIVE · FREE AIS FEED'],
   ];
   $('overview').innerHTML = cells.map(([cls, k, v, svg, sub]) => `<div class="cell ${cls}"><div class="tag">${k}</div><div class="num">${v}</div>${svg}<div class="sub">${sub}</div></div>`).join('');
 };
 renderOverview(true);
 
-/* ---------- replay timeline ---------- */
-const tl = $('tl'), play = $('play');
-tl.min = 0; tl.max = nW - 1; tl.value = nW - 1;
-$('tlSpark').innerHTML = HW.spark(D.index.world, 1000, 20, { min: 0.6, max: 1.02 });
-const weekOf = date => { for (let i = 0; i < nW; i++) if (weeks[i] >= date) return i; return nW - 1; };
-const keyEvents = D.events.filter(e => ['trade disruption', 'conflict', 'tariff', 'blockage'].includes(e.kind) && e.date >= weeks[0]);
-$('track').insertAdjacentHTML('beforeend', keyEvents.map((e, k) => `<span class="ev" data-k="${k}" title="${HW.esc(e.title)}" style="left:${(weekOf(e.date) / (nW - 1) * 100).toFixed(2)}%"></span>`).join(''));
-$('track').addEventListener('click', e => { const t = e.target.closest('.ev'); if (t) { const ev = keyEvents[+t.dataset.k]; setWeek(weekOf(ev.date) + 2); focusEvent(ev); } });
-let playing = false;
-const setWeek = (f, fromRange) => {
-  globe.setWeek(f); if (!fromRange) tl.value = f;
-  const i = Math.round(f);
-  $('tlDate').textContent = HW.fDate(weeks[i]);
-  $('tlLabel').textContent = i >= nW - 1 ? 'NOW · WEEK ENDING' : 'REPLAY · WEEK ENDING';
-  document.querySelectorAll('#jumps button').forEach(b => b.classList.toggle('on', b.dataset.d === 'now' ? i >= nW - 1 : Math.abs(weekOf(b.dataset.d) - i) < 2));
-  // show an event's title while the replay passes it
-  const near = keyEvents.find(e => Math.abs(weekOf(e.date) - i) <= 3);
-  $('evtext').classList.toggle('on', !!near);
-  document.querySelectorAll('.track .ev').forEach(el => el.classList.toggle('on', near && keyEvents[+el.dataset.k] === near));
-  if (near) { $('evwhen').textContent = HW.fDate(near.date); $('evtitle').textContent = near.title; }
-  renderOverview();
-  if (panelItem) showPanel(panelItem, true);
-};
-tl.addEventListener('input', () => { playing = false; play.textContent = '▶'; setWeek(+tl.value, true); });
-play.addEventListener('click', () => {
-  playing = !playing; play.textContent = playing ? '❚❚' : '▶';
-  if (playing && globe.S.ti >= nW - 1.01) setWeek(Math.max(0, weekOf('2023-06-01')));
-});
-let lastT = performance.now();
-const tick = now => {
-  const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
-  if (playing) { const f = globe.S.ti + dt * 9; if (f >= nW - 1) { setWeek(nW - 1); playing = false; play.textContent = '▶'; } else setWeek(f); }
-  requestAnimationFrame(tick);
-};
-requestAnimationFrame(tick);
-const JUMP_TO = { '2021-03-28': 'Suez Canal', '2023-12-17': 'Panama Canal', '2024-02-25': 'Bab el-Mandeb Strait', '2026-03-29': 'Strait of Hormuz' };
-document.querySelectorAll('#jumps button').forEach(b => b.addEventListener('click', () => {
-  playing = false; play.textContent = '▶';
-  if (b.dataset.d === 'now') { setWeek(nW - 1); globe.select(null); return; }
-  setWeek(weekOf(b.dataset.d));
-  const s = strait(JUMP_TO[b.dataset.d]); if (s) globe.select({ kind: 'strait', s });
-}));
-const focusEvent = ev => { const s = ev.where && ev.where.map(strait).find(Boolean); if (s) globe.select({ kind: 'strait', s }); };
-setWeek(nW - 1);
+/* ---------- right now: the page always shows the latest week ---------- */
+const setWeek = () => { globe.setWeek(nW - 1); renderOverview(); if (panelItem) showPanel(panelItem, true); };
+setWeek();
 
 $('zin').addEventListener('click', () => globe.zoomBy(1.5));
 $('zout').addEventListener('click', () => globe.zoomBy(1 / 1.5));
@@ -148,30 +105,26 @@ const showPanel = (item, quiet) => {
     const s = item.s, r = globe.straitRatio(s), mix = globe.straitMix(s);
     const lanesThrough = globe.lanes.filter(L => (L.p.chokepoints || []).includes(s.name));
     const worst = lanesThrough.map(L => ({ L, e: globe.laneEff(L) })).sort((a, b) => a.e - b.e).slice(0, 4);
-    const evs = D.events.filter(e => (e.where || []).includes(s.name)).slice(-3).reverse();
-    b.innerHTML = `<div class="tag">STRAIT · WEEK ENDING ${HW.fDate(weeks[i])}</div><h2>${HW.esc(s.name)}</h2>
+    b.innerHTML = `<div class="tag">STRAIT · THIS WEEK</div><h2>${HW.esc(s.name)}</h2>
       <div class="stats">
         <div><b>${HW.fPct((r - 1) * 100)}</b><span>VS 2023 BASELINE</span></div>
         <div><b>${HW.fInt(weeklyAt(s, 'total', i))}</b><span>SHIPS THIS WEEK</span></div>
         <div><b>${HW.fInt(s.status.baseline_per_week)}</b><span>NORMAL WEEK (2023)</span></div>
         <div><b>${lanesThrough.length}</b><span>ROUTES THROUGH IT</span></div>
       </div>
-      <h3>TRAFFIC VS 2023, 2019 TO NOW</h3>${HW.spark(s.status.ratio, 320, 64, { base: 1, mark: i, min: 0 })}
       <h3>WHO GOES THROUGH, THIS WEEK</h3>${mixBar(mix)}
       ${worst.length ? `<h3>ROUTES THAT DEPEND ON IT</h3>${worst.map(({ L, e }) => `<div style="display:flex;justify-content:space-between;margin-top:6px"><span>${HW.esc(L.p.region_a)} → ${HW.esc(L.p.region_b)}</span><span class="tag" style="letter-spacing:.08em">EFF ${e.toFixed(2)}</span></div>`).join('')}` : ''}
-      ${evs.length ? `<h3>WHAT HAPPENED HERE</h3>${evs.map(e => `<p><span class="tag">${HW.fDate(e.date)}</span><br>${HW.esc(e.title)}</p>`).join('')}` : ''}
       <h3>MARKETS</h3>${relatedMarkets(m => (m.series || '').includes(s.name) || (m.gate && D.gates.chokepoint_gate && D.gates.chokepoint_gate[s.name] === m.gate)) || '<p>No open market on this strait yet.</p>'}`;
   } else if (item.kind === 'lane') {
     const L = item.L, ri = HW.clamp(i + globe.rOff, 0, L.r.expected_days.length - 1);
     const days = L.r.expected_days[ri], eff = L.r.efficiency[ri], blk = L.r.blocked_share[ri];
-    b.innerHTML = `<div class="tag">ROUTE · WEEK ENDING ${HW.fDate(weeks[i])}</div><h2>${HW.esc(L.p.region_a)} → ${HW.esc(L.p.region_b)}</h2>
+    b.innerHTML = `<div class="tag">ROUTE · THIS WEEK</div><h2>${HW.esc(L.p.region_a)} → ${HW.esc(L.p.region_b)}</h2>
       <div class="stats">
         <div><b>${days.toFixed(1)} d</b><span>EXPECTED TRANSIT</span></div>
         <div><b>${L.r.normal_days.toFixed(1)} d</b><span>WHEN EVERYTHING'S OPEN</span></div>
         <div><b>${eff.toFixed(2)}</b><span>EFFICIENCY</span></div>
         <div><b>${Math.round(blk * 100)}%</b><span>TRAFFIC BLOCKED</span></div>
       </div>
-      <h3>EXPECTED DAYS, 2019 TO NOW</h3>${HW.spark(L.r.expected_days.slice(globe.rOff), 320, 64, { base: L.r.normal_days, mark: i })}
       <h3>PASSES THROUGH</h3><p>${(L.p.chokepoints || []).map(HW.esc).join(' · ') || 'Open water only'}</p>
       <p style="font-size:12px;color:var(--dim)">Efficiency is a model built from PortWatch transits: traffic missing from a strait on this route, times the extra days of going around it.</p>
       <h3>MARKETS</h3>${relatedMarkets(m => (m.series || '').includes(L.id)) || '<p>No open market on this route yet.</p>'}`;
@@ -242,7 +195,7 @@ $('mlist').addEventListener('click', async e => {
   else if (lId && lane(lId)) globe.select({ kind: 'lane', L: lane(lId) });
   else if (m.gate) {
     const gl = D.gates.lines.find(g => g.id === m.gate) || D.gates.boxes.find(g => g.id === m.gate);
-    if (gl) { const lat = gl.a ? (gl.a[1] + gl.b[1]) / 2 : (gl.lat[0] + gl.lat[1]) / 2, lon = gl.a ? (gl.a[0] + gl.b[0]) / 2 : (gl.lon[0] + gl.lon[1]) / 2; globe.flyTo(lat, lon, 5.5); setWeek(nW - 1); }
+    if (gl) { const lat = gl.a ? (gl.a[1] + gl.b[1]) / 2 : (gl.lat[0] + gl.lat[1]) / 2, lon = gl.a ? (gl.a[0] + gl.b[0]) / 2 : (gl.lon[0] + gl.lon[1]) / 2; globe.flyTo(lat, lon, 5.5); }
   }
 });
 const pollLive = async () => {
@@ -282,7 +235,6 @@ $('search').addEventListener('submit', async e => {
   const s = await HW.findShip(q);
   if (!s) { $('qerr').textContent = 'NOT FOUND'; return; }
   $('qerr').textContent = '';
-  setWeek(nW - 1);
   const ship = { ...s, g: s.type_group };
   globe.flyTo(+s.lat, +s.lon, 5);
   globe.select({ kind: 'ship', ship });
@@ -352,4 +304,4 @@ const altTick = () => {
 altTick();
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (scene.S.on) $('back').click(); else globe.select(null); } });
 
-window.__hw = { D, globe, scene, setWeek, dive };
+window.__hw = { D, globe, scene, dive };
