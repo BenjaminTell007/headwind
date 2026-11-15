@@ -248,17 +248,6 @@
             ctx.rect(sx - hh, sy - hh, hd, hd);
           }
           ctx.fill();
-          // like the landing page's glyphs: about one dot in eight of the hovered country flickers in a vessel colour
-          for (let i = 0; i < nL; i++) {
-            if (LC[i] !== hc) continue;
-            const h = ((i * 2654435761) ^ (FX_TICK * 40503 + i * 97)) >>> 0;
-            if (h % 8) continue;
-            const Z = m6 * LX[i] + m7 * LY[i] + m8 * LZ[i]; if (Z < 0) continue;
-            const sx = cx + (m0 * LX[i] + m1 * LY[i] + m2 * LZ[i]) * R, sy = cy - (m3 * LX[i] + m4 * LY[i] + m5 * LZ[i]) * R;
-            if (bumpOf(sx, sy) > 0.03) continue;
-            ctx.fillStyle = FX_COLS[(h >>> 8) % FX_COLS.length];
-            ctx.fillRect(sx - hh * 1.15, sy - hh * 1.15, hd * 1.15, hd * 1.15);
-          }
         }
         if (raised.length) {
           // shadows first (where the dots sat), then the lifted dots, back to front
@@ -274,12 +263,7 @@
             const sd = (inCountry ? ds * 1.25 : ds) * (1 + 0.7 * gb);
             ctx.fillStyle = inCountry ? C.accent : C.fg;
             ctx.globalAlpha = Math.min(1, alpha + 0.55 * gb);
-            if (gb > 0.3) {   // the top of the bump turns into glyphs, some in the vessel colours (the landing page's look)
-              const h = ((di * 73856093) ^ (Math.floor(FX_TICK / 2) * 83492791 + di * 131)) >>> 0;
-              if (h % 3 === 0) ctx.fillStyle = FX_COLS[(h >>> 5) % FX_COLS.length];
-              ctx.font = `500 ${(sd * 3.1).toFixed(1)}px ${HW.MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-              ctx.fillText('+×/01▪◦#'[(h >>> 11) % 8], x, y);
-            } else ctx.fillRect(x - sd / 2, y - sd / 2, sd, sd);
+            ctx.fillRect(x - sd / 2, y - sd / 2, sd, sd);
           }
         }
         // which country the cursor is over: the nearest land dot within ~7 px
