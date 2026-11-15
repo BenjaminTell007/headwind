@@ -10,7 +10,7 @@
    whenever you come back to the tab, check the published version (never cached) and,
    if it's newer than this copy, reload once onto it. web/tools/stamp.sh sets both. */
 (function () {
-  var SITE_VERSION = '20261115T2134', URL_ = 'web/version.json';
+  var SITE_VERSION = '20261115T2151', URL_ = 'web/version.json';
   function check() {
     fetch(URL_ + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       if (!d.v || d.v === SITE_VERSION) return;
@@ -24,7 +24,7 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
 })();
 </script>
-<link rel="stylesheet" href="web/landing/landing.css?v=20261115T2134">
+<link rel="stylesheet" href="web/landing/landing.css?v=20261115T2151">
 </head>
 <body>
 
@@ -72,9 +72,9 @@
 
 </div>
 
-<script src="web/js/util.js?v=20261115T2134"></script>
-<script src="web/js/logo.js?v=20261115T2134"></script>
-<script src="web/js/brand.js?v=20261115T2134"></script>
-<script src="web/landing/landing.js?v=20261115T2134"></script>
+<script src="web/js/util.js?v=20261115T2151"></script>
+<script src="web/js/logo.js?v=20261115T2151"></script>
+<script src="web/js/brand.js?v=20261115T2151"></script>
+<script src="web/landing/landing.js?v=20261115T2151"></script>
 </body>
 </html>
