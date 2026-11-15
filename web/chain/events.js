@@ -20,6 +20,33 @@ import { toProb } from './markets.js';
 
 const abi = parseAbi(MARKETS_ABI);
 
+/**
+ * Live odds, the simple way: calls onOdds({ id, probYes, priceYes, yes, isBuy, amount, who, txHash })
+ * once per trade, as soon as its block is proposed (~300 ms on Monad). Also fires when a market
+ * opens (with its starting odds) and when one settles ({ id, resolved: true, outcome }).
+ * Returns a stop function.
+ *
+ *   const stop = await watchOdds(({ id, probYes }) => {
+ *     const card = cards.find(c => c.chainId === id);
+ *     if (card) { card.probYes = probYes; renderMarkets(); }
+ *   });
+ */
+export async function watchOdds(onOdds, opts = {}) {
+  return watch({
+    onTrade: (t) => {
+      if (t.commitState !== 'Proposed') return; // the same trade comes again as Voted/Finalized
+      onOdds({ id: t.id, probYes: t.probYes, priceYes: t.priceYes, yes: t.yes, isBuy: t.isBuy,
+               amount: t.amount, who: t.who, txHash: t.txHash });
+    },
+    onCreated: (c) => {
+      if (c.commitState === 'Proposed') onOdds({ id: c.id, probYes: c.probYes, priceYes: c.priceYes, created: true });
+    },
+    onResolved: (r) => {
+      if (r.commitState === 'Proposed') onOdds({ id: r.id, resolved: true, outcome: Number(r.outcome), value: r.value });
+    },
+  }, opts);
+}
+
 export async function watch(handlers = {}, { address } = {}) {
   const addr = (address ?? (await loadDeployments()).markets.address).toLowerCase();
   let ws;

@@ -71,6 +71,29 @@ function shapeMarket(id, m) {
   };
 }
 
+/**
+ * Find the onchain market for a page market. Use this instead of matching on `series` alone:
+ * several markets share a series (Suez weekly total and Suez collapse are both
+ * `portwatch:Suez Canal:weekly_transits`; every Singapore live window is `gate:singapore:30min`).
+ *
+ * Matches the question exactly first, then falls back to the series. Among several matches it
+ * prefers an open market, then the newest (highest id), so a rolling live market finds this
+ * window's market, not last window's.
+ *
+ *   const onchain = await m.list();
+ *   for (const card of cards) { const c = findMarket(onchain, card); if (c) { card.chainId = c.id; card.probYes = c.probYes; } }
+ */
+export function findMarket(onchain, { question, series } = {}) {
+  const norm = (s) => (s || '').trim().toLowerCase();
+  const best = (xs) => xs.sort((a, b) => (b.open - a.open) || (b.id > a.id ? 1 : b.id < a.id ? -1 : 0))[0];
+  const byQuestion = question ? onchain.filter((x) => norm(x.question) === norm(question)) : [];
+  if (byQuestion.length) return best(byQuestion);
+  // Series alone is only safe when the question was not given or has no onchain match,
+  // and then only among markets that are still open.
+  const bySeries = series ? onchain.filter((x) => x.series === series && x.open) : [];
+  return bySeries.length === 1 ? bySeries[0] : bySeries.length ? best(bySeries) : undefined;
+}
+
 /** Turn a revert into a short sentence for the page. */
 export function explain(err) {
   if (err instanceof BaseError) {
