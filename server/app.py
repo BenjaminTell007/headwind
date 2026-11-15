@@ -26,6 +26,7 @@ On Railway the same command runs with RUN_LOGGER=1, so the server also starts
 the ship logger and keeps it running (see railway.json).
 """
 import csv
+import hmac
 import io
 import json
 import os
@@ -39,7 +40,7 @@ from pathlib import Path
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -363,6 +364,7 @@ app.include_router(markets.router)
 
 
 from server.chain import ChainOff, TxFailed, chain  # noqa: E402
+from server.chain import setting as chain_setting  # noqa: E402
 from server import quotes  # noqa: E402
 quotes.ship_lookup = find_ship
 app.include_router(quotes.router)
@@ -389,6 +391,57 @@ keeper_module.live_dir = LIVE
 def keeper_status():
     """What the keeper has opened and settled, and its recent actions."""
     return keeper_module.keeper.status()
+
+
+# ---------- demo round: a short gate market started by hand ----------
+
+class DemoStart(BaseModel):
+    key: str | None = None          # the demo password (or send it as the X-Demo-Key header)
+    gate: str = "singapore"
+    bet_seconds: int = keeper_module.DEMO_BET_SECONDS
+    count_seconds: int = keeper_module.DEMO_COUNT_SECONDS
+    threshold: int | None = None    # default: the count closest to a coin flip at the gate's current pace
+
+
+@app.get("/api/demo")
+def demo_status():
+    """The latest demo round and its phase: betting, counting, settling or settled."""
+    k = keeper_module.keeper
+    return {"keeper_running": k.running, "round": k.demo_status(),
+            "defaults": {"bet_seconds": keeper_module.DEMO_BET_SECONDS, "count_seconds": keeper_module.DEMO_COUNT_SECONDS}}
+
+
+@app.post("/api/demo/start")
+def demo_start(req: DemoStart, x_demo_key: str | None = Header(None)):
+    """Open a demo round now. Needs the demo password (DEMO_KEY in Railway's variables)."""
+    expected = chain_setting("DEMO_KEY")
+    if not expected:
+        raise HTTPException(503, "DEMO_KEY is not set on this server")
+    given = req.key or x_demo_key or ""
+    if not hmac.compare_digest(given.encode(), expected.encode()):
+        raise HTTPException(403, "wrong demo password")
+    gates = json.loads(GATES_FILE.read_text())
+    if not any(g["id"] == req.gate for g in gates["lines"] + gates["boxes"]):
+        raise HTTPException(400, f"no gate {req.gate}")
+    if not (30 <= req.bet_seconds <= 600 and 60 <= req.count_seconds <= 900):
+        raise HTTPException(400, "bet_seconds must be 30 to 600 and count_seconds 60 to 900")
+    if req.threshold is not None and not (1 <= req.threshold <= 200):
+        raise HTTPException(400, "threshold must be 1 to 200")
+    try:
+        return keeper_module.keeper.start_demo(req.gate, req.bet_seconds, req.count_seconds, req.threshold)
+    except keeper_module.DemoBusy as busy:
+        raise HTTPException(409, f"a demo round is already running: market #{busy.args[0]['market_id']}, "
+                                 f"counting ends {busy.args[0]['count_end']}")
+    except RuntimeError as err:
+        raise HTTPException(503, str(err))
+    except (TxFailed, ChainOff) as err:
+        raise HTTPException(502, f"could not open the demo market: {err}")
+
+
+@app.get("/demo", response_class=HTMLResponse)
+def demo_page():
+    """One button to start a demo round, and a clock for where it is."""
+    return DEMO_PAGE
 
 # The contract already allows one drip per address. This caps how fast new
 # addresses can drain the faucet. It's global, not per IP, because the whole
@@ -468,6 +521,46 @@ main{{max-width:720px;margin:0 auto;padding:40px 16px}}h1{{font-weight:300;lette
 <p>{total:,} ships in memory, {len(recent):,} seen in the last 30 minutes:</p><table>{rows}</table>
 <p class="tag" style="margin-top:28px">TRY</p><ul>{link_html}</ul>
 <p class="tag">This page refreshes every 15 seconds.</p></main></body></html>"""
+
+
+DEMO_PAGE = """<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Headway demo round</title>
+<style>body{margin:0;background:#0a0a0a;color:#ececec;font:15px/1.5 ui-monospace,"SF Mono",Menlo,monospace}
+main{max-width:560px;margin:0 auto;padding:32px 16px}h1{font-weight:300;letter-spacing:.3em;margin:0 0 4px;font-size:22px}
+.tag{color:#8a8a8a;font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+input,button{font:inherit;padding:12px 14px;border-radius:10px;border:1px solid #2a2a2c;background:#141416;color:#ececec;width:100%;box-sizing:border-box;margin-top:10px}
+button{background:#4c8dff;border-color:#4c8dff;color:#fff;letter-spacing:.14em;cursor:pointer}button:disabled{background:#1c1c1e;border-color:#2a2a2c;color:#6b6b6b;cursor:default}
+.box{margin-top:22px;padding:16px;border:1px solid #2a2a2c;border-radius:12px}.big{font:500 34px/1.1 -apple-system,"Helvetica Neue",Arial,sans-serif;margin:6px 0}
+.steps{display:flex;gap:6px;margin:12px 0 4px}.steps i{flex:1;height:4px;border-radius:2px;background:#2a2a2c}.steps i.on{background:#4c8dff}
+.q{font:16px/1.4 -apple-system,"Helvetica Neue",Arial,sans-serif;margin:10px 0}#msg{min-height:1.5em;color:#f08a3c;margin-top:10px}</style></head>
+<body><main><h1>HEADWAY</h1><div class="tag">Demo round: bet, count real ships, settle onchain</div>
+<input id="key" type="password" placeholder="demo password" autocomplete="off">
+<button id="go">START A DEMO ROUND</button><div id="msg"></div>
+<div class="box"><div class="tag" id="phase">no round yet</div><div class="big" id="clock">&mdash;</div>
+<div class="steps"><i id="s0"></i><i id="s1"></i><i id="s2"></i><i id="s3"></i></div>
+<div class="q" id="q"></div><div class="tag" id="detail"></div></div>
+<p class="tag" style="margin-top:22px">The round shows on the markets page as the first Live card.</p></main>
+<script>
+const $=id=>document.getElementById(id);let round=null,skew=0;
+try{$('key').value=localStorage.getItem('hw.demo.key')||''}catch(e){}
+const left=t=>{const s=Math.max(0,Math.round((Date.parse(t)-(Date.now()+skew))/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const paint=()=>{const r=round,ph=r?r.phase:null,order=['betting','counting','settling','settled'];
+  order.forEach((p,i)=>$('s'+i).className=r&&order.indexOf(ph)>=i?'on':'');
+  $('go').disabled=!!r&&ph!=='settled';
+  if(!r){return}
+  $('q').textContent=r.question;
+  if(ph==='betting'){$('phase').textContent='betting open · closes in';$('clock').textContent=left(r.bet_closes);$('detail').textContent='market #'+r.market_id+' · starting odds '+Math.round(r.prior_yes*100)+'% yes'}
+  else if(ph==='counting'){$('phase').textContent='counting ships · ends in';$('clock').textContent=left(r.count_end);$('detail').textContent=(r.count_so_far==null?'—':r.count_so_far)+' of '+r.threshold+' crossed so far'}
+  else if(ph==='settling'){$('phase').textContent='settling onchain';$('clock').textContent=(r.count_so_far==null?'—':r.count_so_far)+' / '+r.threshold;$('detail').textContent='final count going to the contract'}
+  else{$('phase').textContent='settled';$('clock').textContent=(r.outcome||'')+' · '+r.value+' of '+r.threshold;$('detail').textContent='market #'+r.market_id+' · winners can claim on the markets page'}};
+const poll=async()=>{try{const d=await(await fetch('/api/demo')).json();round=d.round;if(round&&round.now)skew=Date.parse(round.now)-Date.now();
+  if(!d.keeper_running)$('msg').textContent='The keeper is not running on this server.';paint()}catch(e){}};
+$('go').onclick=async()=>{$('msg').textContent='';$('go').disabled=true;try{localStorage.setItem('hw.demo.key',$('key').value)}catch(e){}
+  try{const r=await fetch('/api/demo/start',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key:$('key').value})});
+    const d=await r.json();if(!r.ok)$('msg').textContent=d.detail||('error '+r.status)}catch(e){$('msg').textContent=String(e)}
+  await poll()};
+poll();setInterval(poll,2000);setInterval(paint,500);
+</script></body></html>"""
 
 
 @app.get("/data/gates.json")

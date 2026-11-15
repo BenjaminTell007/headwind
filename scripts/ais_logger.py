@@ -212,6 +212,7 @@ async def run(logger, api_key):
                 await ws.send(json.dumps(subscription))
                 print(datetime.now().strftime("%H:%M:%S"), "connected and subscribed")
                 last_report = time.time()
+                last_flush = time.time()
                 while True:
                     try:
                         raw = await asyncio.wait_for(ws.recv(), timeout=SILENCE_SECONDS)
@@ -226,6 +227,11 @@ async def run(logger, api_key):
                         print("server error:", msg["error"])
                         continue
                     logger.handle(msg)
+                    # Write to disk every few seconds, so the server's gate counts and ship
+                    # positions are current (a demo round counts a 3-minute window).
+                    if time.time() - last_flush > 5:
+                        logger.flush()
+                        last_flush = time.time()
                     if time.time() - last_report > 60:
                         logger.flush()
                         print(datetime.now().strftime("%H:%M:%S"), logger.counts)

@@ -43,6 +43,9 @@ The logger reads the aisstream key from `PRIVATE.md` in the repo root (the line 
 | `GET /api/chain` | whether the server is connected to the contracts, the server key's address and balance, the faucet's balance, market count |
 | `POST /api/quote` | body `{ship, port, deadline, cargoUsd}`: prices a ship-arrival hedge with `contracts/pricing` (Xavi's model), signs it with the server key and returns `{quote, signature, model, hedge}`, numbers as strings. The page passes it to `createMarket`. Code in `server/quotes.py` |
 | `GET /api/keeper` | what the keeper has opened and settled, and its last 20 actions |
+| `POST /api/demo/start` | starts a demo round: one short gate market (default Singapore, 2 minutes of betting, then 3 minutes of counting real ships, settled about 30 s later). Body `{key, gate, bet_seconds, count_seconds, threshold}`; `key` is `DEMO_KEY`. One round at a time (409 while one runs) |
+| `GET /api/demo` | the latest demo round and its phase: betting, counting, settling or settled |
+| `GET /demo` | a page with one button to start a round and a clock for where it is |
 
 ## Chain settings
 
@@ -65,7 +68,9 @@ Without the key or the file, the chain endpoints answer 503 and everything else 
 - Re-pricing bot (Xavi's `contracts/pricing/reprice.py`): every 3 minutes, for each open arrival market, re-runs the model on fresh data and buys toward it when it disagrees by more than the fee plus 3 points. Caps: 0.05 MON a step, 0.30 MON a market, 1 MON in total (`KEEPER_REPRICE_BUDGET_MON`), and never below 1 MON left on the server key. It redeems its shares after settlement.
 - Saves what it opened in `keeper_state.json` next to the ship logs (the Railway volume), so restarts don't reopen anything.
 
-Railway variables for the chain: `SERVER_PRIVATE_KEY`, `HEADWAY_KEEPER=1`, optionally `KEEPER_GROUPS`.
+- Demo round (`start_demo`, `settle_demo`): started by hand from `/demo` or `POST /api/demo/start`, so a whole bet, count, settle loop fits on stage whenever the slot starts. The threshold is the count closest to a coin flip at the gate's pace over the last hour, and the starting odds come from the same pace. It shows on the markets page as the first Live card (`demo: true`, id `demo_{gate}`, `live.phase`). It's checked every 5 seconds, so it settles about 25 to 30 seconds after counting ends. Each round borrows a 0.5 MON seed from the vault until it settles.
+
+Railway variables for the chain: `SERVER_PRIVATE_KEY`, `HEADWAY_KEEPER=1`, `DEMO_KEY` (the demo password), optionally `KEEPER_GROUPS`.
 
 ## To build
 

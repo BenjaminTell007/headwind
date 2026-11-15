@@ -21,6 +21,7 @@ What it has opened is saved in keeper_state.json next to the ship logs (the Rail
 volume), so a restart doesn't open anything twice.
 """
 import json
+import math
 import os
 import threading
 import time
@@ -48,6 +49,14 @@ LIVE_RESOLVE_GRACE = timedelta(hours=2)     # resolveBy for live markets, past t
 REPRICE_EVERY = timedelta(minutes=3)
 REPRICE_TOTAL_MON = float(os.environ.get("KEEPER_REPRICE_BUDGET_MON", "1.0"))  # all markets together
 REPRICE_KEEP_MON = 1.0                      # never trade if the server key would drop below this
+# Demo round: a short gate market started by hand (POST /api/demo/start), so a full
+# bet -> count -> settle loop fits on stage whenever the slot starts.
+DEMO_BET_SECONDS = 120                      # betting open this long
+DEMO_COUNT_SECONDS = 180                    # then real ships are counted this long
+DEMO_SETTLE_DELAY = timedelta(seconds=25)   # logger flushes every 5 s, the server reads every 3 s
+DEMO_SEED_MON = 0.5                         # a thin pool, so each bet visibly moves the odds
+DEMO_FALLBACK_RATE = 20.0                   # trade ships an hour, if the last hour's count is unusable
+DEMO_TICK_SECONDS = 5                       # how often a due demo round is checked between cycles
 
 # Set by app.py.
 gate_counter = None     # gate_count(gate_id, since=..., until=...)
@@ -66,6 +75,10 @@ def iso(dt):
 
 def parse(text):
     return datetime.fromisoformat(text.replace("Z", "+00:00"))
+
+
+class DemoBusy(Exception):
+    """A demo round is already running."""
 
 
 class Keeper:
@@ -289,6 +302,101 @@ class Keeper:
                     self.note(f"arrival #{mid}: {err}")
             self.save()
 
+    # ---------- demo round ----------
+
+    def demo_rounds(self):
+        return self.state.setdefault("demo", {})
+
+    def start_demo(self, gate="singapore", bet_seconds=DEMO_BET_SECONDS, count_seconds=DEMO_COUNT_SECONDS,
+                   threshold=None):
+        """Open one short gate market now. Betting runs for bet_seconds, then cargo ships and
+        tankers crossing the gate are counted for count_seconds, then it settles. One at a time."""
+        if not self.running:
+            raise RuntimeError("the keeper isn't running on this server (HEADWAY_KEEPER=1 and the chain set up)")
+        with self.lock:
+            active = [e for e in self.demo_rounds().values() if not e["settled"]]
+            if active:
+                raise DemoBusy(active[0])
+            # How busy is the gate right now? Sets the fair starting odds, and the threshold
+            # if none was given (the one closest to a coin flip).
+            try:
+                rate = float(gate_counter(gate, minutes=60)["count"])
+            except Exception:
+                rate = 0.0
+            if rate < 3:
+                rate = DEMO_FALLBACK_RATE
+            lam = rate * count_seconds / 3600
+            at_least = lambda k: 1 - sum(math.exp(-lam) * lam**i / math.factorial(i) for i in range(k))
+            if threshold is None:
+                threshold = min(range(1, int(lam * 2) + 3), key=lambda k: abs(at_least(k) - 0.5))
+            prior = at_least(threshold)
+
+            now = now_utc()
+            close = now + timedelta(seconds=bet_seconds)
+            close = close.replace(microsecond=0) + timedelta(seconds=(-close.second) % 10)  # tidy :00, :10, ...
+            end = close + timedelta(seconds=count_seconds)
+            name = gate.replace("_", " ").title()
+            ships = "cargo ship or tanker" if threshold == 1 else "cargo ships and tankers"
+            question = (f"Demo round: will at least {threshold} {ships} cross the {name} gate "
+                        f"between {close:%H:%M:%S} and {end:%H:%M:%S} UTC?")
+            series = f"gate:{gate}:demo{count_seconds}s"
+            q = pricing.build("live", question, series, f"gate:{gate}", threshold, True, close, prior, now=now)
+            q["seed"] = int(DEMO_SEED_MON * 10**18)
+            q["resolveBy"] = int((end + LIVE_RESOLVE_GRACE).timestamp())
+            market_id = chain.create_market(chain.quote_from_json(q))
+            entry = {
+                "market_id": market_id, "gate": gate, "threshold": threshold, "question": question,
+                "series": series, "prior_yes": round(prior, 4), "ships_per_hour": round(rate, 1),
+                "opened_at": iso(now), "bet_closes": iso(close), "count_start": iso(close), "count_end": iso(end),
+                "resolved": False, "settled": False,
+            }
+            self.demo_rounds()[str(market_id)] = entry
+            self.save()
+            self.note(f"demo round #{market_id}: at least {threshold} at {gate}, betting to {close:%H:%M:%S}, "
+                      f"counting to {end:%H:%M:%S}")
+            return dict(entry)
+
+    def settle_demo(self, now):
+        for mid, e in list(self.demo_rounds().items()):
+            if e["settled"] or now < parse(e["count_end"]) + DEMO_SETTLE_DELAY:
+                continue
+            try:
+                count = None if e["resolved"] else gate_counter(
+                    e["gate"], since=e["count_start"].replace("Z", "+00:00"),
+                    until=e["count_end"].replace("Z", "+00:00"))["count"]
+                self._finish(f"demo#{mid}", e, "resolve", count)
+            except Exception as err:
+                self.note(f"settle demo #{mid} failed: {err}")
+
+    def demo_tick(self):
+        """Between full cycles, settle a demo round the moment it's due."""
+        now = now_utc()
+        if any(not e["settled"] and now >= parse(e["count_end"]) + DEMO_SETTLE_DELAY
+               for e in self.state.get("demo", {}).values()):
+            with self.lock:
+                self.settle_demo(now)
+
+    def demo_status(self):
+        """The latest demo round with its phase, for /api/demo and the start page."""
+        rounds = self.state.get("demo", {})
+        if not rounds:
+            return None
+        e = dict(rounds[max(rounds, key=int)])
+        now = now_utc()
+        start, end = parse(e["count_start"]), parse(e["count_end"])
+        e["phase"] = ("settled" if e["settled"] else "betting" if now < start else "counting" if now < end
+                      else "settling")
+        if e["phase"] in ("counting", "settling") and gate_counter is not None:
+            try:
+                e["count_so_far"] = gate_counter(e["gate"], since=e["count_start"].replace("Z", "+00:00"),
+                                                 until=e["count_end"].replace("Z", "+00:00"))["count"]
+            except Exception:
+                e["count_so_far"] = None
+        if e["settled"] and e.get("value") is not None:
+            e["outcome"] = "YES" if e["value"] >= e["threshold"] else "NO"
+        e["now"] = iso(now)
+        return e
+
     # ---------- re-pricing bot ----------
 
     def _bot(self, mid):
@@ -354,6 +462,7 @@ class Keeper:
             self.retire_orphans(now)   # first, so the freed seed is there for new markets
             self.open_markets(now)
             self.settle_live(now)
+            self.settle_demo(now)
             self.settle_arrivals(now)
             self.reprice_arrivals(now)
             self.last_cycle = iso(now)
@@ -372,13 +481,18 @@ class Keeper:
                 self.cycle()
             except Exception:
                 traceback.print_exc()
-            time.sleep(CYCLE_SECONDS)
+            for _ in range(CYCLE_SECONDS // DEMO_TICK_SECONDS):
+                time.sleep(DEMO_TICK_SECONDS)
+                try:
+                    self.demo_tick()
+                except Exception:
+                    traceback.print_exc()
 
     def status(self):
         with self.lock:
             return {"running": self.running, "last_cycle": self.last_cycle,
                     "opened": self.state["opened"], "arrivals": self.state.get("arrivals", {}),
-                    "bot": self.state.get("bot", {}),
+                    "bot": self.state.get("bot", {}), "demo": self.state.get("demo", {}),
                     "log": self.log[-20:]}
 
 

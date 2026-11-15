@@ -16,6 +16,9 @@ onchain markets in play. `chainId` is the one taking positions now (the NEXT win
 `live.counting` is the window whose ships are crossing right now; `live.last` is the
 latest settled window.
 
+A demo round (POST /api/demo/start) is one more live card, `demo: true`, id `demo_{gate}`.
+It follows a single market through `live.phase`: betting, counting, settling, settled.
+
 Thresholds are the onchain integers from examples.json, never rescaled here
 (CHAIN_SERVER.md item 3). `threshold_display` is the readable version.
 """
@@ -305,10 +308,83 @@ def build_arrival(m, now):
     }
 
 
+def demo_seconds(series):
+    """Count-window length of a demo round's series, "gate:{gate}:demo180s", else None."""
+    parts = series.split(":")
+    if len(parts) == 3 and parts[0] == "gate" and parts[2].startswith("demo") and parts[2].endswith("s"):
+        try:
+            return int(parts[2][4:-1])
+        except ValueError:
+            return None
+    return None
+
+
+DEMO_SHOW_AFTER = timedelta(minutes=30)   # a settled demo round stays listed this long
+
+
+def build_demo(rounds, now):
+    """The demo round at one gate: a single market followed through betting, counting,
+    settling and settled (keeper.start_demo opens it; POST /api/demo/start). Unlike the
+    rolling live cards, `chainId` and `chain` stay on this one market the whole way, so the
+    card shows CLOSED while ships are counted and then the result."""
+    m = max(rounds, key=lambda x: x["id"])
+    gate = m["series"].split(":")[1]
+    seconds = demo_seconds(m["series"])
+    start = ts(m["closeTime"])
+    end = start + timedelta(seconds=seconds)
+    phase = ("settled" if m["outcome"] != OPEN else "betting" if now < start else "counting" if now < end
+             else "settling")
+    if phase == "settled" and now - end > DEMO_SHOW_AFTER:
+        return None
+    window = {"market_id": m["id"], "question": m["question"], "window_start": iso(start), "window_end": iso(end)}
+    price = m["priceYes"] / WEI
+    return {
+        "id": f"demo_{gate}",
+        "group": "live",
+        "demo": True,
+        "question": m["question"],
+        "series": m["series"],
+        "threshold": m["threshold"],
+        "threshold_display": f"{m['threshold']} ship" + ("" if m["threshold"] == 1 else "s"),
+        "is_above": m["isAbove"],
+        "featured": True,
+        "settles_on": "Cargo ships and tankers crossing the gate, counted by the server from the live AIS feed",
+        "why": (f"A demo round started by hand: betting until {start:%H:%M:%S} UTC, then real ships are counted "
+                f"for {seconds // 60 if seconds % 60 == 0 else round(seconds / 60, 1)} minutes and it settles "
+                "onchain about half a minute later. The threshold is the count closest to a coin flip at "
+                "this gate's pace over the last hour."),
+        "prior_yes": None,
+        "gate": gate,
+        "minutes": seconds / 60,
+        "closes": iso(start),
+        "status": status_of(m, now),
+        "chainId": m["id"],
+        "probYes": price,
+        "chain": chain_block(m),
+        "live": {
+            "phase": phase,
+            "trading": dict(window, trading_closes=iso(start)) if phase == "betting" else None,
+            "counting": dict(window, count_so_far=count_between(gate, start, end), threshold=m["threshold"],
+                             price_yes_at_close=price, settling=phase == "settling")
+            if phase in ("counting", "settling") else None,
+            "last": dict(window, count=m["value"] if m["outcome"] != INVALID else None,
+                         outcome=OUTCOME_NAME[m["outcome"]]) if phase == "settled" else None,
+        },
+    }
+
+
 def all_markets():
     now = datetime.now(timezone.utc)
     onchain = list(index.get().values())
     out = []
+    demo_by_gate = {}
+    for m in onchain:
+        if demo_seconds(m["series"]) is not None:
+            demo_by_gate.setdefault(m["series"].split(":")[1], []).append(m)
+    for rounds in demo_by_gate.values():
+        card = build_demo(rounds, now)
+        if card:
+            out.append(card)
     for ex in examples():
         out.append(build_live(ex, onchain, now) if ex["group"] == "live" else build_fixed(ex, onchain, now))
     for m in onchain:
@@ -333,7 +409,7 @@ def list_markets(
     if onchain:
         markets = [m for m in markets if m["chain"] is not None or (m.get("live") or {}).get("counting")]
     # Featured and tradable first, so the page's first cards are the ones people can use.
-    markets.sort(key=lambda m: (m["chainId"] is None, not m["featured"]))
+    markets.sort(key=lambda m: (not m.get("demo"), m["chainId"] is None, not m["featured"]))
     return {"now": iso(now), "count": len(markets), "chain_error": index.error, "markets": markets}
 
 
