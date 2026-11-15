@@ -152,7 +152,7 @@ const render = () => {
     grid.innerHTML = rows.sort(by).map(card).join('') || '<div class="mk-empty">No markets here right now.</div>';
   }
   $('note').textContent = 'Markets settle onchain on Monad testnet against public data. Stakes are testnet MON, which has no real value. Each share pays 1 MON if you are right.';
-  if (openId != null) renderDrawer();
+  if (openId != null && !hedgeOpen) renderDrawer();
 };
 
 /* ---------- drawer ---------- */
@@ -206,8 +206,104 @@ const renderDrawer = () => {
   if (focused && $('amt')) { const a = $('amt'); a.focus(); a.setSelectionRange(a.value.length, a.value.length); }
   quote();
 };
-const openDrawer = (id, s) => { openId = id; if (s != null) side = s; document.body.classList.add('drawer-open'); $('drawer').setAttribute('aria-hidden', 'false'); renderDrawer(); ensureChain(); };
-const closeDrawer = () => { openId = null; document.body.classList.remove('drawer-open'); $('drawer').setAttribute('aria-hidden', 'true'); };
+const openDrawer = (id, s) => { hedgeOpen = false; openId = id; if (s != null) side = s; document.body.classList.add('drawer-open'); $('drawer').setAttribute('aria-hidden', 'false'); renderDrawer(); ensureChain(); };
+const closeDrawer = () => { hedgeOpen = false; openId = null; document.body.classList.remove('drawer-open'); $('drawer').setAttribute('aria-hidden', 'true'); };
+
+/* ---------- hedge a ship: price a late arrival, then open the market and buy cover in one transaction ---------- */
+let hedgeOpen = false, hq = null;   // hq: the signed quote on screen
+const hv = { ship: '', port: '', deadline: '', cargo: '500000' };
+const USD_PER_MON = 100000;         // demo rate, so the cover fits in a burner wallet (0.25 MON from the faucet)
+const localInput = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+const openHedge = (ship, port) => {
+  openId = null; hedgeOpen = true; hq = null;
+  if (ship != null) hv.ship = ship; if (port != null) hv.port = port;
+  if (!hv.deadline) hv.deadline = localInput(new Date(Date.now() + 19 * 3600e3));
+  document.body.classList.add('drawer-open'); $('drawer').setAttribute('aria-hidden', 'false');
+  renderHedge(); ensureChain();
+};
+const renderHedge = () => {
+  const q = hq, md = q && q.model, inp = md && md.inputs || {}, hg = q && q.hedge || {};
+  const stake = q ? Math.min(0.05, (hg.fair_premium_mon || 0.01) * 1.2) : 0;
+  const when = t => t ? new Date(t).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' }) : '—';
+  $('dbody').innerHTML = `
+    <div class="tag src">HEDGE A SHIP · ARRIVAL MARKET</div>
+    <h1>${q ? esc(q.quote.question) : 'Cover a shipment against arriving late'}</h1>
+    <div class="dcols">
+      <div>
+        <div class="dsec"><h3>YOUR SHIPMENT</h3>
+          <div class="hf">
+            <label class="f"><span>SHIP (NAME, IMO OR MMSI)</span><input id="hShip" value="${esc(hv.ship)}" placeholder="NYK DIANA" autocomplete="off"></label>
+            <label class="f"><span>ARRIVING AT (PORT)</span><input id="hPort" value="${esc(hv.port)}" placeholder="Hamburg" autocomplete="off"></label>
+            <label class="f"><span>MUST ARRIVE BY (YOUR TIME)</span><input id="hDead" type="datetime-local" value="${esc(hv.deadline)}"></label>
+            <label class="f"><span>CARGO VALUE (USD)</span><input id="hCargo" inputmode="numeric" value="${esc(hv.cargo)}"></label>
+          </div>
+          <p class="hfine">The server prices the chance the ship is late from its live position and speed, the weather on the way, straits on the route and how busy the port is. Nothing is spent until you open the market.</p>
+        </div>
+        ${q ? `<div class="dsec"><h3>WHAT THE MODEL SEES</h3><div class="facts">
+            <div><b>${when(md.expected_arrival)}</b><span>EXPECTED ARRIVAL</span></div>
+            <div><b>± ${md.sigma_hours != null ? (+md.sigma_hours).toFixed(1) : '—'} h</b><span>UNCERTAINTY</span></div>
+            <div><b>${md.hours_to_spare != null ? (+md.hours_to_spare).toFixed(1) + ' h' : '—'}</b><span>TIME TO SPARE</span></div>
+            <div><b>${inp.distance_nm != null ? HW.fInt(inp.distance_nm) + ' nm' : '—'}</b><span>DISTANCE LEFT</span></div>
+            <div><b>${inp.speed_kn != null ? (+inp.speed_kn).toFixed(1) + ' kn' : '—'}</b><span>SPEED NOW</span></div>
+            <div><b>${inp.weather ? (+inp.weather.wave_m).toFixed(1) + ' m · ' + Math.round(inp.weather.wind_kn) + ' kn' : '—'}</b><span>WAVES · WIND</span></div>
+            <div><b>${inp.port_wait_hours != null ? (+inp.port_wait_hours).toFixed(1) + ' h' : '—'}</b><span>PORT WAIT</span></div>
+            <div><b>${inp.strait_delay_hours != null ? (+inp.strait_delay_hours).toFixed(1) + ' h' : '—'}</b><span>STRAIT DELAYS${(inp.straits || []).length ? ' · ' + esc(inp.straits.join(', ')).toUpperCase() : ''}</span></div>
+            <div><b>${inp.delay_cost_pct_per_day != null ? inp.delay_cost_pct_per_day + '%' : '—'}</b><span>CARGO VALUE LOST PER DAY LATE</span></div>
+          </div>
+          <p class="hfine">${esc(inp.eta || '')}${inp.delay_cost_source ? ' · Delay cost from ' + esc(inp.delay_cost_source) : ''}</p></div>` : ''}
+      </div>
+      <div class="tb">
+        ${q ? `<div class="odds2"><span class="tag">CHANCE IT IS LATE</span><b>${Math.round(md.p_yes * 100)}%</b></div>
+          <div class="kc" style="padding:0;border:0;box-shadow:none;background:none;cursor:default;transform:none"><div class="bar"><i style="width:${(md.p_yes * 100).toFixed(1)}%"></i></div></div>
+          <div class="est">
+            <div><span>Estimated loss if late</span><b>${hg.loss_usd != null ? HW.fUSD(hg.loss_usd) : '—'}</b></div>
+            <div><span>Suggested cover</span><b>${hg.cover_mon != null ? (+hg.cover_mon).toFixed(3) + ' MON' : '—'}</b></div>
+            <div><span>Fair price for it</span><b>${hg.fair_premium_mon != null ? (+hg.fair_premium_mon).toFixed(4) + ' MON' : '—'}</b></div>
+            <div><span>You pay now (cover + 0.01 fee)</span><b>${(stake + 0.01).toFixed(4)} MON</b></div>
+          </div>
+          <button class="go" id="hGo">OPEN MARKET AND HEDGE</button>
+          <button class="pill" id="hAgain" style="width:100%;margin-top:8px">PRICE IT AGAIN</button>`
+        : `<p class="msg" style="margin:0 0 14px">Fill in the shipment, then get a price. If the ship arrives after your deadline, your cover pays out.</p>
+          <button class="go" id="hQuote">GET A PRICE</button>`}
+        <div class="msg" id="tmsg"></div>
+        <p class="hfine">Demo rate: $${HW.fInt(USD_PER_MON)} of cargo risk per MON, so the cover fits a test wallet.</p>
+      </div>
+    </div>`;
+};
+const readHedge = () => { for (const [k, id] of [['ship', 'hShip'], ['port', 'hPort'], ['deadline', 'hDead'], ['cargo', 'hCargo']]) if ($(id)) hv[k] = $(id).value.trim(); };
+const getQuote = async () => {
+  readHedge();
+  if (!hv.ship || !hv.port || !hv.deadline) return say('Fill in the ship, the port and the deadline.');
+  const deadline = new Date(hv.deadline);
+  if (!(deadline.getTime() > Date.now() + 3600e3)) return say('The deadline has to be more than an hour away.');
+  const btn = $('hQuote') || $('hAgain'); if (btn) btn.disabled = true;
+  say('Pricing your shipment…');
+  await ensureChain(); if (!chain) return say('The chain helpers did not load. Refresh and try again.');
+  try {
+    hq = await chain.mk.requestQuote({ ship: hv.ship, port: hv.port, deadline, cargoUsd: +String(hv.cargo).replace(/[^0-9.]/g, '') || 500000, usdPerMon: USD_PER_MON });
+    renderHedge();
+  } catch (e) {
+    // the server answers with {"detail": "..."}; show that sentence
+    let msg = String(e.message || e); const j = msg.match(/\{.*\}$/s);
+    if (j) { try { msg = JSON.parse(j[0]).detail || msg; } catch { /* keep the raw text */ } }
+    say(esc(msg)); if (btn) btn.disabled = false;
+  }
+};
+const openHedgeMarket = async () => {
+  if (!hq) return;
+  $('hGo').disabled = true; say('Getting your wallet ready…');
+  const w = await connect(); if (!w) { $('hGo').disabled = false; return say('Could not set up a wallet.'); }
+  say('Opening the market and buying your cover…');
+  try {
+    const stake = chain.mk.parseMon(Math.min(0.05, (hq.hedge.fair_premium_mon || 0.01) * 1.2).toFixed(4));
+    const r = await chain.m.create(w, hq, { buyYes: true, stake });
+    const got = r.trade ? chain.mk.formatMon(r.trade.shares, 3) : '';
+    say(`Done. Market #${r.id} is open and you hold ${got} MON of cover. <a href="${chain.cfg.txUrl(r.receipt.transactionHash || r.receipt.hash)}" target="_blank" rel="noopener">View transaction</a>. It is listed under My positions.`);
+    const msg = $('tmsg').innerHTML;
+    onchain = await chain.m.list(); pairOdds(); await loadPositions(); connect();
+    if ($('tmsg')) $('tmsg').innerHTML = msg;
+  } catch (e) { say(esc(chain.mk.explain(e))); if ($('hGo')) $('hGo').disabled = false; }
+};
 
 /* ---------- chain: Xavi's helpers, loaded when first needed ---------- */
 let chainP = null;
@@ -335,6 +431,11 @@ $('grid').addEventListener('click', e => {
 });
 $('grid').addEventListener('keydown', e => { if (e.key === 'Enter') { const c = e.target.closest('.kc[data-id]'); if (c) openDrawer(c.dataset.id); } });
 $('dbody').addEventListener('click', e => {
+  if (hedgeOpen) {
+    if (e.target.closest('#hQuote') || e.target.closest('#hAgain')) return getQuote();
+    if (e.target.closest('#hGo')) return openHedgeMarket();
+    return;
+  }
   const m = current(); if (!m) return;
   const s = e.target.closest('button[data-s]'), q = e.target.closest('button[data-q]');
   if (s) { side = s.dataset.s === 'yes'; return renderDrawer(); }
@@ -345,6 +446,8 @@ $('dbody').addEventListener('click', e => {
 });
 let qt = 0;
 $('dbody').addEventListener('input', e => { if (e.target.id === 'amt') { amount = e.target.value; clearTimeout(qt); qt = setTimeout(quote, 250); } });
+$('dbody').addEventListener('keydown', e => { if (hedgeOpen && e.key === 'Enter' && e.target.closest('.hf')) getQuote(); });
+$('hedgeBtn').addEventListener('click', () => openHedge());
 $('dx').addEventListener('click', closeDrawer);
 $('scrim').addEventListener('click', closeDrawer);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
@@ -357,6 +460,10 @@ $('theme').addEventListener('click', () => { HW.setTheme(HW.C.theme === 'light' 
 setInterval(() => document.querySelectorAll('[data-end]').forEach(el => { const t = +el.dataset.end; if (t && el.textContent !== 'NOT OPEN YET' && el.textContent !== '') el.textContent = left(t); }), 1000);
 
 await refresh();
+{ // arriving from the globe's ship panel: markets.html?hedge=SHIP&port=PORT
+  const qs = new URLSearchParams(location.search);
+  if (qs.has('hedge')) openHedge(qs.get('hedge') || '', qs.get('port') || '');
+}
 loadSeries();
 ensureChain();
 setInterval(refresh, 15000);

@@ -152,7 +152,8 @@ const showPanel = (item, quiet) => {
         <div><b>${HW.esc(s.eta || '—')}</b><span>ETA</span></div>
       </div>
       <p class="fine">IMO ${HW.esc(s.imo || '—')} · MMSI ${HW.esc(s.mmsi)} · ${(+s.lat).toFixed(3)}, ${(+s.lon).toFixed(3)}</p>
-      <button class="cta" id="diveBtn">DIVE TO SHIP</button>`;
+      <button class="cta" id="diveBtn">DIVE TO SHIP</button>
+      <a class="cta" style="text-decoration:none;margin-top:8px" href="markets.html?hedge=${encodeURIComponent(s.name || s.mmsi)}&port=${encodeURIComponent(s.destination || '')}">HEDGE THIS SHIP</a>`;
     $('diveBtn').addEventListener('click', () => dive(s));
   }
   p.classList.add('open');

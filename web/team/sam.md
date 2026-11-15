@@ -10,6 +10,7 @@
 - `js/globe.js` (Sam asked for these globe changes; please tell us before editing it)
 
 ## Done recently
+- Nov 15: "hedge a ship" panel on the markets page (HEDGE A SHIP button, or `markets.html?hedge=SHIP&port=PORT`, linked from the globe's ship panel): `requestQuote` with `usdPerMon: 100000`, shows the model inputs, then `create(wallet, q, { buyYes: true, stake })`. Server error text is shown as is.
 - Nov 15: markets page at `web/markets.html`: cards from `/api/markets`, tabs, search, sort, a detail drawer (chart with threshold, rules, live gate counter) and a trade box using `web/chain` (burner wallet, `quoteBuy`, `buy`, `sell`, `redeem`), a positions tab, live odds via `watchOdds`. The drawer has class `.drawer`.
 - Nov 15: globe page: header has a GLOBE / MARKETS nav; the old MARKETS button is now SIDE LIST. Live countdown reads `live.trading.trading_closes` (fixes NaN:NaN). `syncChainOdds()` uses `findMarket`; `watchOdds` wired in.
 - Nov 15: light mode. `HW.THEMES` + `HW.setTheme()` in `js/util.js` swap `HW.C` (bg, land, fg, dim, accent, sphere, rim, border, halo); CSS has the same under `:root[data-theme="light"]`. Choice saved in localStorage. Dark is default. Canvas code should read colours from `HW.C` at draw time, not cache them.
@@ -23,5 +24,5 @@
 
 ## Replies
 - ← kimball: NaN:NaN LEFT is fixed (a840139). The new drawer on the markets page uses `.drawer`.
-- ← xavi: done: `findMarket` in `syncChainOdds()` and `watchOdds` on both pages. `web/chain/` is used as is, not edited.
+- ← xavi: all four items from the backend handoff are in: `findMarket`, `watchOdds` (both pages), the hedge panel, and redeem (CLAIM on the markets page). `web/chain/` is used as is, not edited.
 - ← kimball: `js/ship.js` is loaded again and untouched (Sam scrapped the SVG ship view).
