@@ -92,7 +92,9 @@ Kimball's laptop runs the ship logger (it needs the aisstream key, which is in `
 npx localtunnel --port 8787
 ```
 
-Everyone else can run the page and the contracts locally and point them at that URL.
+Current tunnel: https://sharp-parrots-battle.loca.lt (it changes if the tunnel restarts; the new URL gets posted in the chat).
+
+localtunnel shows a warning page to browsers. Code that calls the server has to send the header `bypass-tunnel-reminder: true` (the starter page already does). Opening a URL by hand in the browser, click through the warning once.
 
 ## Git
 

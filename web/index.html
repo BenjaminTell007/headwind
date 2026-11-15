@@ -27,8 +27,15 @@
   <p class="tag">Starter page: proves the page can read the data files and the live server. The globe goes here.</p>
 </main>
 <script>
-// Where the server is. Change this to the tunnel URL when running on another laptop.
-const SERVER = "http://localhost:8787";
+// Where the server is. On Kimball's laptop it's localhost; everyone else uses
+// the tunnel URL (it changes each time the tunnel restarts).
+const SERVER = location.hostname === "localhost" && !location.search.includes("tunnel")
+  ? "http://localhost:8787"
+  : "https://sharp-parrots-battle.loca.lt";
+
+// localtunnel shows a warning page to browsers unless this header is sent.
+const _fetch = window.fetch;
+window.fetch = (url, opts = {}) => _fetch(url, { ...opts, headers: { ...(opts.headers || {}), "bypass-tunnel-reminder": "true" } });
 
 const colours = { cargo: "var(--container)", tanker: "var(--tanker)", passenger: "var(--general)", other: "var(--other)", unknown: "var(--dim)" };
 
