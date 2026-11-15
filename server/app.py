@@ -96,17 +96,32 @@ class Tailer:
         self.header = None
         self.offset = 0
         self.buffer = ""
-        with open(path, "r", newline="") as f:
-            self.header = next(csv.reader([f.readline()]))
-            size = path.stat().st_size
-            start = max(f.tell(), size - START_BYTES)
-            f.seek(start)
-            if start > 0:
-                f.readline()  # skip the partial line we landed in
+        self._try_header(first=True)
+
+    def _try_header(self, first=False):
+        """Read the header line once it's fully written. On a fresh server the
+        logger creates its files a moment before it flushes the header, so this
+        may take a few polls."""
+        with open(self.path, "r", newline="") as f:
+            line = f.readline()
+            if not line.endswith("\n"):
+                return False
+            self.header = next(csv.reader([line]))
+            if first:
+                # Existing file: skip to the last START_BYTES so start-up is quick.
+                header_end = f.tell()
+                size = self.path.stat().st_size
+                start = max(header_end, size - START_BYTES)
+                f.seek(start)
+                if start > header_end:
+                    f.readline()  # skip the partial line we landed in
             self.offset = f.tell()
+        return True
 
     def read_new(self):
         rows = []
+        if self.header is None and not self._try_header():
+            return rows
         with open(self.path, "r", newline="") as f:
             f.seek(self.offset)
             chunk = f.read()

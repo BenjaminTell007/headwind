@@ -86,15 +86,13 @@ Cut in this order: vessel click, find your ship, trade ribbons, claim flow (reso
 
 ## Running it
 
-Kimball's laptop runs the ship logger (it needs the aisstream key, which is in `PRIVATE.md` and not in git) and the server. To let the other two reach the server, expose it with a tunnel, for example:
+The server and the ship logger run on Railway, so they keep going when any laptop is closed:
 
-```bash
-npx localtunnel --port 8787
-```
+https://headway-production-83bb4bd7.up.railway.app
 
-Current tunnel: https://sharp-parrots-battle.loca.lt (it changes if the tunnel restarts; the new URL gets posted in the chat).
+Open it for a status page. Endpoints are listed in `server/README.md`, and the setup is in `server/RAILWAY.md`. Every push to `main` redeploys it, which resets the live ship history, so stop pushing server changes about an hour before the demo.
 
-localtunnel shows a warning page to browsers. Code that calls the server has to send the header `bypass-tunnel-reminder: true` (the starter page already does). Opening a URL by hand in the browser, click through the warning once.
+Secrets (the aisstream key, wallet keys) are in `PRIVATE.md`, which isn't in git. Get it from Kimball.
 
 ## Git
 

@@ -28,12 +28,12 @@
 </main>
 <script>
 // Where the server is. Change SHARED_SERVER in one place when it moves
-// (tunnel now, Railway once it's deployed). Add ?local to the page URL to use
+// (Railway now). Add ?local to the page URL to use
 // a server running on your own machine instead.
-const SHARED_SERVER = "https://sharp-parrots-battle.loca.lt";
+const SHARED_SERVER = "https://headway-production-83bb4bd7.up.railway.app";
 const SERVER = location.search.includes("local") ? "http://localhost:8787" : SHARED_SERVER;
 
-// localtunnel shows a warning page to browsers unless this header is sent.
+// Only needed if SHARED_SERVER is ever a localtunnel URL again; harmless otherwise.
 const _fetch = window.fetch;
 window.fetch = (url, opts = {}) => _fetch(url, { ...opts, headers: { ...(opts.headers || {}), "bypass-tunnel-reminder": "true" } });
 

@@ -39,6 +39,8 @@ Live counts only cover what the server has in memory: it reads the last ~12 MB o
 
 ## Deploy on Railway
 
+Step by step with checks and fixes: `server/RAILWAY.md`.
+
 The repo is set up so Railway can run it as is. `railway.json` has the start command and health check, `requirements.txt` in the repo root lists only what the server and logger need, and `.python-version` pins Python 3.13.
 
 1. On railway.com: New Project, Deploy from GitHub repo, pick `kimballw1/Headway`.
