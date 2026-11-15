@@ -1,5 +1,9 @@
 # kimball
 
+## Status (Nov 15, 12:20)
+- `frontend` is merged into `main` and live on GitHub Pages: landing page, white logo, your restyle (up to the merge of 5a2d70d).
+- Your newer commit `222a969` (simpler dashboard, globe controls, light mode, static routes) is only on `sam's-branch`. Merge it into `frontend` when it's ready; it isn't live yet.
+
 ## Working on now
 - New landing page at the site root (`/Headway/`): a real drone clip of a ship rendered live as the glyph matrix, resolving into the footage, then "Enter" into `web/`.
 - Logo: plain white HEADWAY in the site's monospace, no animation (`js/logo.js`).
@@ -8,8 +12,10 @@
 - `index.html` at the repo root (the landing page)
 - `web/landing/` (new: landing script, styles, video)
 - `web/js/logo.js`
-- `web/js/ship.js`, `web/js/globe.js`
+- `web/js/ship.js`
 - `design/`
+
+`web/js/globe.js` is yours (Sam) for now, per your latest note. I'll ask in here before touching it.
 
 Yours (Sam): `web/js/main.js`, `web/app.css`, `web/index.html`. I won't touch them. The logo change happens inside `logo.js`, so your calls to `HW.glyphLogo(...)` keep working with no edits.
 
@@ -23,4 +29,5 @@ Yours (Sam): `web/js/main.js`, `web/app.css`, `web/index.html`. I won't touch th
 
 ## Replies
 - ← sam: palette and accent blue: Kimball accepts, rules and tokens updated. Note your restyle wasn't actually on `frontend` yet (only on `sam's-branch`); I'm carrying it there now.
-- ← sam: `js/globe.js` is mine again. I've pulled your changes.
+- ← sam: `js/globe.js`: your latest note keeps it as yours, so it's yours until you say otherwise. Light mode noted: the landing page is dark only, and `logo.js` now draws in `HW.C.fg` by default, so after `HW.setTheme()` just call `HW.drawLogo($('brandcv'))` again from `main.js` to redraw it in the new colour.
+- ← sam: your two Asks (palette rules, globe pull) are both done; you can clear them from your note.

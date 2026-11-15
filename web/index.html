@@ -19,23 +19,19 @@
 
   <header>
     <div class="brand"><canvas id="brandcv" width="528" height="96"></canvas></div>
-    <div class="sys tag">
-      <span>ROUTES <b id="sysRoutes">210</b></span>
-      <span>STRAITS <b id="sysStraits">28</b></span>
-      <span class="live off" id="sysLive">SHIPS LIVE <b id="sysShips">—</b></span>
-      <span>DATA TO <b id="sysAsOf">—</b></span>
-    </div>
+    <span class="live off tag" id="sysLive"><b id="sysShips">—</b> SHIPS UNDERWAY</span>
     <form class="search" id="search" autocomplete="off">
-      <span class="tag">FIND</span>
-      <input id="q" placeholder="SHIP NAME, IMO OR MMSI">
+      <input id="q" placeholder="Find a ship: name, IMO or MMSI" aria-label="Find a ship">
       <span class="err" id="qerr"></span>
     </form>
-    <button class="wallet" id="wallet">CONNECT WALLET</button>
+    <button class="pill" id="mtoggle" aria-expanded="true">MARKETS</button>
+    <button class="pill icon" id="theme" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
+    <button class="pill" id="wallet">CONNECT WALLET</button>
   </header>
 
   <section class="overview" id="overview"></section>
 
-  <aside class="rail">
+  <aside class="rail" id="rail">
     <div class="head">
       <span class="tag">MARKETS</span>
       <div class="tabs" id="mtabs">
@@ -51,14 +47,37 @@
 
   <aside class="panel" id="panel"><button class="x" id="px" aria-label="Close">✕</button><div id="pbody"></div></aside>
 
-  <div class="zoomctl"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div>
+  <nav class="ctl" id="ctl" aria-label="Globe controls">
+    <div class="grp">
+      <button data-a="zin" title="Zoom in (+)" aria-label="Zoom in">+</button>
+      <button data-a="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
+    </div>
+    <div class="grp pad">
+      <button data-a="up" title="Tilt up (↑)" aria-label="Tilt up">▲</button>
+      <div class="mid">
+        <button data-a="left" title="Turn left (←)" aria-label="Turn left">◀</button>
+        <button data-a="north" class="n" title="North up (N)" aria-label="North up">N</button>
+        <button data-a="right" title="Turn right (→)" aria-label="Turn right">▶</button>
+      </div>
+      <button data-a="down" title="Tilt down (↓)" aria-label="Tilt down">▼</button>
+    </div>
+    <div class="grp">
+      <button data-a="rollL" title="Rotate the picture left ([)" aria-label="Rotate left">↺</button>
+      <button data-a="rollR" title="Rotate the picture right (])" aria-label="Rotate right">↻</button>
+      <button data-a="flip" title="Flip upside down (F)" aria-label="Flip upside down">⇅</button>
+    </div>
+    <div class="grp">
+      <button data-a="spin" title="Spin slowly (space)" aria-label="Auto spin">⟳</button>
+      <button data-a="home" title="Reset view (R)" aria-label="Reset view">⌂</button>
+    </div>
+    <select id="goto" aria-label="Go to a strait"><option value="">GO TO…</option></select>
+  </nav>
 
   <div class="legend">
-    <span><i style="background:var(--container)"></i>CONTAINER</span>
+    <span><i style="background:var(--container)"></i>CARGO / CONTAINER</span>
     <span><i style="background:var(--tanker)"></i>TANKER</span>
-    <span><i style="background:var(--bulk)"></i>DRY BULK</span>
-    <span><i style="background:var(--general)"></i>GENERAL</span>
-    <span><i style="background:var(--roro)"></i>RO-RO</span>
+    <span><i class="ln"></i>SHIPPING ROUTE</span>
+    <span><i class="ring"></i>STRAIT · GAP = TRAFFIC VS 2023</span>
   </div>
 </div>
 
