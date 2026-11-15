@@ -7,7 +7,7 @@
      get a small canvas running the glyph animation. Hovering it speeds it up a little.
    - Loader: one look everywhere. The map page's #intro and the landing's #loader are
      restyled into it; any page with <body data-hw-loader> gets one injected, which
-     hides itself once the page has loaded (at least 1.2 s, at most 7 s).
+     hides itself once the page has loaded (at least 3.5 s, at most 9 s).
      Pages can drive it with HW.loader.set(fraction, message) and HW.loader.done(). */
 
 (() => {
@@ -22,7 +22,7 @@
   .hw-loader .hw-bar i { position:absolute; left:0; top:0; bottom:0; width:0; background:#4c8dff; transition:width .35s ease; }
   .hw-loader .hw-row { width:min(320px, 64vw); display:flex; justify-content:space-between; gap:12px; font:300 10.5px/1.3 ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing:.2em; text-transform:uppercase; color:#8a8a8a; }
   .hw-loader .hw-row span:first-child { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .hw-logo { display:block; width:200px; height:38px; }
+  .hw-logo { display:block; width:220px; height:42px; }
   @media (max-width: 820px) { .hw-logo { width:150px; height:28px; } }
   `;
   const style = document.createElement('style');
@@ -34,11 +34,11 @@
     if (!HW.glyphIntro || host.querySelector('canvas.hw-logo')) return;
     const cv = document.createElement('canvas');
     cv.className = 'hw-logo';
-    cv.width = 600; cv.height = 114;            // drawn at 3x for sharp glyphs
+    cv.width = 440; cv.height = 84;             // 2x the shown size; chunky cells so the letters read small
     cv.setAttribute('aria-label', 'Headway');
     host.textContent = '';
     host.appendChild(cv);
-    HW.glyphIntro(cv, { step: 6, bg: null });
+    HW.glyphIntro(cv, { step: 5, bg: null });
   };
 
   /* ---------- the loader ---------- */
@@ -61,7 +61,8 @@
     const pct = document.createElement('span'); if (pctId) pct.id = pctId; pct.textContent = '0%';
     row.append(msg, pct);
     el.append(bar, row);
-    const anim = HW.glyphIntro ? HW.glyphIntro(cv, { step: 12, bg: '#0a0a0a' }) : null;
+    // the map page's main.js already animates its own #introcv, so don't start a second one
+    const anim = cv.id !== 'introcv' && HW.glyphIntro ? HW.glyphIntro(cv, { step: 12, bg: '#0a0a0a' }) : null;
     return { el, fill, msg, pct, anim, p: 0, t0: performance.now(), auto: true, finished: false };
   };
 
@@ -122,10 +123,12 @@
       L = build(el);
       creep();
       const t0 = performance.now();
-      const end = () => setTimeout(finish, Math.max(0, 1200 - (performance.now() - t0)));
+      const end = () => setTimeout(finish, Math.max(0, 3500 - (performance.now() - t0)));
       if (document.readyState === 'complete') end(); else window.addEventListener('load', end);
-      setTimeout(finish, 7000);
+      setTimeout(finish, 9000);
     }
   };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  // scripts sit at the end of <body>, so the page is already there: set up now, before
+  // page scripts (like landing.js) look for the loader's ids
+  if (document.body) init(); else document.addEventListener('DOMContentLoaded', init);
 })();
