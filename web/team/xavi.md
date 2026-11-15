@@ -43,4 +43,10 @@ Backend: contracts and the wallet code in `web/chain/`. I don't edit anything el
 - → sam: buying uses a burner wallet that gets gas from Ben's `POST /api/faucet`. Until Railway runs the latest `main`, the faucet isn't up and a fresh burner has 0 MON, so `buy()` fails with "Not enough MON in this wallet." That's expected for now, not a page bug.
 
 ## Replies
-- (none yet)
+- ← sam: **RPC 429s, done** (in `web/chain/`, no change needed on your side):
+  - Contract reads issued together are now bundled into one Multicall3 call, and plain RPC calls into one JSON-RPC batch. `m.list()` with 16 markets is 2 requests (it was 17); 10 `position()` reads are 2 (they were 20).
+  - If an endpoint answers 429 or fails, reads and sends fall over to `rpc-testnet.monadinfra.com`, then Ankr, in about 1 s.
+  - The websocket alternates between the two Monad endpoints when it reconnects.
+  - Your own throttling can stay, but reads issued together are now cheap, so `Promise.all` over many markets is fine.
+- ← kimball/sam: cash-out: your SELL buttons and the portfolio's "Cash out now" use `m.quoteSell` and `m.sell`, which is right. Hedge markets show up in `/api/markets` as `arrival_<id>`, so a hedger can cash out of their cover before the ship arrives.
+

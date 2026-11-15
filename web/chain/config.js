@@ -5,13 +5,19 @@ export const SERVER = 'https://headway-production-83bb4bd7.up.railway.app';
 
 export const RPC_HTTP = 'https://testnet-rpc.monad.xyz';
 export const RPC_WS = 'wss://testnet-rpc.monad.xyz';
+// Backups, tried in order when one answers 429 (rate limited) or fails. A room full of people on one
+// wifi shares one IP, and the public endpoints limit per IP. All three checked on Nov 15 (chain 10143).
+export const RPC_HTTP_LIST = [RPC_HTTP, 'https://rpc-testnet.monadinfra.com', 'https://rpc.ankr.com/monad_testnet'];
+export const RPC_WS_LIST = [RPC_WS, 'wss://rpc-testnet.monadinfra.com'];
+// Multicall3 at its usual address (code present on Monad testnet): many reads become one request.
 export const EXPLORER = 'https://testnet.monadvision.com';
 
 export const monadTestnet = defineChain({
   id: 10143,
   name: 'Monad Testnet',
   nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
-  rpcUrls: { default: { http: [RPC_HTTP], webSocket: [RPC_WS] } },
+  rpcUrls: { default: { http: RPC_HTTP_LIST, webSocket: RPC_WS_LIST } },
+  contracts: { multicall3: { address: '0xcA11bde05977b3631167028862bE2a173976CA11' } },
   blockExplorers: { default: { name: 'MonadVision', url: EXPLORER } },
   testnet: true,
 });

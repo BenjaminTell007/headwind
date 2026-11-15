@@ -44,6 +44,9 @@ MAX_STEP_MON = 0.05         # most it spends on one market per run
 MAX_PER_MARKET_MON = 0.30   # most it ever puts into one market
 MIN_TRADE_MON = 0.002       # skip dust trades (gas costs ~0.007 MON)
 P_MIN, P_MAX = 0.02, 0.98   # never push a price to certainty; settlement does that
+STEP_TOWARD = 0.5           # each run moves the price this fraction of the way to the model, so one
+                            # noisy reading (AIS speed jumps 10-15%) can't swing a market; a lasting
+                            # change still gets there over a few runs
 
 
 def trade_to(y, n, fee_bps, p_target):
@@ -77,6 +80,30 @@ def price_after(y, n, fee_bps, yes, gross):
         y1 = y + x
         n1 = -(-k // y1)
     return n1 / (y1 + n1), (y + x - y1) if yes else (n + x - n1)
+
+
+# Each ship's recent speed reports, kept for as long as the keeper process runs. AIS speed jumps
+# 10-15% report to report, so the model uses the median of the last 90 minutes instead of the
+# latest value. Module-level so the keeper gets it without any change on its side.
+SPEED_WINDOW = timedelta(minutes=90)
+_speeds = {}   # ship id -> deque[(time, sog)]
+
+
+def smoothed_ship(ship, now):
+    """The ship with `sog` replaced by its median over the last 90 minutes (moving reports only)."""
+    sid = str(ship.get("imo") or ship.get("mmsi"))
+    try:
+        sog = float(ship.get("sog"))
+    except (TypeError, ValueError):
+        return ship
+    h = _speeds.setdefault(sid, deque())
+    h.append((now, sog))
+    while h and now - h[0][0] > SPEED_WINDOW:
+        h.popleft()
+    moving = sorted(s for _, s in h if s >= 3)
+    if sog < 3 or not moving:   # stopped or slowing for port: use what it's doing now
+        return ship
+    return dict(ship, sog=moving[len(moving) // 2], sog_latest=sog, sog_reports=len(moving))
 
 
 class PortQueue:
@@ -124,6 +151,7 @@ def fair_probability(market, now=None, ship_lookup=None, ships_lookup=None, queu
     ship = (ship_lookup or model.fetch_ship)(ship_id)
     if not ship or "lat" not in ship:
         return None
+    ship = smoothed_ship(ship, now)
     port = model.find_port(port_code)
     deadline = datetime.fromtimestamp(int(market["threshold"]), tz=timezone.utc)
     qf = 1.0
@@ -152,7 +180,7 @@ def plan_for_market(market, now=None, ship_lookup=None, ships_lookup=None, queue
     p_now = n / (y + n)
     if abs(p_model - p_now) <= fee / 10_000 + BAND:
         return None
-    t = trade_to(y, n, fee, p_model)
+    t = trade_to(y, n, fee, p_now + STEP_TOWARD * (p_model - p_now))
     if not t:
         return None
     yes, gross = t
