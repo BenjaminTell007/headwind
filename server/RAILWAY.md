@@ -77,7 +77,7 @@ Ship counts start at zero on every deploy and build up: a few thousand after 5 m
 
 1. Send the URL to Claude (or edit these yourself): `SHARED_SERVER` at the top of the script in `web/index.html`, the "Shared server" section of `PRIVATE.md`, and the "Running it" section of `PLAN.md`.
 2. Tell the team the new URL. No tunnel password and no `bypass-tunnel-reminder` header needed with Railway.
-3. Once the Railway URL works, the laptop pieces can stop: close the tunnel terminal, and stop the laptop logger with `kill $(cat ~/Downloads/Chokepoint/data/live/logger.pid)`. Keep the laptop logger running until Railway is confirmed, though.
+3. Once the Railway URL works, the laptop pieces can stop: close the tunnel terminal, and stop the laptop logger with `kill $(cat ~/Downloads/Headway/data/live/logger.pid)`. Keep the laptop logger running until Railway is confirmed, though.
 
 ## 7. Things to know during the day
 

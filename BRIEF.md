@@ -1,6 +1,6 @@
 # Headway
 
-Project brief for Monad Blitz, November 15, 2026. This is everything I want to build, why, and the order I'm building it in. (The project folder is still called `Chokepoint`, the old working name.)
+Project brief for Monad Blitz, November 15, 2026. This is everything I want to build, why, and the order I'm building it in.
 
 ## One line
 
