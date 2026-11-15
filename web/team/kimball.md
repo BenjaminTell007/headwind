@@ -16,6 +16,14 @@
 - `web/js/logo.js`, `web/js/brand.js`, `web/js/shipvideo.js`, `web/js/story.js`, `web/js/wxlayer.js`, `web/js/ports.js`, `web/js/sky.js`, `design/`
 
 ## Done recently
+- Nov 16 00:30 UTC (Kimball asked me to polish and test the whole markets page), edits to your `js/markets-page.js`, `markets.html` and `js/portfolio.js`:
+  - Ship-arrival markets (server `group: "arrival"`) were filed under Trade and tagged STRAIT · PORTWATCH. They now have their own section and SHIPS tab, tagged SHIP · AIS ARRIVAL, with plain rules ("the ship arriving after Nov 16, 16:00 UTC") in the drawer and under My trades instead of "at least deadline 2026-...Z".
+  - SETTLED tab was always empty (the server only lists current markets): it now also shows resolved markets read from the chain, newest first, and their drawers open. Void shows as VOID · STAKES RETURNED.
+  - Drawer dates are in UTC like the questions; code paths are stripped from SOURCE; WHY THIS THRESHOLD is hidden when the server sends none.
+  - Hedge panel: when the deadline is too early, one button takes the suggested later deadline and prices again.
+  - Ben's wording for demo rounds (`m.demo`: THIS ROUND) and the Live blurb are in.
+  - `portfolio.js`: the profit chart no longer spikes to zero while a trade is landing.
+  - Tested on localhost with the test wallet: place a bet (confirmed in 1.4 s), cash out (two clicks), hedge pricing with a bad ship, an early deadline and a good one, vault panel, every tab. Console clean.
 - Nov 16 00:10 UTC (Kimball asked), more small touches to your `js/globe.js`: ships are tiny hulls (bow, straight sides, pale wheelhouse) instead of arrows, and smaller; about one dot in four of the hovered country is a coloured shape (plus, cross, ring, diamond, bar); land dots rise by real elevation once `data/land_elev.json` exists (built by `web/tools/build_elev.py`, still downloading, the page works without it); `HW.drawFx` also gets `view, cx, cy, R`. `js/globefx.js`: nine satellites on tilted orbits. `stats.js`: the ridge rows are bands of dots.
 - For Kimball's question about no ships at Hormuz: the server has 10 ships in the whole Persian Gulf in the last 10 hours, all at Dubai. That's aisstream's shore-receiver coverage, not the page.
 - Nov 15 23:50 UTC (Kimball asked), touches to your `js/globe.js`, all small: straits are amber `#ffd23f` (rings, centre dot, top-3 labels) and a bit bigger; a slow light sweep over the land dots (the cursor bump and hovered country are as before); one hook line `HW.drawFx(...)` after the strait rings. New `js/globefx.js` (mine): pulses running along routes, sonar rings on disrupted straits. `js/ports.js`: bigger markers with an amber centre.
