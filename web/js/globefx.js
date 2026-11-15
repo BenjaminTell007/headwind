@@ -15,8 +15,8 @@
   // Satellites: a handful on tilted orbits just above the surface. Each is a small body with two
   // solar panels and a short fading trail. They pass in front of the globe and disappear behind it.
   const SATS = [];
-  for (let i = 0; i < 9; i++) {
-    const inc = (20 + (i * 47) % 78) * Math.PI / 180, node = i * 2.399, alt = 1.1 + (i % 4) * 0.055;
+  for (let i = 0; i < 3; i++) {
+    const inc = (20 + (i * 47) % 78) * Math.PI / 180, node = i * 2.1 + 0.6, alt = 1.1 + (i % 4) * 0.055;
     // orbit plane: two unit vectors u (along the equator at the node) and w (tilted by the inclination)
     const u = [Math.sin(node), 0, Math.cos(node)], w = [Math.cos(node) * Math.cos(inc), Math.sin(inc), -Math.sin(node) * Math.cos(inc)];
     SATS.push({ u, w, alt, ph: i * 1.7, sp: (0.11 + (i % 3) * 0.03) * (i % 2 ? 1 : -1) });
@@ -68,14 +68,17 @@
       for (const p of ps) {
         p.s += p.v * dt; if (p.s > 1) p.s -= 1;
         const head = p.s * (n - 1), j0 = Math.floor(head);
-        for (let k = 0; k < TAIL; k++) {
-          const a = j0 - k, b = a - 1; if (b < 0) break;
-          if (!L.sv[a] || !L.sv[b]) continue;
-          const f = 1 - k / TAIL;
-          ctx.globalAlpha = 0.85 * f * f * quiet;
-          ctx.strokeStyle = k < 2 ? C.fg : C.accent;
-          ctx.lineWidth = (1.2 + 1.6 * busy) * (0.5 + 0.5 * f);
-          ctx.beginPath(); ctx.moveTo(L.sx[a], L.sy[a]); ctx.lineTo(L.sx[b], L.sy[b]); ctx.stroke();
+        // three strokes per pulse (bright head, middle, faint tail), not one per segment: keeps the frame cheap
+        for (let part = 0; part < 3; part++) {
+          const k0 = Math.floor(TAIL * part / 3), k1 = Math.floor(TAIL * (part + 1) / 3), f = 1 - part / 3;
+          ctx.globalAlpha = 0.85 * f * f * quiet; ctx.strokeStyle = part === 0 ? C.fg : C.accent; ctx.lineWidth = (1.2 + 1.6 * busy) * (0.5 + 0.5 * f);
+          ctx.beginPath(); let pen = false;
+          for (let k = k0; k <= k1; k++) {
+            const a = j0 - k; if (a < 0) break;
+            if (!L.sv[a]) { pen = false; continue; }
+            if (pen) ctx.lineTo(L.sx[a], L.sy[a]); else { ctx.moveTo(L.sx[a], L.sy[a]); pen = true; }
+          }
+          ctx.stroke();
         }
       }
     }

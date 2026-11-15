@@ -256,32 +256,16 @@
         if (hc >= 0) {
           ctx.fillStyle = C.accent;   // the hovered country lights up in the accent blue
           ctx.globalAlpha = 0.95 * S.countryFade; ctx.beginPath();
-          const hd = ds * 1.25, hh = hd / 2, shapes = [];
+          const hd = ds * 1.25, hh = hd / 2;
           for (let i = 0; i < nL; i++) {
             if (LC[i] !== hc) continue;
             const Z = m6 * LX[i] + m7 * LY[i] + m8 * LZ[i]; if (Z < 0) continue;
             const sx = cx + (m0 * LX[i] + m1 * LY[i] + m2 * LZ[i]) * R, sy = cy - (m3 * LX[i] + m4 * LY[i] + m5 * LZ[i]) * R;
             const gb = bumpOf(sx, sy);
             if (gb > 0.03) { raised.push([i, sx, sy, gb, 0.95 * S.countryFade, true]); continue; }
-            const h = (Math.imul(i, 2654435761) ^ Math.imul((FX_TICK / 6 + (i & 7)) | 0, 40503)) >>> 0;
-            if (h % 4 === 0) { shapes.push(sx, sy, h); continue; }   // this dot becomes a shape, below
             ctx.rect(sx - hh, sy - hh, hd, hd);
           }
           ctx.fill();
-          // about one dot in four of the hovered country is a small shape in a vessel colour
-          // (plus, cross, ring, diamond, bar), and they slowly trade places: the landing page's pattern
-          const g = Math.max(2.2, ds * 1.7); ctx.lineWidth = Math.max(1, ds * 0.55); ctx.lineCap = 'butt';
-          for (let k = 0; k < shapes.length; k += 3) {
-            const sx = shapes[k], sy = shapes[k + 1], h = shapes[k + 2], col = FX_COLS[(h >>> 4) % FX_COLS.length];
-            ctx.strokeStyle = col; ctx.fillStyle = col; ctx.beginPath();
-            switch ((h >>> 9) % 5) {
-              case 0: ctx.moveTo(sx - g, sy); ctx.lineTo(sx + g, sy); ctx.moveTo(sx, sy - g); ctx.lineTo(sx, sy + g); ctx.stroke(); break;
-              case 1: ctx.moveTo(sx - g * 0.8, sy - g * 0.8); ctx.lineTo(sx + g * 0.8, sy + g * 0.8); ctx.moveTo(sx + g * 0.8, sy - g * 0.8); ctx.lineTo(sx - g * 0.8, sy + g * 0.8); ctx.stroke(); break;
-              case 2: ctx.arc(sx, sy, g * 0.8, 0, 6.2832); ctx.stroke(); break;
-              case 3: ctx.moveTo(sx, sy - g); ctx.lineTo(sx + g, sy); ctx.lineTo(sx, sy + g); ctx.lineTo(sx - g, sy); ctx.closePath(); ctx.fill(); break;
-              default: ctx.rect(sx - g, sy - g * 0.35, g * 2, g * 0.7); ctx.fill();
-            }
-          }
         }
         if (raised.length) {
           // shadows first (where the dots sat), then the lifted dots, back to front
