@@ -19,7 +19,7 @@
   if (!document.querySelector('link[data-hw-font]')) {
     const f = document.createElement('link');
     f.rel = 'stylesheet'; f.dataset.hwFont = '1';
-    f.href = 'https://fonts.googleapis.com/css2?family=Unbounded:wght@200;300;400&display=swap';
+    f.href = 'https://fonts.googleapis.com/css2?family=Unbounded:wght@300&display=block';
     document.head.appendChild(f);
   }
   const css = `
@@ -29,10 +29,19 @@
     background-size:320% 100%; background-position:100% 0; -webkit-background-clip:text; background-clip:text; color:transparent;
     animation:hw-sweep 7s cubic-bezier(.45,0,.2,1) infinite; }
   @keyframes hw-sweep { 0% { background-position:100% 0; } 55%, 100% { background-position:0% 0; } }
-  .hw-wordmark.sm { font-size:20px; letter-spacing:.34em; padding-left:.34em; }
-  .hw-wordmark.lg { font-size:clamp(44px, 8.4vw, 132px); font-weight:200; }
+  /* one weight (300) and one letter-spacing (.3em) at every size */
+  .hw-wordmark.sm { font-size:21px; }
+  .hw-wordmark.lg { font-size:clamp(44px, 8.4vw, 132px); }
   @media (max-width: 820px) { .hw-wordmark.sm { font-size:15px; } }
-  @media (prefers-reduced-motion: reduce) { .hw-wordmark { animation:none; background-position:0 0; } }
+  /* colour pixels over the letters: a second copy of the word, filled with a tile of scattered
+     vessel-coloured squares that jumps in steps, so pixels flicker in place inside the strokes */
+  .hw-wordmark { position:relative; }
+  .hw-wordmark::after { content:'HEADWAY'; position:absolute; left:0; top:0; padding-left:inherit; white-space:nowrap; pointer-events:none;
+    background-image:var(--hw-px); background-size:96px 96px; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:hw-px 3.2s steps(8) infinite; }
+  .hw-wordmark.sm::after { background-size:36px 36px; }
+  @keyframes hw-px { to { background-position:96px 192px; } }
+  @media (prefers-reduced-motion: reduce) { .hw-wordmark, .hw-wordmark::after { animation:none; background-position:0 0; } }
   .hw-loader { position:fixed; inset:0; z-index:60; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; transition:opacity .9s ease, visibility .9s; }
   .hw-loader.done, .hw-loader.out { opacity:0; visibility:hidden; pointer-events:none; }
   .hw-loader { gap:30px; }
@@ -44,6 +53,17 @@
   @media (max-width: 1180px) { .hw-logo { width:280px; height:53px; } }
   @media (max-width: 820px) { .hw-logo { width:170px; height:32px; } }
   `;
+  // the pixel tile: a 16 x 16 grid where about one cell in six is a vessel colour or the accent blue
+  (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 96;
+    const g = c.getContext('2d'), cols = ['#46b36f', '#f08a3c', '#8f82f2', '#ea86b5', '#e9c84b', '#4c8dff', '#4c8dff'];
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+      if (Math.random() > 0.17) continue;
+      g.fillStyle = cols[(Math.random() * cols.length) | 0];
+      g.fillRect(x * 6, y * 6, 6, 6);
+    }
+    document.documentElement.style.setProperty('--hw-px', `url(${c.toDataURL()})`);
+  })();
   const style = document.createElement('style');
   style.textContent = css;
   document.head.appendChild(style);
