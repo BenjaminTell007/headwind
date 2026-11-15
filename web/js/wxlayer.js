@@ -13,6 +13,14 @@
      size   = roughness too; rough spots also get a soft see-through halo
    Shapes and colours shimmer in place like the logo. Hover a glyph for the numbers.
 
+   On top of the glyphs (which now mark only the rough spots) sits a weather-app style
+   field: the grid is interpolated onto 3° cells and drawn as a smooth, see-through colour
+   gradient, blurred and clipped to the globe. Pick the layer in the legend: WIND, RAIN or
+   WAVES. Calm areas stay clear.
+
+   Where the data comes from: the server first (GET {SERVER}/api/weather/grid, shared by
+   everyone, see the note to Ben in web/team/kimball.md), then Open-Meteo directly.
+
    Turned on and off with the WEATHER button (HW.wx.toggle()). globe.js calls
    HW.drawWeather(ctx, {...}) every frame; it draws nothing while the overlay is off. */
 
@@ -40,10 +48,21 @@
       const c = JSON.parse(localStorage.getItem(CACHE) || 'null');
       if (c && Date.now() - c.at < 15 * 60e3 && c.w.length === PTS.length) {
         c.w.forEach((w, i) => { PTS[i].w = w; if (w) classify(PTS[i]); });
-        wx.loadedAt = c.at; summary(); return;
+        wx.loadedAt = c.at; fieldDirty = true; summary(); return;
       }
     } catch { /* no storage: just fetch */ }
     wx.loading = true; status('LOADING LIVE WEATHER…');
+    // 0. our server's shared copy, if it has one
+    try {
+      const d = await getJSON(`${HW.SERVER}/api/weather/grid`);
+      const byKey = new Map((d.points || []).map(q => [q.lat + ',' + q.lon, q]));
+      let n = 0;
+      PTS.forEach(p => { const q = byKey.get(p.lat + ',' + p.lon); if (q) { p.w = { wind: q.wind, gust: q.gust, rain: q.rain, code: q.code, cloud: q.cloud, wave: q.wave }; classify(p); n++; } });
+      if (n > PTS.length * 0.6) {
+        wx.loading = false; wx.loadedAt = Date.parse(d.at) || Date.now(); fieldDirty = true;
+        summary(' · FROM OUR SERVER'); return;
+      }
+    } catch { /* server doesn't have it (yet): ask Open-Meteo directly */ }
     const groups = chunk(PTS, 126);
     // 1. wind, gusts, rain, weather code
     for (const g of groups) {
@@ -56,7 +75,7 @@
         });
       } catch { /* leave these points empty */ }
     }
-    wx.loadedAt = Date.now(); summary(' · WAVES IN A MINUTE');
+    wx.loadedAt = Date.now(); fieldDirty = true; summary(' · WAVES IN A MINUTE');
     // 2. wave heights, a minute later so we stay inside the free rate limit
     setTimeout(async () => {
       for (const g of groups) {
@@ -65,7 +84,7 @@
           (Array.isArray(m) ? m : [m]).forEach((r, i) => { if (g[i].w && r && r.current) { g[i].w.wave = r.current.wave_height; classify(g[i]); } });
         } catch { /* no waves for these */ }
       }
-      wx.loading = false; summary();
+      wx.loading = false; fieldDirty = true; summary();
       try { localStorage.setItem(CACHE, JSON.stringify({ at: wx.loadedAt, w: PTS.map(p => p.w) })); } catch { /* fine */ }
     }, 61000);
   };
@@ -86,6 +105,80 @@
     p.level = p.sev < 0.2 ? 0 : p.sev < 0.4 ? 1 : p.sev < 0.6 ? 2 : p.sev < 0.8 ? 3 : 4;
   };
 
+  /* ---------- the gradient field ---------- */
+  // colour ramps per layer: [value, r, g, b, alpha]; below the first stop it's clear
+  const LAYERS = {
+    wind: { label: 'WIND', unit: 'KN', get: w => w.wind, stops: [[8, 76, 141, 255, 0.00], [14, 76, 141, 255, 0.50], [22, 143, 130, 242, 0.71], [32, 234, 134, 181, 0.90], [44, 240, 138, 60, 0.90], [60, 255, 226, 170, 0.90]] },
+    rain: { label: 'RAIN', unit: 'MM/H', get: w => w.rain, stops: [[0.05, 76, 141, 255, 0.00], [0.3, 76, 141, 255, 0.62], [1, 143, 130, 242, 0.81], [3, 234, 134, 181, 0.90], [7, 240, 138, 60, 0.90], [15, 255, 226, 170, 0.90]] },
+    waves: { label: 'WAVES', unit: 'M', get: w => w.wave, stops: [[0.6, 76, 141, 255, 0.00], [1.2, 76, 141, 255, 0.46], [2.2, 143, 130, 242, 0.68], [3.5, 234, 134, 181, 0.87], [5, 240, 138, 60, 0.90], [8, 255, 226, 170, 0.90]] },
+  };
+  wx.layer = 'wind';
+  let fieldDirty = true;
+  const rampAt = (stops, v) => {
+    if (v == null || !(v > stops[0][0])) return null;
+    for (let k = 1; k < stops.length; k++) {
+      if (v <= stops[k][0]) {
+        const a = stops[k - 1], b = stops[k], u = (v - a[0]) / (b[0] - a[0]);
+        return [a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u, a[3] + (b[3] - a[3]) * u, a[4] + (b[4] - a[4]) * u];
+      }
+    }
+    const z = stops[stops.length - 1]; return [z[1], z[2], z[3], z[4]];
+  };
+  // grid value at any lat/lon: bilinear between the 10° points, wrapping in longitude
+  const ROWS = Math.round((70 - -60) / STEP) + 1, COLS = 360 / STEP;
+  const gridVal = (get, lat, lon) => {
+    const r = (lat + 60) / STEP, c = ((lon + 180) % 360 + 360) % 360 / STEP;
+    const r0 = Math.max(0, Math.min(ROWS - 1, Math.floor(r))), r1 = Math.min(ROWS - 1, r0 + 1), c0 = Math.floor(c) % COLS, c1 = (c0 + 1) % COLS;
+    const fr = Math.max(0, Math.min(1, r - r0)), fc = c - Math.floor(c);
+    let sum = 0, wsum = 0;
+    [[r0, c0, (1 - fr) * (1 - fc)], [r0, c1, (1 - fr) * fc], [r1, c0, fr * (1 - fc)], [r1, c1, fr * fc]].forEach(([rr, cc, wt]) => {
+      const p = PTS[rr * COLS + cc]; const v = p && p.w ? get(p.w) : null;
+      if (v != null && wt > 0) { sum += v * wt; wsum += wt; }
+    });
+    return wsum > 0.15 ? sum / wsum : null;
+  };
+  // 3° cells over the globe, corners as 3D unit vectors
+  const CS = 3, CLAT0 = -72, CLAT1 = 78, NR = (CLAT1 - CLAT0) / CS, NC = 360 / CS;
+  const VX = new Float32Array((NR + 1) * (NC + 1)), VY = new Float32Array(VX.length), VZ = new Float32Array(VX.length);
+  for (let i = 0; i <= NR; i++) for (let j = 0; j <= NC; j++) { const v = vec(CLAT0 + i * CS, -180 + j * CS), k = i * (NC + 1) + j; VX[k] = v[0]; VY[k] = v[1]; VZ[k] = v[2]; }
+  const PX = new Float32Array(VX.length), PY = new Float32Array(VX.length), PZ = new Float32Array(VX.length);
+  let cellFill = new Array(NR * NC).fill(null);
+  const buildField = () => {
+    const L = LAYERS[wx.layer];
+    for (let i = 0; i < NR; i++) for (let j = 0; j < NC; j++) {
+      const lat = CLAT0 + (i + 0.5) * CS, lon = -180 + (j + 0.5) * CS;
+      let c = rampAt(L.stops, gridVal(L.get, lat, lon));
+      if (c && (lat < -60 || lat > 70)) c[3] *= Math.max(0, 1 - Math.min(Math.abs(lat + 60), Math.abs(lat - 70)) / 8);   // fade past the data
+      cellFill[i * NC + j] = c && c[3] > 0.02 ? `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${c[3].toFixed(3)})` : null;
+    }
+    fieldDirty = false;
+  };
+  const off = document.createElement('canvas'), octx = off.getContext('2d');
+  const drawField = (ctx, W, H, cx, cy, R, view, alpha) => {
+    if (fieldDirty) buildField();
+    const sc = 0.5, w = Math.ceil(W * sc), h = Math.ceil(H * sc);
+    if (off.width !== w || off.height !== h) { off.width = w; off.height = h; }
+    octx.setTransform(1, 0, 0, 1, 0, 0); octx.clearRect(0, 0, w, h);
+    for (let k = 0; k < VX.length; k++) {
+      const q = view([VX[k], VY[k], VZ[k]]);
+      PX[k] = (cx + q[0] * R) * sc; PY[k] = (cy - q[1] * R) * sc; PZ[k] = q[2];
+    }
+    for (let i = 0; i < NR; i++) for (let j = 0; j < NC; j++) {
+      const f = cellFill[i * NC + j]; if (!f) continue;
+      const a = i * (NC + 1) + j, b = a + 1, c = a + NC + 2, d = a + NC + 1;
+      if (PZ[a] + PZ[b] + PZ[c] + PZ[d] < 0.05) continue;   // on the far side
+      octx.fillStyle = f; octx.beginPath();
+      octx.moveTo(PX[a], PY[a]); octx.lineTo(PX[b], PY[b]); octx.lineTo(PX[c], PY[c]); octx.lineTo(PX[d], PY[d]); octx.closePath(); octx.fill();
+    }
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.2832); ctx.clip();
+    ctx.globalAlpha = alpha;
+    ctx.filter = `blur(${Math.max(3, R / 90).toFixed(1)}px) saturate(1.25)`;   // soften the cells into a smooth gradient
+    ctx.drawImage(off, 0, 0, W, H);
+    ctx.filter = 'none';
+    ctx.restore();
+  };
+
   /* ---------- the button, the legend and the status line ---------- */
   let legend = null;
   const status = text => { const el = legend && legend.querySelector('.wx-status'); if (el) el.textContent = text; };
@@ -100,12 +193,26 @@
     legend = document.createElement('div');
     legend.className = 'wx-legend';
     legend.innerHTML = `<div class="tag">WEATHER ON THE GLOBE</div>
+      <div class="wx-layers">${Object.entries(LAYERS).map(([k, L]) => `<button data-l="${k}" class="${k === wx.layer ? 'on' : ''}">${L.label}</button>`).join('')}</div>
+      <div class="wx-grad"></div><div class="wx-grad-l"></div>
+      <div class="tag" style="margin-top:12px">ROUGH SPOTS</div>
       <div class="wx-keys">${[['rain', 'RAIN'], ['wind', 'WIND'], ['waves', 'WAVES'], ['storm', 'THUNDERSTORM'], ['calm', 'CALM']].map(([k, l]) => `<span><svg width="14" height="14">${glyphSvg(k, '#f2f2f0')}</svg>${l}</span>`).join('')}</div>
       <div class="wx-ramp">${SEV.map((c, i) => `<i style="background:${i ? c : '#5a5a5a'}"></i>`).join('')}</div>
       <div class="wx-ramp-l"><span>CALM</span><span>SEVERE</span></div>
       <div class="tag wx-status">—</div>`;
     document.body.appendChild(legend);
+    legend.querySelectorAll('.wx-layers button').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.l)));
+    paintRamp();
   };
+  const paintRamp = () => {
+    if (!legend) return;
+    const L = LAYERS[wx.layer], st = L.stops;
+    legend.querySelector('.wx-grad').style.background = `linear-gradient(90deg, ${st.map((s2, k) => `rgba(${s2[1]},${s2[2]},${s2[3]},${Math.max(0.08, s2[4])}) ${(k / (st.length - 1) * 100).toFixed(0)}%`).join(', ')})`;
+    legend.querySelector('.wx-grad-l').innerHTML = `<span>${st[0][0]} ${L.unit}</span><span>${st[Math.floor(st.length / 2)][0]}</span><span>${st[st.length - 1][0]}+</span>`;
+    legend.querySelectorAll('.wx-layers button').forEach(b => b.classList.toggle('on', b.dataset.l === wx.layer));
+  };
+  const setLayer = k => { if (!LAYERS[k]) return; wx.layer = k; fieldDirty = true; paintRamp(); };
+  wx.setLayer = setLayer;
   const style = document.createElement('style');
   style.textContent = `
     .wx-legend { position:fixed; right:24px; bottom:64px; z-index:6; width:250px; background:rgba(14,14,15,.72); backdrop-filter:blur(12px); border:1px solid #2a2a2c; border-radius:14px; padding:14px 16px; opacity:0; transform:translateY(8px); transition:opacity .4s, transform .4s; pointer-events:none; font:300 10px/1.4 ui-monospace,"SF Mono",Menlo,monospace; letter-spacing:.14em; color:#a8a8a8; }
@@ -116,6 +223,11 @@
     .wx-legend .wx-ramp i { flex:1; }
     .wx-legend .wx-ramp-l { display:flex; justify-content:space-between; margin:5px 0 10px; }
     .wx-legend .wx-status { color:#8a8a8a; font-size:9.5px; }
+    .wx-legend .wx-layers { display:flex; gap:4px; margin:10px 0 10px; }
+    .wx-legend .wx-layers button { flex:1; font:400 10px/1 ui-monospace,"SF Mono",Menlo,monospace; letter-spacing:.14em; color:#cfcfcf; padding:7px 0; border:1px solid #2a2a2c; border-radius:999px; background:none; cursor:pointer; }
+    .wx-legend .wx-layers button.on { background:#f2f2f0; color:#0a0a0a; border-color:#f2f2f0; }
+    .wx-legend .wx-grad { height:8px; border-radius:4px; }
+    .wx-legend .wx-grad-l { display:flex; justify-content:space-between; margin-top:5px; }
     #wxBtn.on { background:var(--accent); border-color:var(--accent); color:#fff; }
   `;
   document.head.appendChild(style);
@@ -137,10 +249,11 @@
 
   /* ---------- drawing ---------- */
   let t = 0;
-  HW.drawWeather = (ctx, { cx, cy, R, view, dt, P, zoom }) => {
+  HW.drawWeather = (ctx, { W, H, cx, cy, R, view, dt, P, zoom }) => {
     t += dt;
     wx.fade += ((wx.on ? 1 : 0) - wx.fade) * (1 - Math.exp(-5 * dt));
     if (wx.fade < 0.01) { wx.hover = null; return; }
+    drawField(ctx, W, H, cx, cy, R, view, wx.fade * (0.92 + 0.08 * Math.sin(t * 0.8)));
     const base = 3.4 + 1.2 * Math.sqrt(zoom);
     let best = null, bestD = 400;
     const drawn = [];
@@ -161,7 +274,7 @@
         g.addColorStop(0, `rgba(${HALO[p.level]},${0.32 * p.sev})`); g.addColorStop(1, `rgba(${HALO[p.level]},0)`);
         ctx.globalAlpha = wx.fade * edge; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
       }
-      drawn.push([x, y, s, lvl, p.kind, edge]);
+      if (p.level >= 2) drawn.push([x, y, s, lvl, p.kind, edge]);   // the field shows the rest; glyphs mark rough spots
       if (P.inside && !P.down) { const d = (x - P.x) ** 2 + (y - P.y) ** 2; if (d < bestD) { bestD = d; best = { p, x, y }; } }
     }
     for (const [x, y, s, lvl, kind, edge] of drawn) {
