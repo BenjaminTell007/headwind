@@ -41,6 +41,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parent.parent
 LIVE = Path(os.environ.get("HEADWAY_LIVE_DIR", ROOT / "data" / "live"))
@@ -173,6 +174,7 @@ class ShipState:
                             "lat": float(row["lat"]), "lon": float(row["lon"]),
                             "sog": float(row["sog"]) if row["sog"] else None,
                             "cog": float(row["cog"]) if row["cog"] else None,
+                            "nav_status": row.get("nav_status", ""),  # arrival rule: 1 anchored, 5 moored
                         })
                     except ValueError:
                         continue
@@ -202,6 +204,7 @@ class ShipState:
             "draught": s.get("draught"),
             "length": s.get("length"),
             "lat": p["lat"], "lon": p["lon"], "sog": p["sog"], "cog": p["cog"],
+            "nav_status": p.get("nav_status"),
             "time": p["time"].isoformat(),
         }
 
@@ -240,6 +243,7 @@ async def lifespan(app):
         else:
             print("RUN_LOGGER=1 but AISSTREAM_API_KEY is not set, so no live ships")
     threading.Thread(target=poll_forever, daemon=True).start()
+    keeper_module.start()  # only where HEADWAY_KEEPER=1
     yield
 
 
@@ -308,7 +312,8 @@ def find_ship(query: str):
 
 
 @app.get("/api/gates/{gate_id}/count")
-def gate_count(gate_id: str, minutes: int = Query(30, ge=1, le=120), since: str | None = None):
+def gate_count(gate_id: str, minutes: int = Query(30, ge=1, le=120), since: str | None = None,
+               until: str | None = None):
     """Cargo ships and tankers that crossed the gate in the window.
     `since` (ISO time) overrides `minutes`, so a market can count from its open time."""
     gates = json.loads(GATES_FILE.read_text())
@@ -318,6 +323,7 @@ def gate_count(gate_id: str, minutes: int = Query(30, ge=1, le=120), since: str 
         raise HTTPException(404, f"no gate {gate_id}")
 
     start = datetime.fromisoformat(since) if since else datetime.now(timezone.utc) - timedelta(minutes=minutes)
+    end = datetime.fromisoformat(until) if until else None  # a closed market window counts only up to its end
     with state.lock:
         trade = {m for m, s in state.static.items() if type_group(s.get("type")) in ("cargo", "tanker")}
         tracks = {}
@@ -329,7 +335,7 @@ def gate_count(gate_id: str, minutes: int = Query(30, ge=1, le=120), since: str 
     for mmsi, track in tracks.items():
         track.sort(key=lambda p: p["time"])
         for a, b in zip(track[:-1], track[1:]):
-            if b["time"] < start or (b["time"] - a["time"]) > timedelta(minutes=30):
+            if b["time"] < start or (end and b["time"] >= end) or (b["time"] - a["time"]) > timedelta(minutes=30):
                 continue
             p1, p2 = (a["lon"], a["lat"]), (b["lon"], b["lat"])
             if line is not None:
@@ -349,9 +355,66 @@ markets.gate_counter = gate_count
 app.include_router(markets.router)
 
 
+from server.chain import ChainOff, TxFailed, chain  # noqa: E402
+from server import quotes  # noqa: E402
+quotes.ship_lookup = find_ship
+app.include_router(quotes.router)
+
+from server import keeper as keeper_module  # noqa: E402
+keeper_module.gate_counter = gate_count
+keeper_module.ship_lookup = find_ship
+keeper_module.live_dir = LIVE
+
+
+@app.get("/api/keeper")
+def keeper_status():
+    """What the keeper has opened and settled, and its recent actions."""
+    return keeper_module.keeper.status()
+
+# The contract already allows one drip per address. This caps how fast new
+# addresses can drain the faucet. It's global, not per IP, because the whole
+# demo audience shares one venue wifi address.
+FAUCET_PER_MINUTE = 30
+_faucet_times = deque()
+_faucet_lock = threading.Lock()
+
+
+class FaucetRequest(BaseModel):
+    address: str
+
+
+@app.get("/api/chain")
+def chain_status():
+    """Is the server connected to the contracts, and how much MON do the server key and faucet hold."""
+    return chain.status()
+
+
 @app.post("/api/faucet")
-def faucet():
-    raise HTTPException(501, "Not built yet: the relayer should call Faucet.drip(address). See PLAN.md.")
+def faucet(req: FaucetRequest):
+    """Send a new burner wallet its gas money: Faucet.drip(address), once per address."""
+    if not chain.ready():
+        raise HTTPException(503, f"chain not set up: {chain.why_off}")
+    try:
+        if chain.already_dripped(req.address):
+            raise HTTPException(409, "this address already got its MON")
+    except ValueError as err:
+        raise HTTPException(400, str(err))
+    now = time.monotonic()
+    with _faucet_lock:
+        while _faucet_times and now - _faucet_times[0] > 60:
+            _faucet_times.popleft()
+        if len(_faucet_times) >= FAUCET_PER_MINUTE:
+            raise HTTPException(429, "faucet is busy, try again in a minute")
+        _faucet_times.append(now)
+    try:
+        tx_hash, amount = chain.drip(req.address)
+    except TxFailed as err:
+        # AlreadyDripped can still happen if two requests for one address race.
+        code = 409 if "AlreadyDripped" in str(err) else 502
+        raise HTTPException(code, f"drip failed: {err}")
+    except ChainOff as err:
+        raise HTTPException(503, f"chain not set up: {err}")
+    return {"address": req.address, "tx": tx_hash, "amount_wei": str(amount), "amount_mon": amount / 1e18}
 
 
 @app.get("/", response_class=HTMLResponse)

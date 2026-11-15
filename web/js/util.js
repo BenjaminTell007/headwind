@@ -5,7 +5,8 @@
 const HW = window.HW = window.HW || {};
 
 HW.C = {
-  bg: '#222222', land: '#3a3a3a', line: '#2e2e2e', fg: '#ececec', dim: '#8c8c8c', faint: '#5a5a5a',
+  bg: '#0a0a0a', land: '#2c2f34', line: '#1c1c1e', fg: '#f2f2f0', dim: '#8a8a8a', faint: '#4a4a4a',
+  accent: '#4c8dff',   // Swiss watch site blue: routes, selection, hover, buttons
   container: '#f08a3c', tanker: '#8f82f2', bulk: '#46b36f', general: '#ea86b5', roro: '#e9c84b', other: '#f2f2f2',
   yes: '#f2f2f2', no: '#6b6b6b',
 };
@@ -43,7 +44,7 @@ HW.label = (ctx, s, x, y, col, align, size, weight) => {
   ctx.globalAlpha = 1;
   ctx.font = (weight || 400) + ' ' + (size || 11) + 'px ' + HW.MONO;
   ctx.textAlign = align || 'left';
-  ctx.lineJoin = 'round'; ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(34,34,34,0.85)';
+  ctx.lineJoin = 'round'; ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(10,10,10,0.85)';
   ctx.strokeText(s, x, y);
   ctx.fillStyle = col || HW.C.dim;
   ctx.fillText(s, x, y);

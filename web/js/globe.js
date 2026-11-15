@@ -1,8 +1,8 @@
-/* The globe. Dotted land, every corridor between world regions drawn as a lane whose
-   brightness is its efficiency that week, flow particles in vessel colours moving along
+/* The globe. Filled countries, every corridor between world regions drawn as a blue lane whose
+   brightness is its efficiency this week, flow particles in vessel colours moving along
    the lanes (slower and thinner when a route is losing efficiency), a valve at every
    strait that opens and closes with its traffic, and the live ships from the server.
-   Drag to spin (it keeps its momentum), scroll to zoom, click a strait, lane or ship. */
+   Drag left/right to spin and up/down to tilt, all the way over the poles (it keeps its momentum), scroll to zoom, click a strait, lane or ship. */
 
 (() => {
   const HW = window.HW, C = HW.C, RAD = Math.PI / 180;
@@ -29,10 +29,16 @@
     for (let i = 0; i < nL; i++) { const v = vec(ld[2 * i] / 100, ld[2 * i + 1] / 100); LX[i] = v[0]; LY[i] = v[1]; LZ[i] = v[2]; LB[i] = rnd(); }
     const nO = 5200, OX = new Float32Array(nO), OY = new Float32Array(nO), OZ = new Float32Array(nO);
     for (let i = 0; i < nO; i++) { const y = 1 - 2 * (i + 0.5) / nO, r = Math.sqrt(1 - y * y), a = i * 2.399963; OX[i] = r * Math.cos(a); OY[i] = y; OZ[i] = r * Math.sin(a); }
+    // country rings, densified to every 2 degrees so the part clipped to the rim follows its curve
     const rings = D.land.borders.map(r => {
-      const n = r.length / 2, f = new Float32Array(n * 3);
-      for (let i = 0; i < n; i++) { const v = vec(r[2 * i + 1] / 10, r[2 * i] / 10); f[3 * i] = v[0]; f[3 * i + 1] = v[1]; f[3 * i + 2] = v[2]; }
-      return f;
+      const out = [], n = r.length / 2;
+      let prev = null;
+      for (let i = 0; i < n; i++) {
+        const v = vec(r[2 * i + 1] / 10, r[2 * i] / 10);
+        if (prev) { const om = Math.acos(HW.clamp(dot3(prev, v), -1, 1)), k = Math.ceil(om / (2 * RAD)); for (let j = 1; j < k; j++) out.push(...slerp(prev, v, j / k)); }
+        out.push(...v); prev = v;
+      }
+      return new Float32Array(out);
     });
 
     // corridors: densified 3D polylines with cumulative length, for drawing and particles
@@ -83,7 +89,6 @@
     const unview = v => [M[0] * v[0] + M[3] * v[1] + M[6] * v[2], M[1] * v[0] + M[4] * v[1] + M[7] * v[2], M[2] * v[0] + M[5] * v[1] + M[8] * v[2]];
 
     let cx = 0, cy = 0, R = 1;
-    const ball = (x, y) => { const px = (x - cx) / R, py = (cy - y) / R, d2 = px * px + py * py; return norm(d2 <= 0.5 ? [px, py, Math.sqrt(1 - d2)] : [px, py, 0.5 / Math.sqrt(d2)]); };
 
     /* values at the current week */
     const wi = () => Math.round(HW.clamp(S.ti, 0, nW - 1));
@@ -110,10 +115,11 @@
     const obj = {
       down() { S.wSpeed = 0; S.dragAng = 0; S.fly = null; S.idle = 0; },
       drag(st, dx, dy) {
-        const P = st.ptr, a = ball(P.x - dx, P.y - dy), b = ball(P.x, P.y), ax = cross(a, b), l = Math.hypot(ax[0], ax[1], ax[2]);
-        if (l < 1e-6) return;
-        const ang = Math.asin(Math.min(1, l)) * 1.1;
-        S.wAxis = [ax[0] / l, ax[1] / l, ax[2] / l]; S.dragAng += ang; spin(S.wAxis, ang); S.idle = 0;
+        // left/right spins about the screen's vertical axis, up/down tilts about its horizontal
+        // axis, with no limit, so you can roll the globe over the poles and upside down
+        const l = Math.hypot(dx, dy); if (l < 1e-6) return;
+        const ang = l / R;
+        S.wAxis = [dy / l, dx / l, 0]; S.dragAng += ang; spin(S.wAxis, ang); S.idle = 0;
       },
       wheel(st, dy) { S.zoomT = HW.clamp(S.zoomT * Math.exp(-dy * 0.0016), 0.85, 9); S.idle = 0; },
       click() {
@@ -148,10 +154,10 @@
 
         /* sphere body and rim */
         const g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.05, cx, cy, R);
-        g.addColorStop(0, '#2c2c2d'); g.addColorStop(0.7, '#242425'); g.addColorStop(1, '#1d1d1e');
+        g.addColorStop(0, '#16171a'); g.addColorStop(0.7, '#111214'); g.addColorStop(1, '#0d0d0f');
         ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.2832); ctx.fill();
         const halo = ctx.createRadialGradient(cx, cy, R * 0.99, cx, cy, R * 1.16);
-        halo.addColorStop(0, 'rgba(236,236,236,0.06)'); halo.addColorStop(1, 'rgba(236,236,236,0)');
+        halo.addColorStop(0, 'rgba(76,141,255,0.08)'); halo.addColorStop(1, 'rgba(76,141,255,0)');
         ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, R * 1.16, 0, 6.2832); ctx.arc(cx, cy, R, 0, 6.2832, true); ctx.fill();
         ctx.strokeStyle = 'rgba(236,236,236,0.16)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.2832); ctx.stroke();
 
@@ -163,36 +169,25 @@
         }
         ctx.fill();
 
-        /* land dots in three brightness buckets so the texture breathes a little */
-        const ds = HW.clamp(1.25 * Math.sqrt(S.zoom), 1.2, 2.6), hs = ds / 2, px = P.inside ? P.x : -1e4, py = P.y;
-        for (let b = 0; b < 3; b++) {
-          ctx.fillStyle = b === 2 ? '#8a8a8a' : b === 1 ? '#5f5f5f' : '#474747';
-          ctx.globalAlpha = 1; ctx.beginPath();
-          for (let i = 0; i < nL; i++) {
-            const Z = m6 * LX[i] + m7 * LY[i] + m8 * LZ[i]; if (Z < 0) continue;
-            let sx = cx + (m0 * LX[i] + m1 * LY[i] + m2 * LZ[i]) * R, sy = cy - (m3 * LX[i] + m4 * LY[i] + m5 * LZ[i]) * R;
-            if (sx < -4 || sx > W + 4 || sy < -4 || sy > H + 4) continue;
-            const dx = sx - px, dy = sy - py, near = dx * dx + dy * dy < 7000 ? Math.exp(-(dx * dx + dy * dy) / 2400) : 0;
-            const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2;
-            const bucket = lum > 1.05 ? 2 : lum > 0.72 ? 1 : 0;
-            if (bucket !== b) continue;
-            ctx.rect(sx - hs, sy - hs, ds, ds);
-          }
-          ctx.fill();
-        }
-
-        /* country outlines, faint */
-        ctx.globalAlpha = 1; ctx.strokeStyle = 'rgba(236,236,236,0.07)'; ctx.lineWidth = 0.6; ctx.beginPath();
+        /* countries, filled. Points past the horizon are pushed out to the rim so a country
+           that straddles the edge is clipped to the disc instead of folding back over it. */
+        const land = new Path2D();
         for (const f of rings) {
-          let pen = false;
+          let any = false, first = true;
+          for (let i = 0; i < f.length; i += 3) { if (m6 * f[i] + m7 * f[i + 1] + m8 * f[i + 2] > 0) { any = true; break; } }
+          if (!any) continue;
           for (let i = 0; i < f.length; i += 3) {
             const x0 = f[i], y0 = f[i + 1], z0 = f[i + 2], Z = m6 * x0 + m7 * y0 + m8 * z0;
-            if (Z < 0.02) { pen = false; continue; }
-            const x = cx + (m0 * x0 + m1 * y0 + m2 * z0) * R, y = cy - (m3 * x0 + m4 * y0 + m5 * z0) * R;
-            if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; }
+            let vx = m0 * x0 + m1 * y0 + m2 * z0, vy = m3 * x0 + m4 * y0 + m5 * z0;
+            if (Z < 0) { const l = Math.hypot(vx, vy) || 1; vx /= l; vy /= l; }
+            const x = cx + vx * R, y = cy - vy * R;
+            if (first) { land.moveTo(x, y); first = false; } else land.lineTo(x, y);
           }
+          land.closePath();
         }
-        ctx.stroke();
+        ctx.globalAlpha = 1; ctx.fillStyle = C.land; ctx.fill(land);
+        ctx.strokeStyle = 'rgba(242,242,240,0.28)'; ctx.lineWidth = 0.7; ctx.stroke(land);
+        const px = P.inside ? P.x : -1e4, py = P.y;
 
         /* lanes: brightness is efficiency, blocked share turns the lane into a dotted grey line */
         const hovLane = S.hover && S.hover.kind === 'lane' ? S.hover.L : null, selLane = S.sel && S.sel.kind === 'lane' ? S.sel.L : null;
@@ -205,9 +200,9 @@
             if (L.sv[j] && P.inside && !P.down && j % 2 === 0) { const d2 = (tmp[0] - px) ** 2 + (tmp[1] - py) ** 2; if (d2 < laneD) { laneD = d2; lanePick = L; } }
           }
           const eff = laneEff(L), blk = laneBlocked(L), hi = L === hovLane || L === selLane;
-          ctx.strokeStyle = hi ? C.fg : blk > 0.3 ? '#6b6b6b' : C.fg;
+          ctx.strokeStyle = hi ? '#9cc0ff' : blk > 0.3 ? '#6b6b6b' : C.accent;
           ctx.lineWidth = hi ? 1.6 : 0.6 + 0.6 * eff;
-          ctx.globalAlpha = hi ? 0.95 : (0.05 + 0.2 * Math.pow(eff, 3)) * S.quiet;
+          ctx.globalAlpha = hi ? 1 : (0.25 + 0.45 * Math.pow(eff, 3)) * S.quiet;
           ctx.setLineDash(blk > 0.3 ? [2, 4] : []);
           ctx.beginPath(); let pen = false;
           for (let j = 0; j < n; j++) { if (!L.sv[j]) { pen = false; continue; } if (pen) ctx.lineTo(L.sx[j], L.sy[j]); else { ctx.moveTo(L.sx[j], L.sy[j]); pen = true; } }
@@ -223,8 +218,8 @@
           p.s += p.dir * sp * dt; if (p.s > L.len) p.s -= L.len; if (p.s < 0) p.s += L.len;
           const a = laneAt(L, p.s), Z = proj(a, tmp); if (Z < 0.03) continue;
           const x = tmp[0], y = tmp[1]; if (x < -10 || x > W + 10 || y < -10 || y > H + 10) continue;
-          const kind = pickVessel(p.pick), col = VCOL[kind], hi = L === hovLane || L === selLane;
-          ctx.globalAlpha = (hi ? 1 : 0.85 * S.quiet) * (Z < 0.2 ? Z * 5 : 1);
+          const col = '#cfe0ff', hi = L === hovLane || L === selLane;   // light blue, so the routes read as blue and vessel colours are kept for ships
+          ctx.globalAlpha = (hi ? 1 : 0.4 * S.quiet) * (Z < 0.2 ? Z * 5 : 1);
           if (blk > 0.5) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.5, 0, 6.2832); ctx.fill(); continue; }
           const b = laneAt(L, HW.clamp(p.s - p.dir * tail * (0.4 + eff), 0, L.len)); proj(b, tmp);
           ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(tmp[0], tmp[1]); ctx.lineTo(x, y); ctx.stroke();
@@ -233,24 +228,34 @@
         /* live ships, only at "now" */
         const atNow = S.ti >= nW - 1.01;
         S.shipsFade += ((atNow && S.showShips ? 1 : 0) - S.shipsFade) * (1 - Math.exp(-4 * dt));
-        let shipPick = null, shipD = S.zoom > 2.5 ? 64 : 0;
+        let shipPick = null, shipD = 64;
         if (S.shipsFade > 0.02 && S.ships.length) {
-          const len = 2 + 1.6 * Math.sqrt(S.zoom);
-          for (const s of S.ships) {
-            const Z = proj(s.v, tmp); if (Z < 0.03) continue;
-            const x = tmp[0], y = tmp[1]; if (x < -6 || x > W + 6 || y < -6 || y > H + 6) continue;
-            const main = s.g === 'cargo' || s.g === 'tanker';
-            ctx.globalAlpha = S.shipsFade * (main ? 0.95 : 0.35) * (Z < 0.2 ? Z * 5 : 1);
-            ctx.strokeStyle = ctx.fillStyle = HW.groupColour(s.g);
-            if (s.sog > 3 && s.cog != null) {
-              // streak points backwards along course; course is clockwise from north
-              const c = s.cog * RAD, l = len * HW.clamp(s.sog / 14, 0.4, 1.6);
-              const north = view([-Math.sin(s.lat * RAD) * Math.sin(s.lon * RAD), Math.cos(s.lat * RAD), -Math.sin(s.lat * RAD) * Math.cos(s.lon * RAD)]);
-              const east = view([Math.cos(s.lon * RAD), 0, -Math.sin(s.lon * RAD)]);
-              const vx = Math.sin(c) * east[0] + Math.cos(c) * north[0], vy = Math.sin(c) * east[1] + Math.cos(c) * north[1];
-              ctx.lineWidth = main ? 1.3 : 1; ctx.beginPath(); ctx.moveTo(x - vx * l, y + vy * l); ctx.lineTo(x, y); ctx.stroke();
-            } else { ctx.beginPath(); ctx.rect(x - 0.9, y - 0.9, 1.8, 1.8); ctx.fill(); }
-            if (shipD && main && P.inside && !P.down) { const d2 = (x - px) ** 2 + (y - py) ** 2; if (d2 < shipD) { shipD = d2; shipPick = s; } }
+          // every ship is a dot in its vessel colour with a dark ring; zoomed in, cargo ships and
+          // tankers become pins whose tip sits exactly on the ship's position
+          const pins = S.zoom >= 2.2;
+          for (let pass = 0; pass < 2; pass++) {   // other ships first, cargo and tankers on top
+            for (const s of S.ships) {
+              const main = s.g === 'cargo' || s.g === 'tanker';
+              if (main !== (pass === 1)) continue;
+              const Z = proj(s.v, tmp); if (Z < 0.03) continue;
+              const x = tmp[0], y = tmp[1]; if (x < -12 || x > W + 12 || y < -20 || y > H + 6) continue;
+              const fade = S.shipsFade * (Z < 0.2 ? Z * 5 : 1), col = HW.groupColour(s.g);
+              ctx.fillStyle = col; ctx.strokeStyle = C.bg;
+              if (main && pins) {
+                const r = 4, top = y - 13;
+                ctx.globalAlpha = fade;
+                ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, top + r); ctx.strokeStyle = col; ctx.stroke();
+                ctx.beginPath(); ctx.arc(x, top, r, 0, 6.2832); ctx.fill();
+                ctx.lineWidth = 1.2; ctx.strokeStyle = C.bg; ctx.stroke();
+                ctx.fillStyle = C.bg; ctx.beginPath(); ctx.arc(x, top, 1.4, 0, 6.2832); ctx.fill();
+                ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.3, 0, 6.2832); ctx.fill();
+              } else {
+                const r = main ? 2.4 : 1.5;
+                ctx.globalAlpha = fade * (main ? 1 : 0.5);
+                ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); ctx.stroke();
+              }
+              if (main && P.inside && !P.down) { const hy = pins ? y - 13 : y, d2 = (x - px) ** 2 + (hy - py) ** 2; if (d2 < shipD) { shipD = d2; shipPick = s; } }
+            }
           }
         }
 
