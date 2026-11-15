@@ -1,15 +1,24 @@
-"""Build and sign market quotes for Markets.createMarket.
+"""Build market quotes for Markets.createMarket: terms, starting price, caps.
 
 A quote fixes a market's terms and its starting price. The pricer key signs it (EIP-712) and the
 contract checks the signature, so nobody can open a market at a price the model didn't give.
 
-The server exposes this as POST /api/quote; the page sends the quote and signature to createMarket.
+Who does what (CHAIN_SERVER.md item 1):
+  - this file BUILDS quotes, and returns them UNSIGNED by default
+  - the server SIGNS them with server/chain.py chain.sign_quote() (the server key never leaves it)
+    POST /api/quote (server/quotes.py) and the keeper (server/keeper.py) both work this way
 
     from contracts.pricing.quote import arrival_quote
-    q = arrival_quote("COSCO SAGITTARIUS", "Rotterdam", deadline, signer_key, markets_address)
-    # -> {"quote": {...}, "signature": "0x...", "model": {...}, "hedge": {...}}
+    out = arrival_quote("COSCO SAGITTARIUS", "Rotterdam", deadline, cargo_usd=500_000)
+    # -> {"quote": {...numbers as strings...}, "model": {...}, "hedge": {...}}   no "signature"
 
-Needs `eth-account` for signing (pip install eth-account). Pricing itself is stdlib (model.py).
+sign() below exists only for local tests and the CLI; pass private_key to use it.
+
+The Quote struct is defined in four places that must match field for field:
+  Markets.sol (struct Quote, QUOTE_TYPEHASH), server/chain.py (QUOTE_FIELDS),
+  QUOTE_TYPES below, and web/chain/abi.js (QUOTE_TYPES). Change all four together.
+
+Needs `eth-utils` for the subject hash (installed with web3 / eth-account). Pricing is stdlib (model.py).
 CLI:  python3 contracts/pricing/quote.py "COSCO SAGITTARIUS" Rotterdam 24   (hours to the deadline; prints unsigned)
 """
 
@@ -102,7 +111,8 @@ def build(kind, question, series, subject_key, threshold, is_above, close_time, 
 
 
 def sign(quote, private_key, markets_address, chain_id=CHAIN_ID):
-    """EIP-712 signature (0x, 65 bytes) the contract's createMarket accepts."""
+    """EIP-712 signature (0x, 65 bytes) the contract's createMarket accepts.
+    For local tests only: on the server, chain.sign_quote() is the signer."""
     from eth_account import Account
     from eth_account.messages import encode_typed_data
 
@@ -125,7 +135,8 @@ def to_json(quote):
 
 def arrival_quote(ship_query, port_query, deadline, private_key=None, markets_address=None,
                   cargo_usd=None, usd_per_mon=1000.0, now=None):
-    """'Will <ship> arrive at <port> after <deadline>?' YES = late. The hedge a trade manager buys."""
+    """'Will <ship> arrive at <port> after <deadline>?' YES = late. The hedge a trade manager buys.
+    Returns an unsigned quote unless private_key and markets_address are given (tests only)."""
     now = now or datetime.now(timezone.utc)
     ship = model.fetch_ship(ship_query)
     if "lat" not in ship:

@@ -1,3 +1,7 @@
+// TEST TOOL. On the demo deployment, the server's keeper (server/keeper.py) is the only thing that
+// opens markets (CHAIN_SERVER.md item 2), so this refuses to --send there without --force.
+// Point it at a scratch deployment with --deployments path/to/deployments.json instead.
+//
 // Open the example markets from contracts/markets/examples.json on Monad.
 // Each gets a quote signed with the pricer key (as the server's /api/quote would), and the
 // vault seeds it. Dry run by default: prints what it would open and what it costs. Add --send.
@@ -28,6 +32,8 @@ const opt = (name, dflt) => {
 const SEND = args.includes('--send');
 const groups = opt('groups', 'featured').split(',');
 const only = opt('only');
+const FORCE = args.includes('--force');
+const DEMO_DEPLOYMENTS = path.join(CONTRACTS, 'deployments.json'); // what the server and page use
 const GAS_MARGIN = 112n; // percent: Monad charges the full gas limit, keep it tight
 // Same policy as contracts/pricing/quote.py
 const POLICY = {
@@ -39,9 +45,9 @@ const POLICY = {
 const examples = readJson(path.join(CONTRACTS, 'markets', 'examples.json')).markets;
 const createdPath = path.join(CONTRACTS, 'markets', 'created.json');
 const created = existsSync(createdPath) ? readJson(createdPath) : {};
-const deployments = existsSync(path.join(CONTRACTS, 'deployments.json'))
-  ? readJson(path.join(CONTRACTS, 'deployments.json'))
-  : undefined;
+const deploymentsPath = path.resolve(opt('deployments', DEMO_DEPLOYMENTS));
+const deployments = existsSync(deploymentsPath) ? readJson(deploymentsPath) : undefined;
+const onDemo = deploymentsPath === DEMO_DEPLOYMENTS;
 
 const now = Math.floor(Date.now() / 1000);
 const closeOf = (m) => (m.close_minutes ? now + m.close_minutes * 60 : Math.floor(Date.parse(m.close_time) / 1000));
@@ -93,7 +99,12 @@ console.log(`Vault seeds ${formatEther(seedTotal)} MON (from the vault, not your
 console.log(`Your wallet: creation fees ${formatEther(feeTotal)} MON + gas about ${formatEther(gasEach * gasPrice * BigInt(plan.length))} MON at ${Number(gasPrice) / 1e9} gwei`);
 
 if (!SEND) { console.log('\nDry run. Add --send to open them.'); process.exit(0); }
-if (!deployments) { console.error('No contracts/deployments.json. Deploy, then run script/write_deployments.mjs'); process.exit(1); }
+if (!deployments) { console.error(`No deployments file at ${deploymentsPath}. Deploy, then run script/write_deployments.mjs`); process.exit(1); }
+if (onDemo && !FORCE) {
+  console.error(`Refusing: ${deployments.markets.address} is the demo deployment, where the server's keeper opens markets.
+Opening them here too would make duplicates. Use --deployments <scratch deployments.json>, or add --force if you really mean it.`);
+  process.exit(1);
+}
 
 const address = deployments.markets.address;
 const pricerKey = setting('PRICER_PRIVATE_KEY');

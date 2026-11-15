@@ -74,7 +74,8 @@ export const MARKETS_ABI = [
   'error TransferFailed()',
 ];
 
-/** EIP-712 types for a quote. Must match Markets.QUOTE_TYPEHASH and contracts/pricing/quote.py. */
+/** EIP-712 types for a quote. One of four copies that must match field for field:
+ *  Markets.sol (QUOTE_TYPEHASH), server/chain.py (QUOTE_FIELDS), contracts/pricing/quote.py, and this. */
 export const QUOTE_DOMAIN = { name: 'Headway', version: '1' }; // + chainId, verifyingContract
 export const QUOTE_TYPES = {
   Quote: [
