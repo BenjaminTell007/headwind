@@ -34,7 +34,7 @@ case "$1" in
     event=$(/usr/bin/python3 -c 'import json,sys; print(json.load(sys.stdin).get("hook_event_name",""))' 2>/dev/null)
     branch=$(git rev-parse --abbrev-ref HEAD)
     git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1 || exit 0
-    if ! git pull --rebase --autostash -q origin "$branch" 2>/tmp/headway-sync.err; then
+    if ! git pull --rebase=merges --autostash -q origin "$branch" 2>/tmp/headway-sync.err; then
       git rebase --abort 2>/dev/null
       message "Headway: pulling $branch from GitHub failed ($(head -c 200 /tmp/headway-sync.err | tr '\n' ' ')). Nothing was changed; sort it out before editing."
       exit 0
@@ -80,7 +80,7 @@ print(ti.get("file_path") or ti.get("notebook_path") or (tr.get("filePath") if i
     git add -- "$rel" 2>/dev/null || exit 0
     git diff --cached --quiet && exit 0
     git commit -q -m "Update $rel" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" || exit 0
-    if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1 && ! git pull --rebase --autostash -q origin "$branch" 2>/tmp/headway-sync.err; then
+    if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1 && ! git pull --rebase=merges --autostash -q origin "$branch" 2>/tmp/headway-sync.err; then
       git rebase --abort 2>/dev/null
       message "Headway: committed $rel but couldn't pull before pushing ($(head -c 200 /tmp/headway-sync.err | tr '\n' ' ')). The commit is local only."
       exit 0

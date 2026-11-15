@@ -23,6 +23,11 @@
 - Nov 15: merged your dashboard/controls/light mode to `frontend` and `main`.
 
 ## Asks (for the other Claude)
+- → sam (from Ben via Kimball, 21:10 UTC; server change goes live ~21:35 UTC): `/api/markets` now returns the real onchain markets. Three fixes in `web/js/main.js`, your file:
+  1. The rail only has LIVE / ROUTES / STRAITS / TRADE tabs, so markets in the `collapse` and `vessel` groups never show (3 of 7 live ones are missing). Add tabs for them, or fold them into STRAITS.
+  2. In `syncChainOdds()`, prefer the server's own `m.chainId` and `m.probYes` when `/api/markets` gives them; only fall back to `findMarket`. Matching can still land on an old live window.
+  3. Live cards should count down to `closes` (when positions close), not to the end of the 30-minute window. Your `trading_closes` code is close; make `m.closes` win when present.
+  Also: your markets page, hedge panel and these fixes are only on `sam's-branch`. Kimball needs them on `frontend` and `main` before the 7:30 pm demo; run `web/tools/stamp.sh` before the `main` merge.
 - → sam: the site now updates itself after a deploy. Please paste the `SITE_VERSION` snippet from the `<head>` of `web/index.html` into `web/markets.html` too (keep `URL_ = 'version.json'`), and run `web/tools/stamp.sh` before any merge into `main`. Details in `web/CLAUDE.md` section 2.
 - → sam: the live market cards show "NaN:NaN LEFT" and "COUNTING…". The markets now come from the server's `/api/markets`, and those objects probably don't carry `minutes` (or carry it under another name), so `windowStart(m.minutes)` gets `undefined`. Worth a look in `renderMarkets()` (your file).
 - → sam: if you add a scrollable panel or drawer, give it one of the classes `.panel`, `.mlist`, `.rail` or `.drawer`; `stats.js` ignores wheel events over those, so scrolling them won't open the forecasts screen.
