@@ -1,11 +1,12 @@
-/* Headway colours and type. Hue only ever means vessel type. */
+/* Headway colours and type. Hue means vessel type, except the one accent blue (routes, selection, buttons). */
 :root {
   /* background and neutrals */
-  --bg: #222222;          /* page and globe background */
-  --land: #3a3a3a;        /* land dots */
-  --line: #2e2e2e;        /* panel lines and dividers */
-  --fg: #ececec;          /* main text */
-  --dim: #8c8c8c;         /* secondary text and labels */
+  --bg: #0a0a0a;          /* page and globe background */
+  --land: #2c2f34;        /* filled countries */
+  --line: #1c1c1e;        /* panel lines and dividers */
+  --fg: #f2f2f0;          /* main text */
+  --dim: #8a8a8a;         /* secondary text and labels */
+  --accent: #4c8dff;      /* the one non-vessel hue: routes, selection, hover, buttons */
 
   /* vessel types (PortWatch fields in brackets) */
   --container: #f08a3c;   /* n_container */
