@@ -240,13 +240,17 @@ def price_arrival(ship, port, deadline, now=None, weather=None):
     model_h = sail_h + strait_h + wait_h
     expected = now + timedelta(hours=model_h)
 
-    # Crew ETA: trust it half when it is within 3 days of the model.
+    # Crew ETA: trust it half when it is in the future and within 3 days of the model.
+    # A crew ETA that has already passed only tells us the ship is running late, so it isn't blended.
     crew_eta = _parse_ais_eta(ship.get("eta") or "", now)
     eta_note = "no usable crew ETA"
-    if crew_eta and abs((crew_eta - expected).total_seconds()) < 3 * 86400 \
+    if crew_eta and crew_eta <= now:
+        eta_note = f"crew ETA {crew_eta:%b %d %H:%M} has passed (running late), not used"
+    elif crew_eta and abs((crew_eta - expected).total_seconds()) < 3 * 86400 \
             and (ship.get("destination") or "").strip():
         expected = expected + (crew_eta - expected) / 2
         eta_note = f"blended with crew ETA {crew_eta:%b %d %H:%M}"
+    expected = max(expected, now + timedelta(minutes=15))  # never forecast an arrival in the past
 
     sigma_h = math.sqrt(
         (2.0 + 0.06 * sail_h) ** 2          # speed and routing error grows with distance
@@ -260,6 +264,8 @@ def price_arrival(ship, port, deadline, now=None, weather=None):
     cost_pct, cost_source = cargo_cost_per_day(group, port["name"])
     return {
         "p_yes": p_late,
+        # Already stopped in port: the arrival rule would settle a market at once, so don't quote one.
+        "already_arrived": at_port and sog < 1.0,
         "expected_arrival": expected.isoformat(timespec="minutes"),
         "sigma_hours": round(sigma_h, 1),
         "hours_to_spare": round(margin_h, 1),

@@ -146,6 +146,8 @@ def arrival_quote(ship_query, port_query, deadline, private_key=None, markets_ad
         raise ValueError("deadline must be at least an hour away")
 
     priced = model.price_arrival(ship, port, deadline, now=now)
+    if priced["already_arrived"]:
+        raise ValueError(f"{ship.get('name') or ship_query} is already stopped at {port['name']}: nothing to hedge")
     # Trading stops before the deadline (6 h, or a quarter of the time left if sooner), so
     # nobody trades on a ship already visible at the berth. Arrival settles it early anyway.
     close = deadline - min(timedelta(hours=6), (deadline - now) / 4)
