@@ -364,12 +364,13 @@ def cargo_cost_per_day(ship_type, port_name):
     return round(pct, 2), f"Comtrade mix {lanes[0]['from_country']} to {lanes[0]['to_country']}"
 
 
-def price_arrival(ship, port, deadline, now=None, weather=None):
+def price_arrival(ship, port, deadline, now=None, weather=None, queue_factor=1.0):
     """P(the ship arrives at `port` at or after `deadline`), with the working shown.
 
     ship: dict from /api/ship (lat, lon, sog, type_group, eta, name, imo, mmsi, time)
     port: dict from find_port()
     deadline: aware datetime
+    queue_factor: live port queue vs its recent level (reprice.PortQueue), 1.0 = normal
     """
     now = now or datetime.now(timezone.utc)
     lat, lon = float(ship["lat"]), float(ship["lon"])
@@ -397,9 +398,13 @@ def price_arrival(ship, port, deadline, now=None, weather=None):
             strait_sd += shortfall * extra * 0.5
             strait_notes.append(f"{name} at {ratio:.0%} of normal")
 
-    # Port congestion: waiting time grows with calls above the baseline.
-    cong = port_congestion().get(port["name"].lower(), 1.0)
-    wait_h = 6.0 * max(0.5, cong) ** 2
+    # Port approach: arrival counts once the ship is inside the port area and anchored or slow
+    # (arrival.py), so berth waiting doesn't delay it. What's left is the approach (pilot, slowing,
+    # anchoring), about 1.5 h, longer when the port is busy.
+    # Weekly PortWatch calls vs baseline, scaled by the live queue (ships stopped at the port now vs
+    # the last few hours), damped with a square root because free AIS coverage is patchy.
+    cong = port_congestion().get(port["name"].lower(), 1.0) * min(max(queue_factor, 0.5), 3.0) ** 0.5
+    wait_h = 0.0 if at_port else 1.5 * max(0.5, cong) ** 2
 
     model_h = sail_h + strait_h + wait_h
     expected = now + timedelta(hours=model_h)
@@ -412,15 +417,18 @@ def price_arrival(ship, port, deadline, now=None, weather=None):
         eta_note = f"crew ETA {crew_eta:%b %d %H:%M} has passed (running late), not used"
     elif crew_eta and abs((crew_eta - expected).total_seconds()) < 3 * 86400 \
             and (ship.get("destination") or "").strip():
-        expected = expected + (crew_eta - expected) / 2
-        eta_note = f"blended with crew ETA {crew_eta:%b %d %H:%M}"
+        # Crew ETAs are usually for the berth, later than our arrival, and the live position says
+        # more as the ship gets close: weight the crew ETA by 50% far out, fading to 0 in the last day.
+        w = 0.5 * min(1.0, sail_h / 24)
+        expected = expected + (crew_eta - expected) * w
+        eta_note = f"blended {w:.0%} with crew ETA {crew_eta:%b %d %H:%M}"
     expected = max(expected, now + timedelta(minutes=15))  # never forecast an arrival in the past
 
     sigma_h = math.sqrt(
-        (2.0 + 0.06 * sail_h) ** 2          # speed and routing error grows with distance
+        (0.5 + 0.07 * sail_h) ** 2          # speed and routing error, shrinks as the ship nears
         + (0.03 * sail_h * max(0.0, wave - 2.5)) ** 2  # rough seas
         + strait_sd ** 2
-        + (3.0 * cong) ** 2                 # berth/anchorage wait
+        + (0.0 if at_port else 0.75 * cong) ** 2  # approach and anchoring
     )
     margin_h = (deadline - expected).total_seconds() / 3600
     p_late = 1 - _phi(margin_h / sigma_h)

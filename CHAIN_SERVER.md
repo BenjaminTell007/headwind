@@ -118,6 +118,38 @@ After resolving, call `settleVault(id)` so the vault gets its money back.
 ### 6. Two `setting()` helpers that read `PRIVATE.md`
 One is in `server/chain.py` (Python) and one in `contracts/script/env.mjs` (Node). They run in different places, so this is fine. Just keep the key names the same as the Keys table above.
 
+### 7. Keeping prices current (new, Nov 15 evening)
+A market's price only moves when someone trades, so on its own it ignores a ship that slows down, crosses a strait or nears port. Xavi added `contracts/pricing/reprice.py`, a market-making step for the keeper. It re-runs the pricing model on fresh data and, when the model and the market disagree by more than the fee plus 3 points, buys the cheap side through the normal `Markets.buy`. Each run picks up:
+- the ship's latest position, speed and weather
+- straits it has passed, which drop out
+- the live queue at the port (ships stopped there now vs the last 6 hours)
+- the time left, so the odds firm up toward 0 or 1 as the deadline nears
+
+Limits: 0.05 MON per step and 0.30 MON per market in total. Prices never go past 2% or 98%; settlement handles certainty. Only `arrival:` markets are re-priced; the others close before their period starts, so no new information arrives while they trade.
+
+Proposed keeper code (Ben's file, Ben's call):
+
+```python
+from contracts.pricing import reprice
+port_queue = reprice.PortQueue()            # keep one, it remembers each port's recent queue
+bot_spent = {}                              # market id -> wei the bot has put in (keep in keeper_state.json)
+
+# every 2 to 5 minutes, for each open arrival: market
+m = chain.get_market(mid)
+plan = reprice.plan_for_market(m, ship_lookup=ship_lookup, ships_lookup=lambda bbox: ships_in_bbox(bbox),
+                               queue=port_queue, spent_wei=bot_spent.get(mid, 0))
+if plan:
+    chain.send(chain.markets.functions.buy(mid, plan["yes"], plan["min_shares"]), value=plan["amount_wei"])
+    bot_spent[mid] = bot_spent.get(mid, 0) + plan["amount_wei"]
+    note(f"reprice #{mid}: {plan['p_market']} -> {plan['p_after']} (model {plan['p_model']})")
+# after an arrival market settles: chain.send(markets.functions.redeem(mid)) for the bot's own shares
+```
+
+`ship_lookup` is the same in-memory lookup `/api/quote` uses. `ships_in_bbox(bbox)` returns the live ships in `"minLon,minLat,maxLon,maxLat"`, the same filter as `/api/ships?bbox=`. The bot trades from the server key, which holds about 3.9 MON (Xavi topped it up).
+
+- [x] Ben: agreed, and it's in the keeper loop (`reprice_arrivals` in `server/keeper.py`, every 3 minutes). Two extra guards because the bot spends from the key that pays the keeper's gas: at most 1 MON across all markets (`KEEPER_REPRICE_BUDGET_MON`), and no trades if the key would drop below 1 MON. The bot redeems its shares after each market settles. Its spending shows in `/api/keeper` under `bot`. Also: `find_port` now falls back to port ids for every caller, including `reprice.py` (ports with no LOCODE, like New York, failed before). Tested on anvil: 6 steps of 0.05 MON moved a mispriced market from 0.83 to 0.14, stopped at the 0.30 cap, then redeemed after the ship docked.
+- [x] Xavi: `reprice.py`, tested. Trades land on the target price to within 1e-16, and the odds firm up as a ship nears port.
+
 ## Checklist to a working demo
 
 - [x] Xavi: deploy (`forge script ... --broadcast`), run `write_deployments.mjs`, commit `contracts/deployments.json` and `web/chain/deployments.js` to `main`. Markets `0x91655EF876726BC2730DC2FbF3a296688E552db5`, Faucet `0xf7D1255AEBDa35454121C3189850e48a5C82cDB9`; oracle, pricer and relayer all `0x32F0A79FF9e4918D5771BF716ACba54219F1F78c`; vault 20 MON, subject cap 3 MON

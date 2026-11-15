@@ -24,7 +24,9 @@ weeks = D.status.weeks; nW = weeks.length;
 $('introtag').textContent = `SYS.ROUTES: ${D.corridors.features.length} · STRAITS: ${D.straits.length} · DATA TO ${HW.fDate(D.overview.as_of)}`;
 
 globe = HW.makeGlobe($('globe'), D, { onSelect: item => showPanel(item) });
-scene = HW.makeShipScene($('shipcv'));
+// the 3D ship scene (js/ship3d.js, three.js) when WebGL works; the 2D one otherwise
+const webglOK = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
+scene = (HW.makeShipScene3D && webglOK ? HW.makeShipScene3D : HW.makeShipScene)($('shipcv'));
 
 // let the logo play for a moment, then reveal the globe
 setTimeout(() => { $('intro').classList.add('out'); setTimeout(() => { intro.stop(); $('intro').remove(); $('overview').classList.add('in'); }, 1000); }, Math.max(0, 3800 - (performance.now() - introStart)));
@@ -174,6 +176,7 @@ const dive = async ship => {
 };
 const renderHUD = (s, w) => {
   const g = s.g || s.type_group || HW.vesselGroup(s.type), kind = scene.S.kind;
+  renderStrip(s, w);
   $('ident').innerHTML = `<div class="tag"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${HW.groupColour(g)};margin-right:7px"></span>${HW.groupLabel(g)}</div>
     <h2>${HW.esc(s.name || 'MMSI ' + s.mmsi)}</h2><div class="tag">${s.destination ? 'BOUND FOR ' + HW.esc(s.destination) : 'NO DESTINATION REPORTED'}</div>
     <div class="grid">
@@ -206,6 +209,45 @@ const renderHUD = (s, w) => {
     <line x1="31" y1="31" x2="${31 + 22 * Math.sin(cog * Math.PI / 180)}" y2="${31 - 22 * Math.cos(cog * Math.PI / 180)}" stroke="${HW.groupColour(g)}" stroke-width="2"/>
     ${wd != null ? `<line x1="${31 + 26 * Math.sin(wd * Math.PI / 180)}" y1="${31 - 26 * Math.cos(wd * Math.PI / 180)}" x2="${31 + 14 * Math.sin(wd * Math.PI / 180)}" y2="${31 - 14 * Math.cos(wd * Math.PI / 180)}" stroke="#ececec" stroke-dasharray="2 2"/>` : ''}</g>`;
 };
+/* the strip of big readouts along the bottom of the ship view */
+const BEAUFORT = [[1, 'CALM'], [4, 'LIGHT AIR'], [7, 'LIGHT BREEZE'], [11, 'GENTLE BREEZE'], [17, 'MODERATE BREEZE'], [22, 'FRESH BREEZE'], [28, 'STRONG BREEZE'], [34, 'NEAR GALE'], [41, 'GALE'], [48, 'STRONG GALE'], [56, 'STORM'], [64, 'VIOLENT STORM'], [1e9, 'HURRICANE']];
+const SEA = [[0.1, 'GLASSY'], [0.5, 'RIPPLED'], [1.25, 'SLIGHT'], [2.5, 'MODERATE'], [4, 'ROUGH'], [6, 'VERY ROUGH'], [9, 'HIGH'], [14, 'VERY HIGH'], [1e9, 'PHENOMENAL']];
+const sunElev = (lat, lon) => {   // degrees above the horizon at the ship, right now
+  const RAD = Math.PI / 180, d = (Date.now() - Date.UTC(2000, 0, 1, 12)) / 864e5;
+  const g = (357.529 + 0.98560028 * d) * RAD, L = (280.459 + 0.98564736 * d + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * RAD, e = 23.439 * RAD;
+  const dec = Math.asin(Math.sin(e) * Math.sin(L)), ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L));
+  const ha = (280.46061837 + 360.98564736629 * d) * RAD + lon * RAD - ra, la = lat * RAD;
+  return Math.asin(Math.sin(la) * Math.sin(dec) + Math.cos(la) * Math.cos(dec) * Math.cos(ha)) / RAD;
+};
+const etaHours = eta => {   // AIS ETA is "MM-DD HH:MM" in UTC, year implied
+  const m = /^(\d\d)-(\d\d) (\d\d):(\d\d)/.exec(eta || ''); if (!m) return null;
+  const now = new Date(); let t = Date.UTC(now.getUTCFullYear(), +m[1] - 1, +m[2], +m[3], +m[4]);
+  if (t < Date.now() - 180 * 864e5) t = Date.UTC(now.getUTCFullYear() + 1, +m[1] - 1, +m[2], +m[3], +m[4]);
+  return (t - Date.now()) / 3600e3;
+};
+let hudShip = null;
+const renderStrip = (s, w) => {
+  hudShip = s;
+  const kn = s.sog != null ? +s.sog : null, wind = w && w.wind_speed_10m != null ? +w.wind_speed_10m : null, wave = w && w.wave_height != null ? +w.wave_height : null;
+  const bf = wind == null ? null : BEAUFORT.findIndex(([v]) => wind < v);
+  const sea = wave == null ? null : SEA.findIndex(([v]) => wave < v);
+  const el = sunElev(+s.lat, +s.lon), eh = etaHours(s.eta);
+  const dest = (s.destination || '').trim();
+  const cell = (big, unit, label, sub) => `<div><b>${big}${unit ? `<small>${unit}</small>` : ''}</b><span>${label}</span>${sub ? `<em>${sub}</em>` : ''}</div>`;
+  $('strip').innerHTML =
+    cell(kn != null ? kn.toFixed(1) : '—', 'kn', 'Speed', kn != null ? (kn * 1.852).toFixed(0) + ' km/h · ' + (kn * 24).toFixed(0) + ' nm a day' : '') +
+    cell(bf != null ? bf : '—', '', 'Beaufort', bf != null ? BEAUFORT[bf][1] : 'loading') +
+    cell(sea != null ? sea : '—', '', 'Sea state', sea != null ? SEA[sea][1] + ' · ' + wave.toFixed(1) + ' m' : 'loading') +
+    cell(el.toFixed(0) + '°', '', 'Sun height', el > 0 ? 'Day at the ship' : el > -6 ? 'Twilight' : 'Night at the ship') +
+    cell(eh == null ? '—' : eh < 0 ? 'DUE' : eh < 48 ? eh.toFixed(0) : (eh / 24).toFixed(1), eh == null || eh < 0 ? '' : eh < 48 ? 'h' : 'd', 'To ETA', eh == null ? 'no ETA reported' : eh < 0 ? 'past its reported ETA' : (dest ? 'to ' + HW.esc(dest).slice(0, 18) : '')) +
+    `<a class="hedge" href="markets.html?hedge=${encodeURIComponent(s.name || '')}${dest ? '&port=' + encodeURIComponent(dest) : ''}"><b>HEDGE THIS SHIP →</b><span>Cover a late arrival</span></a>`;
+};
+setInterval(() => {
+  if (!scene.S.on || !hudShip) return;
+  const now = new Date(), local = new Date(now.getTime() + (+hudShip.lon / 15) * 3600e3);
+  const f = d => String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+  $('hudClock').innerHTML = `UTC ${f(now)} · LOCAL ${f(local)}<br>${(+hudShip.lat).toFixed(3)}°, ${(+hudShip.lon).toFixed(3)}°`;
+}, 1000);
 document.querySelectorAll('#cams button').forEach(b => b.addEventListener('click', () => {
   scene.setMode(b.dataset.m); document.querySelectorAll('#cams button').forEach(o => o.classList.toggle('on', o === b));
 }));
@@ -215,7 +257,7 @@ $('back').addEventListener('click', () => {
   globe.zoomBy(0.35);
 });
 const altTick = () => {
-  if (scene.S.on) $('hudScale').textContent = 'ALT ' + Math.round(HW.lerp(1800, 320, HW.ease(scene.S.intro))) + ' M · ' + (scene.S.mode === 'top' ? 'DRONE' : 'PROFILE');
+  if (scene.S.on) $('hudScale').textContent = 'ALT ' + Math.round(scene.S.alt != null ? scene.S.alt : HW.lerp(1800, 320, HW.ease(scene.S.intro))).toLocaleString('en-US') + ' M · ' + (scene.S.mode === 'top' ? 'DRONE' : 'PROFILE');
   requestAnimationFrame(altTick);
 };
 altTick();

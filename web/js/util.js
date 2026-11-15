@@ -30,7 +30,9 @@ HW.setTheme = t => {
   document.documentElement.dataset.theme = t;
   try { localStorage.setItem('hw-theme', t); } catch { /* private window: just don't remember */ }
 };
-HW.setTheme((() => { try { return localStorage.getItem('hw-theme'); } catch { return null; } })() || 'dark');
+// dark mode only (Kimball, Nov 15): the light theme is kept in THEMES but never used
+HW.setTheme = (orig => () => orig('dark'))(HW.setTheme);
+HW.setTheme('dark');
 HW.MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 HW.SANS = '-apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", Arial, sans-serif';
 
