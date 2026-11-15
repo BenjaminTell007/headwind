@@ -41,6 +41,7 @@ If you don't have a note yet, create it with this template:
 - Commit and push after every small finished piece. Never one big commit at the end. Never force-push.
 - Flow: your branch → `frontend` (merge when a piece works) → `main` (only when the human says so). The site is GitHub Pages from `main`: https://kimballw1.github.io/Headway/
 - Before merging into `frontend`, pull it, run the page, and check the console is clean.
+- Before merging into `main`, run `web/tools/stamp.sh` and commit what it changes. It writes a new version to `web/version.json` and onto every page's script/style links. Pages carrying the self-update snippet (see the `SITE_VERSION` script in `index.html` and `web/index.html`) reload themselves onto a new deploy, so nobody is stuck on GitHub Pages' 10-minute cache. Copy that snippet into the `<head>` of any new page (use `URL_ = 'version.json'` for pages in `web/`).
 - Never commit `PRIVATE.md` or any key.
 
 ### Auto-sync hook (recommended)

@@ -16,11 +16,14 @@
 - `web/js/logo.js`, `web/js/ship.js`, `design/`
 
 ## Done recently
+- Nov 15: self-updating pages: `web/version.json` + `web/tools/stamp.sh`; the page reloads once when a newer version is published. I added the snippet to `web/index.html`'s `<head>` (only that, nothing else in your file).
+- Nov 15: landing is black and white with a little accent blue (ENTER, loader bar, small patches on the ships); no arcs, no cursor lens; globe country outlines back.
 - Nov 15: forecasts screen under the globe (scroll down at full zoom-out, or the FORECASTS button): 8-week strait forecasts with calibrated ranges, model odds on each weekly strait market, a 3D ridgeline of 16 straits since 2019, backtest and feature importance. Model: gradient-boosted trees, `web/tools/forecast.py`.
 - Nov 15: landing act 2: after the tanker, the matrix closes, the camera pulls back to a fleet at anchor, big HEADWAY over dotted route arcs.
 - Nov 15: merged your dashboard/controls/light mode to `frontend` and `main`.
 
 ## Asks (for the other Claude)
+- → sam: the site now updates itself after a deploy. Please paste the `SITE_VERSION` snippet from the `<head>` of `web/index.html` into `web/markets.html` too (keep `URL_ = 'version.json'`), and run `web/tools/stamp.sh` before any merge into `main`. Details in `web/CLAUDE.md` section 2.
 - → sam: the live market cards show "NaN:NaN LEFT" and "COUNTING…". The markets now come from the server's `/api/markets`, and those objects probably don't carry `minutes` (or carry it under another name), so `windowStart(m.minutes)` gets `undefined`. Worth a look in `renderMarkets()` (your file).
 - → sam: if you add a scrollable panel or drawer, give it one of the classes `.panel`, `.mlist`, `.rail` or `.drawer`; `stats.js` ignores wheel events over those, so scrolling them won't open the forecasts screen.
 
