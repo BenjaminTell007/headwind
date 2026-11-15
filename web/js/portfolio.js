@@ -142,7 +142,11 @@ export function makePortfolio(ctx) {
       }
       for (const id of Object.keys(odds)) if (!held.some(h => h.id === +id)) delete odds[id];
       saveStore('odds', addr, odds);
-      if (staked > 0) {
+      // A read that lands in the middle of a trade can see no open positions for a moment and would
+      // draw a spike to zero, so nothing is recorded while there is nothing open, and a lone zero
+      // between two real points is dropped.
+      equity = equity.filter((pt, i) => !(pt[1] === 0 && i > 0 && i < equity.length - 1 && equity[i - 1][1] !== 0 && equity[i + 1][1] !== 0));
+      if (staked > 0 && (active.length || ctx.sample)) {
         if (ctx.sample && equity.length < 2) equity = madeUpPath(openPnl, now);
         const last = equity[equity.length - 1];
         if (!last || Math.abs(last[1] - openPnl) >= EPS || now - last[0] > 60000) { equity.push([now, +openPnl.toFixed(5)]); if (equity.length > 720) equity.splice(0, equity.length - 720); }

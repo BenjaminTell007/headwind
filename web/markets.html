@@ -10,7 +10,7 @@
    whenever you come back to the tab, check the published version (never cached) and,
    if it's newer than this copy, reload once onto it. web/tools/stamp.sh sets both. */
 (function () {
-  var SITE_VERSION = '20261115T2350', URL_ = 'version.json';
+  var SITE_VERSION = '20261115T2357', URL_ = 'version.json';
   function check() {
     fetch(URL_ + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       if (!d.v || d.v === SITE_VERSION) return;
@@ -24,8 +24,8 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
 })();
 </script>
-<link rel="stylesheet" href="app.css?v=20261115T2350">
-<link rel="stylesheet" href="markets.css?v=20261115T2350">
+<link rel="stylesheet" href="app.css?v=20261115T2357">
+<link rel="stylesheet" href="markets.css?v=20261115T2357">
 </head>
 <body class="mk" data-hw-loader>
 
@@ -51,6 +51,7 @@
     <div class="chips" id="tabs">
       <button data-t="all" class="on">ALL OPEN</button>
       <button data-t="live">LIVE</button>
+      <button data-t="ship">SHIPS</button>
       <button data-t="strait">STRAITS</button>
       <button data-t="route">ROUTES</button>
       <button data-t="trade">TRADE</button>
@@ -81,9 +82,9 @@
   <div id="dbody"></div>
 </aside>
 
-<script src="js/util.js?v=20261115T2350"></script>
-<script src="js/logo.js?v=20261115T2350"></script>
-<script src="js/brand.js?v=20261115T2350"></script>
-<script type="module" src="js/markets-page.js?v=20261115T2350"></script>
+<script src="js/util.js?v=20261115T2357"></script>
+<script src="js/logo.js?v=20261115T2357"></script>
+<script src="js/brand.js?v=20261115T2357"></script>
+<script type="module" src="js/markets-page.js?v=20261115T2357"></script>
 </body>
 </html>
