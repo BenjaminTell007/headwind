@@ -17,14 +17,17 @@ Outputs (data/processed/):
   --selftest  build fake tracks and check the crossing logic
 """
 import json
+import os
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
-LIVE = ROOT / "data" / "live"
+LIVE = Path(os.environ.get("HEADWAY_LIVE_DIR", ROOT / "data" / "live"))
 OUT = ROOT / "data" / "processed"
 GATES = ROOT / "data" / "gates.json"
 LANES = OUT / "lanes.geojson"
@@ -88,15 +91,7 @@ def load(kind):
     return frame.dropna(subset=["time"])
 
 
-def segments_cross(p1, p2, a, b):
-    """True if segment p1-p2 crosses segment a-b (lon/lat treated as flat, fine at gate scale)."""
-    def orient(p, q, r):
-        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
-    d1 = orient(a, b, p1)
-    d2 = orient(a, b, p2)
-    d3 = orient(p1, p2, a)
-    d4 = orient(p1, p2, b)
-    return (d1 * d2 < 0) and (d3 * d4 < 0)
+from geometry import segments_cross  # noqa: E402  (kept importable from here too)
 
 
 def find_crossings(positions, gates):

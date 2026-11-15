@@ -19,10 +19,15 @@ in one place.
 
 Run from the repo root:
   ~/.venvs/chokepoint/bin/python -m uvicorn server.app:app --port 8787 --reload
+
+On Railway the same command runs with RUN_LOGGER=1, so the server also starts
+the ship logger and keeps it running (see railway.json).
 """
 import csv
 import io
 import json
+import os
+import subprocess
 import sys
 import threading
 import time
@@ -38,14 +43,14 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parent.parent
-LIVE = ROOT / "data" / "live"
+LIVE = Path(os.environ.get("HEADWAY_LIVE_DIR", ROOT / "data" / "live"))
 PROCESSED = ROOT / "data" / "processed"
 GATES_FILE = ROOT / "data" / "gates.json"
 
-# Reuse the crossing test from the summary script so live counts match the
+# Same crossing test the summary script uses, so live counts match the
 # thresholds it set.
 sys.path.insert(0, str(ROOT / "scripts"))
-from summarize_live import segments_cross  # noqa: E402
+from geometry import segments_cross  # noqa: E402
 
 POLL_SECONDS = 3
 START_BYTES = 12_000_000      # on start-up, read this much of the end of each log file
@@ -198,8 +203,26 @@ def poll_forever():
         time.sleep(POLL_SECONDS)
 
 
+def run_logger_forever():
+    """Run scripts/ais_logger.py as a child process and restart it if it ever exits.
+    Used on Railway, where one start command has to run both the logger and the server."""
+    while True:
+        print("starting ship logger")
+        child = subprocess.Popen([sys.executable, "-u", str(ROOT / "scripts" / "ais_logger.py")], cwd=ROOT)
+        child.wait()
+        print(f"ship logger exited with code {child.returncode}, restarting in 10s")
+        time.sleep(10)
+
+
 @asynccontextmanager
 async def lifespan(app):
+    # RUN_LOGGER=1 (set on Railway) makes the server start the ship logger too.
+    # On a laptop that already runs the logger, leave it unset.
+    if os.environ.get("RUN_LOGGER") == "1":
+        if os.environ.get("AISSTREAM_API_KEY"):
+            threading.Thread(target=run_logger_forever, daemon=True).start()
+        else:
+            print("RUN_LOGGER=1 but AISSTREAM_API_KEY is not set, so no live ships")
     threading.Thread(target=poll_forever, daemon=True).start()
     yield
 

@@ -27,11 +27,11 @@
   <p class="tag">Starter page: proves the page can read the data files and the live server. The globe goes here.</p>
 </main>
 <script>
-// Where the server is. On Kimball's laptop it's localhost; everyone else uses
-// the tunnel URL (it changes each time the tunnel restarts).
-const SERVER = location.hostname === "localhost" && !location.search.includes("tunnel")
-  ? "http://localhost:8787"
-  : "https://sharp-parrots-battle.loca.lt";
+// Where the server is. Change SHARED_SERVER in one place when it moves
+// (tunnel now, Railway once it's deployed). Add ?local to the page URL to use
+// a server running on your own machine instead.
+const SHARED_SERVER = "https://sharp-parrots-battle.loca.lt";
+const SERVER = location.search.includes("local") ? "http://localhost:8787" : SHARED_SERVER;
 
 // localtunnel shows a warning page to browsers unless this header is sent.
 const _fetch = window.fetch;

@@ -34,8 +34,10 @@ python3 -m venv ~/.venvs/chokepoint
 ```
 
 ```bash
-~/.venvs/chokepoint/bin/python -m pip install -r requirements.txt
+~/.venvs/chokepoint/bin/python -m pip install -r requirements.txt -r scripts/requirements.txt
 ```
+
+(`requirements.txt` is the server and ship logger, which is what Railway installs. `scripts/requirements.txt` adds what the data pipeline needs.)
 
 The processed data is committed, so you don't need to rerun the pipeline. To rebuild it anyway:
 

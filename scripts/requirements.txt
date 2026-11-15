@@ -1,0 +1,12 @@
+# Data pipeline (scripts/). Python 3.13. Make a venv and install both files:
+#   python3 -m venv ~/.venvs/chokepoint
+#   ~/.venvs/chokepoint/bin/python -m pip install -r requirements.txt -r scripts/requirements.txt
+requests==2.34.2
+pandas==3.1.1
+numpy==2.5.4
+searoute==1.6.0
+websockets==17.4
+certifi==2026.10.23
+geopandas==1.2.0
+pyogrio==0.13.0
+shapely==2.2.0

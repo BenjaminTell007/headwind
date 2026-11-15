@@ -26,14 +26,16 @@ import os
 import ssl
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import certifi
 import websockets
 
 ROOT = Path(__file__).resolve().parent.parent
-LIVE = ROOT / "data" / "live"
+LIVE = Path(os.environ.get("HEADWAY_LIVE_DIR", ROOT / "data" / "live"))
+# Delete day files older than this many days, so a cloud disk never fills up.
+RETAIN_DAYS = int(os.environ.get("HEADWAY_RETAIN_DAYS", "3"))
 GATES = ROOT / "data" / "gates.json"
 URL = "wss://stream.aisstream.io/v0/stream"
 
@@ -94,6 +96,7 @@ class Logger:
         for f in self.files.values():
             f.close()
         self.day = day
+        self.delete_old_files()
         for kind, fields in [("gates", POSITION_FIELDS), ("sample", POSITION_FIELDS), ("static", STATIC_FIELDS)]:
             path = LIVE / f"{kind}_{day}.csv"
             new_file = not path.exists()
@@ -103,6 +106,14 @@ class Logger:
                 writer.writeheader()
             self.files[kind] = f
             self.writers[kind] = writer
+
+    def delete_old_files(self):
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=RETAIN_DAYS)).strftime("%Y%m%d")
+        for path in LIVE.glob("*_????????.csv"):
+            stamp = path.stem.rsplit("_", 1)[-1]
+            if stamp.isdigit() and stamp < cutoff:
+                path.unlink()
+                print("deleted old log", path.name)
 
     def handle(self, msg):
         self.open_day()

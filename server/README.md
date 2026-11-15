@@ -36,3 +36,19 @@ The logger reads the aisstream key from `.env` in the repo root (`AISSTREAM_API_
 - Seed the weekly, route, trade and replay markets once at start-up from `market_seeds.json`.
 
 Live counts only cover what the server has in memory: it reads the last ~12 MB of each log file when it starts, then follows them. Restarting the server mid-market can undercount that market, so don't restart during the demo.
+
+## Deploy on Railway
+
+The repo is set up so Railway can run it as is. `railway.json` has the start command and health check, `requirements.txt` in the repo root lists only what the server and logger need, and `.python-version` pins Python 3.13.
+
+1. On railway.com: New Project, Deploy from GitHub repo, pick `kimballw1/Headway`.
+2. In the service's Variables tab, add:
+   - `AISSTREAM_API_KEY` = the key (from `SHARE.md` or `.env`, never commit it)
+   - `RUN_LOGGER` = `1` (makes the server start the ship logger too, and restart it if it dies)
+   - `HEADWAY_RETAIN_DAYS` = `1` (deletes ship logs older than a day so the disk doesn't fill)
+3. In Settings, Networking: Generate Domain. That URL is the server from now on.
+4. Open the URL. The status page should show ships within a minute and a few thousand after five.
+
+A new deploy starts with no ship history. Live gate counts are only right for markets opened after the server came up, so deploy at least 30 minutes before the first live market needs to resolve. Every push to `main` redeploys and resets that history, so near the demo, avoid pushing server changes.
+
+Optional: add a Volume mounted at `/live` and set `HEADWAY_LIVE_DIR=/live` so ship logs survive redeploys.
