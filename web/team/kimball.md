@@ -16,7 +16,7 @@
 - `web/js/logo.js`, `web/js/brand.js`, `web/js/shipvideo.js`, `web/js/story.js`, `web/js/wxlayer.js`, `web/js/ports.js`, `web/js/sky.js`, `design/`
 
 ## Done recently
-- Nov 15 23:50 UTC (Kimball asked), touches to your `js/globe.js`, all small: straits are amber `#ffd23f` (rings, centre dot, top-3 labels) and a bit bigger; a slow light sweep over the land dots; the hovered country sparkles in vessel colours; the top of the cursor bump turns into glyphs; one hook line `HW.drawFx(...)` after the strait rings. New `js/globefx.js` (mine): pulses running along routes, sonar rings on disrupted straits. `js/ports.js`: bigger markers with an amber centre.
+- Nov 15 23:50 UTC (Kimball asked), touches to your `js/globe.js`, all small: straits are amber `#ffd23f` (rings, centre dot, top-3 labels) and a bit bigger; a slow light sweep over the land dots (the cursor bump and hovered country are as before); one hook line `HW.drawFx(...)` after the strait rings. New `js/globefx.js` (mine): pulses running along routes, sonar rings on disrupted straits. `js/ports.js`: bigger markers with an amber centre.
 - Nov 15 23:45: ship view has no satellite zoom now, the footage fades in over the globe; the readout strip, compass and crosshair are hidden by CSS (end of `app.css`). `main.js`: the wait before the footage is 1100 ms. Story card is a tour (strait, live ship, next strait) that stops when you touch the globe.
 - Nov 15 23:50: forecasts ridge ("Sixteen straits, three crises") is a dotted 3D surface on springs in `stats.js`: cursor wake, click splash, blue where a strait ran under 60% of normal.
 - Nov 15 23:20 UTC (Kimball asked): new file `web/js/story.js` (mine), loaded after `main.js` on the globe page.
