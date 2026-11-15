@@ -5,7 +5,8 @@
 const HW = window.HW = window.HW || {};
 
 HW.C = {
-  container: '#f08a3c', tanker: '#8f82f2', bulk: '#46b36f', general: '#ea86b5', roro: '#e9c84b', other: '#f2f2f2',
+  container: '#46b36f', tanker: '#f08a3c', bulk: '#8f82f2',   // cargo green, tankers orange (Sam, Nov 15)
+  general: '#ea86b5', roro: '#e9c84b', other: '#f2f2f2',
   yes: '#f2f2f2', no: '#6b6b6b',
 };
 
