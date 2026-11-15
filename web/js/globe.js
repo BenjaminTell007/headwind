@@ -27,6 +27,7 @@
     const ld = D.land.dots, nL = ld.length / 2;
     const LX = new Float32Array(nL), LY = new Float32Array(nL), LZ = new Float32Array(nL), LB = new Float32Array(nL);
     for (let i = 0; i < nL; i++) { const v = vec(ld[2 * i] / 100, ld[2 * i + 1] / 100); LX[i] = v[0]; LY[i] = v[1]; LZ[i] = v[2]; LB[i] = rnd(); }
+    const LA = new Float32Array(nL); for (let i = 0; i < nL; i++) LA[i] = Math.atan2(LX[i], LZ[i]);   // longitude, for the light sweep
     // country of each land dot and each border ring (-1 = none), from web/tools/build_land.py
     const LC = new Int16Array(nL).fill(-1);
     (D.land.dot_country || []).forEach((c, i) => { if (i < nL) LC[i] = c; });
@@ -189,6 +190,9 @@
            colour at low opacity, so it works in light and dark mode. */
         const ds = HW.clamp(1.25 * Math.sqrt(S.zoom), 1.2, 2.6), hs = ds / 2, px = P.inside ? P.x : -1e4, py = P.y;
         const BUCKET_ALPHA = [0.24, 0.36, 0.58];
+        // a slow band of light that travels round the land, west to east, once every 14 s (Kimball: make the globe feel alive)
+        const TAU = Math.PI * 2, sweepAt = (performance.now() / 1000 * TAU / 14) % TAU, SWEEP_W = 0.42;
+        const FX_TICK = Math.floor(performance.now() / 220), FX_COLS = ['#46b36f', '#f08a3c', '#8f82f2', '#ea86b5', '#e9c84b', C.fg];
         // the country under the cursor (like the 423 globe): its dots light up and its outline shows
         const hc = S.country;
         let nearDot = -1, nearD = 50;
@@ -221,7 +225,8 @@
             const dx = sx - px, dy = sy - py, d2 = dx * dx + dy * dy, near = d2 < 2200 ? Math.exp(-d2 / 700) : 0;
             if (b === 0 && d2 < nearD) { nearD = d2; nearDot = i; }
             if (hc >= 0 && LC[i] === hc) continue;   // drawn bright below
-            const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2;
+            let sw = sweepAt - LA[i]; if (sw < 0) sw += TAU;   // how far behind the front this dot is
+            const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2 + (sw < SWEEP_W ? (1 - sw / SWEEP_W) ** 2 * 0.55 * S.quiet : 0);
             const bucket = lum > 1.05 ? 2 : lum > 0.72 ? 1 : 0;
             if (bucket !== b) continue;
             const gb = bumpOf(sx, sy);
@@ -243,6 +248,17 @@
             ctx.rect(sx - hh, sy - hh, hd, hd);
           }
           ctx.fill();
+          // like the landing page's glyphs: about one dot in eight of the hovered country flickers in a vessel colour
+          for (let i = 0; i < nL; i++) {
+            if (LC[i] !== hc) continue;
+            const h = ((i * 2654435761) ^ (FX_TICK * 40503 + i * 97)) >>> 0;
+            if (h % 8) continue;
+            const Z = m6 * LX[i] + m7 * LY[i] + m8 * LZ[i]; if (Z < 0) continue;
+            const sx = cx + (m0 * LX[i] + m1 * LY[i] + m2 * LZ[i]) * R, sy = cy - (m3 * LX[i] + m4 * LY[i] + m5 * LZ[i]) * R;
+            if (bumpOf(sx, sy) > 0.03) continue;
+            ctx.fillStyle = FX_COLS[(h >>> 8) % FX_COLS.length];
+            ctx.fillRect(sx - hh * 1.15, sy - hh * 1.15, hd * 1.15, hd * 1.15);
+          }
         }
         if (raised.length) {
           // shadows first (where the dots sat), then the lifted dots, back to front
@@ -253,12 +269,17 @@
             ctx.fillRect(sx - sd / 2, sy - sd / 2 + 1.5, sd, sd);
           }
           raised.sort((a, b) => a[3] - b[3]);
-          for (const [, sx, sy, gb, alpha, inCountry] of raised) {
+          for (const [di, sx, sy, gb, alpha, inCountry] of raised) {
             const x = sx + (sx - S.bx) * SPREAD * gb, y = sy + (sy - S.by) * SPREAD * gb - LIFT * gb;
             const sd = (inCountry ? ds * 1.25 : ds) * (1 + 0.7 * gb);
             ctx.fillStyle = inCountry ? C.accent : C.fg;
             ctx.globalAlpha = Math.min(1, alpha + 0.55 * gb);
-            ctx.fillRect(x - sd / 2, y - sd / 2, sd, sd);
+            if (gb > 0.3) {   // the top of the bump turns into glyphs, some in the vessel colours (the landing page's look)
+              const h = ((di * 73856093) ^ (Math.floor(FX_TICK / 2) * 83492791 + di * 131)) >>> 0;
+              if (h % 3 === 0) ctx.fillStyle = FX_COLS[(h >>> 5) % FX_COLS.length];
+              ctx.font = `500 ${(sd * 3.1).toFixed(1)}px ${HW.MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.fillText('+×/01▪◦#'[(h >>> 11) % 8], x, y);
+            } else ctx.fillRect(x - sd / 2, y - sd / 2, sd, sd);
           }
         }
         // which country the cursor is over: the nearest land dot within ~7 px
@@ -392,6 +413,8 @@
           }
         }
 
+        /* moving pulses on the routes and sonar rings on disrupted straits (js/globefx.js) */
+        if (HW.drawFx) HW.drawFx(ctx, { lanes, straits, straitRatio, laneBlocked, dt, zoom: S.zoom, quiet: S.quiet });
         /* hover: strait first, then ship, then lane */
         if (!P.down) {
           const was = S.hover && (S.hover.s || S.hover.L || S.hover.ship);

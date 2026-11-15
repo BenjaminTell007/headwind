@@ -88,8 +88,9 @@
     };
     const pickClip = () => {
       const moored = ship.sog != null && +ship.sog < 0.8;
-      if (moored) return S.kind === 'cargo' ? 'container_port' : 'jetty';
-      if (env.night > 0.5) return 'night';
+      // the night clip is a ship alongside a lit quay, so it's only for ships that aren't moving;
+      // a ship underway at night gets the sea footage, darkened by the grade
+      if (moored) return env.night > 0.5 ? 'night' : S.kind === 'cargo' ? 'container_port' : 'jetty';
       if (env.rain || env.storm || env.fog > 0.5 || env.cloud > 0.8) return 'grey_sea';
       if (S.kind === 'tanker') return 'tanker';
       if (S.kind === 'cargo') return 'container_sea';
@@ -166,40 +167,27 @@
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       ctx.clearRect(0, 0, W, H);
 
-      // hold the start until the wide satellite levels are in (at most 1.5 s), so the zoom
-      // never begins on a blank frame
+      // No satellite zoom any more (Kimball, Nov 15): the globe flies to the ship underneath, and
+      // the footage fades in over it once the clip has a frame to show (at most 2.5 s wait).
       if (!started) {
-        if (tiles.filter(e => e.ready && e.z <= 9).length >= 2 || now - t0 > 1500) { started = true; t0 = now; }
-        else { S.intro = 0; return; }
+        if (video.readyState >= 2 || now - t0 > 2500) { started = true; t0 = now; }
+        else { S.intro = 0; canvas.parentElement.style.background = 'transparent'; return; }
       }
       const t2 = (now - t0) / 1000;
-      // one continuous push-in: fade in over the globe, zoom steadily from a country-wide view
-      // down to the ship, and blend into the footage while still moving
-      const ZOOM_FOR = 5.6, BLEND_AT = 3.9, BLEND_FOR = 1.9;
-      const u = clamp(t2 / ZOOM_FOR, 0, 1), k = u * u * (3 - 2 * u);
-      const Z = lerp(5.2, 18.4, k);
-      const into = clamp((t2 - BLEND_AT) / BLEND_FOR, 0, 1), ein = into * into * (3 - 2 * into);
-      const fadeIn = clamp(t2 / 0.9, 0, 1);
-      S.intro = clamp(t2 / (BLEND_AT + BLEND_FOR), 0, 1);
-      canvas.parentElement.style.background = fadeIn >= 1 ? '#05070a' : 'transparent';
-      ctx.globalAlpha = fadeIn; ctx.fillStyle = '#05070a'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
-      if (into < 1) {
-        ctx.save();
-        ctx.globalAlpha = fadeIn;
-        if (ein > 0.02) ctx.filter = `blur(${(ein * 10).toFixed(1)}px) brightness(${(1 - ein * 0.35).toFixed(2)})`;
-        drawSat(Z);
-        ctx.restore(); ctx.filter = 'none'; ctx.globalAlpha = 1;
-      }
-      S.alt = into < 1 ? Math.round(40075000 * Math.cos(+ship.lat * RAD) / 2 ** Z * (W / 256) / 2.2) : (S.mode === 'side' ? 140 : 320);
+      const into = clamp(t2 / 1.4, 0, 1), ein = into * into * (3 - 2 * into), fadeIn = into;
+      S.intro = into;
+      canvas.parentElement.style.background = into >= 1 ? '#05070a' : 'transparent';
+      ctx.globalAlpha = ein; ctx.fillStyle = '#05070a'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+      S.alt = Math.round(lerp(1800, S.mode === 'side' ? 140 : 320, ein));
 
       if (into > 0 && video.readyState >= 2) {
         const vw = video.videoWidth, vh = video.videoHeight;
         const zoomIn = S.mode === 'side' ? 1.7 : 1;
         S.vz = lerp(S.vz || 1, zoomIn, 1 - Math.exp(-2.5 * dt));
         // the footage arrives still pushing in: it starts wide and settles as it sharpens
-        const sc = Math.max(W / vw, H / vh) * S.vz * lerp(0.82, 1, ein);
+        const sc = Math.max(W / vw, H / vh) * S.vz * lerp(1.12, 1, ein);
         ctx.globalAlpha = ein;
-        ctx.filter = grade() + (ein < 0.98 ? ` blur(${((1 - ein) * 8).toFixed(1)}px)` : '');
+        ctx.filter = grade();
         ctx.drawImage(video, (W - vw * sc) / 2, (H - vh * sc) / 2, vw * sc, vh * sc);
         ctx.filter = 'none'; ctx.globalAlpha = 1;
         note.style.opacity = into > 0.9 ? 1 : 0;
@@ -218,7 +206,7 @@
       S, envFrom,
       open(s, w) {
         ship = s; S.kind = kindOf(s); env = envFrom(w, s);
-        resize(); loadTiles(s); setClip(pickClip());
+        resize(); setClip(pickClip());
         S.on = true; S.vz = 1; started = false; t0 = performance.now(); last = t0;
         if (!raf) raf = requestAnimationFrame(frame);
       },
