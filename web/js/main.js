@@ -33,9 +33,6 @@ try {
   throw e;
 }
 weeks = D.status.weeks; nW = weeks.length;
-$('sysAsOf').textContent = HW.fDate(D.overview.as_of);
-$('sysStraits').textContent = D.straits.length;
-$('sysRoutes').textContent = D.corridors.features.length;
 $('introtag').textContent = `SYS.ROUTES: ${D.corridors.features.length} · STRAITS: ${D.straits.length} · DATA TO ${HW.fDate(D.overview.as_of)}`;
 
 globe = HW.makeGlobe($('globe'), D, { onSelect: item => showPanel(item) });
@@ -49,10 +46,9 @@ const refreshShips = async () => {
   try {
     const ships = await HW.loadShips();
     globe.setShips(ships);
-    const main = ships.filter(s => s.type_group === 'cargo' || s.type_group === 'tanker').length;
-    $('sysShips').textContent = HW.fInt(ships.length);
+    D.liveMain = globe.S.ships.length;   // cargo ships and tankers underway (the globe keeps only those)
+    $('sysShips').textContent = HW.fInt(D.liveMain);
     $('sysLive').classList.remove('off');
-    D.liveMain = main;
     renderOverview(true);
   } catch { $('sysLive').classList.add('off'); }
 };
@@ -68,21 +64,15 @@ const renderOverview = force => {
   const i = Math.round(globe.S.ti);
   if (i === lastOverviewWeek && !force) return;
   lastOverviewWeek = i;
-  const idx = D.index.world, iw = HW.clamp(i, 0, idx.length - 1), eff = idx[iw];
-    const suez = strait('Suez Canal'), hormuz = strait('Strait of Hormuz'), cape = strait('Cape of Good Hope');
-  const rS = globe.straitRatio(suez), rH = globe.straitRatio(hormuz);
-  const capeShare = weeklyAt(cape, 'total', i) / (weeklyAt(cape, 'total', i) + weeklyAt(suez, 'total', i)) * 100;
-  const ri = HW.clamp(i + globe.rOff, 0, EA_NE.r.expected_days.length - 1), days = EA_NE.r.expected_days[ri], extra = Math.max(0, days - EA_NE.r.normal_days);
+  const idx = D.index.world, eff = idx[HW.clamp(i, 0, idx.length - 1)];
+  // the most disrupted strait right now, among the ones with real traffic
+  const worst = globe.straits.filter(s => s.status.baseline_per_week >= 50).map(s => ({ s, r: globe.straitRatio(s) })).sort((a, b) => a.r - b.r)[0];
   const cells = [
-    ['lead', 'WORLD ROUTE EFFICIENCY', eff.toFixed(2), '', '1.00 = EVERY ROUTE NORMAL'],
-    ['', 'SUEZ VS 2023', HW.fPct((rS - 1) * 100), '', `${HW.fInt(weeklyAt(suez, 'total', i))} SHIPS THIS WEEK`],
-    ['', 'HORMUZ VS 2023', HW.fPct((rH - 1) * 100), '', `${HW.fInt(weeklyAt(hormuz, 'total', i))} SHIPS THIS WEEK`],
-    ['', 'CAPE SHARE OF SUEZ+CAPE', capeShare.toFixed(0) + '%', '', 'SHIPS GOING THE LONG WAY'],
-    ['', 'ASIA → N. EUROPE', days.toFixed(1) + ' D', '', `NORMAL ${EA_NE.r.normal_days.toFixed(1)} · +${extra.toFixed(1)} DAYS`],
-    ['', 'TIME COST PER $1M CARGO', extra > 0.05 ? HW.fUSD(extra * 0.006 * 1e6) + '–' + HW.fUSD(extra * 0.021 * 1e6) : '$0', '', 'HUMMELS & SCHAUR RANGE'],
-    ['', 'CARGO + TANKERS UNDERWAY', D.liveMain ? HW.fInt(D.liveMain) : '—', '', 'LIVE · FREE AIS FEED'],
+    ['lead', 'WORLD ROUTE EFFICIENCY', eff.toFixed(2), '1.00 = every route normal'],
+    ['', 'CARGO SHIPS + TANKERS UNDERWAY', D.liveMain ? HW.fInt(D.liveMain) : '—', 'Live, from the free AIS feed'],
+    ['', 'MOST DISRUPTED STRAIT', worst ? HW.fPct((worst.r - 1) * 100) : '—', worst ? `${worst.s.name} vs a normal 2023 week` : ''],
   ];
-  $('overview').innerHTML = cells.map(([cls, k, v, svg, sub]) => `<div class="cell ${cls}"><div class="tag">${k}</div><div class="num">${v}</div>${svg}<div class="sub">${sub}</div></div>`).join('');
+  $('overview').innerHTML = cells.map(([cls, k, v, sub], n) => `<div class="cell ${cls}"${n === 2 && worst ? ` data-strait="${HW.esc(worst.s.name)}"` : ''}><div class="tag">${k}</div><div class="num">${v}</div><div class="sub">${sub}</div></div>`).join('');
 };
 renderOverview(true);
 
@@ -90,8 +80,35 @@ renderOverview(true);
 const setWeek = () => { globe.setWeek(nW - 1); renderOverview(); if (panelItem) showPanel(panelItem, true); };
 setWeek();
 
-$('zin').addEventListener('click', () => globe.zoomBy(1.5));
-$('zout').addEventListener('click', () => globe.zoomBy(1 / 1.5));
+/* ---------- globe controls: buttons, the go-to list and keys ---------- */
+const ACT = {
+  zin: () => globe.zoomBy(1.5), zout: () => globe.zoomBy(1 / 1.5),
+  left: () => globe.turn(-30), right: () => globe.turn(30),
+  up: () => globe.tilt(20), down: () => globe.tilt(-20),
+  rollL: () => globe.roll(-45), rollR: () => globe.roll(45),
+  north: () => globe.northUp(), flip: () => globe.flip(),
+  spin: () => { globe.setAutoSpin(!globe.S.autoSpin); document.querySelector('[data-a="spin"]').classList.toggle('on', globe.S.autoSpin); },
+  home: () => globe.home(),
+};
+$('ctl').addEventListener('click', e => { const b = e.target.closest('button[data-a]'); if (b) ACT[b.dataset.a](); });
+$('goto').innerHTML += globe.straits.slice().sort((a, b) => a.name.localeCompare(b.name)).map(s => `<option>${HW.esc(s.name)}</option>`).join('');
+$('goto').addEventListener('change', e => { const s = strait(e.target.value); if (s) globe.select({ kind: 'strait', s }); e.target.value = ''; e.target.blur(); });
+const KEYS = { '+': 'zin', '=': 'zin', '-': 'zout', ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', '[': 'rollL', ']': 'rollR', n: 'north', N: 'north', f: 'flip', F: 'flip', r: 'home', R: 'home', ' ': 'spin' };
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input, select, textarea') || e.metaKey || e.ctrlKey || $('dive').classList.contains('on')) return;
+  const a = KEYS[e.key]; if (a) { e.preventDefault(); ACT[a](); }
+});
+$('overview').addEventListener('click', e => { const c = e.target.closest('[data-strait]'); if (c) globe.select({ kind: 'strait', s: strait(c.dataset.strait) }); });
+
+/* ---------- light / dark, and the markets drawer ---------- */
+const themeBtn = () => { $('theme').textContent = HW.C.theme === 'light' ? '☾' : '☀'; };
+themeBtn();
+$('theme').addEventListener('click', () => { HW.setTheme(HW.C.theme === 'light' ? 'dark' : 'light'); themeBtn(); if (panelItem) showPanel(panelItem, true); });
+$('mtoggle').addEventListener('click', () => {
+  const open = !document.body.classList.toggle('nomarkets');
+  $('mtoggle').setAttribute('aria-expanded', open); $('mtoggle').classList.toggle('on', open);
+});
+$('mtoggle').classList.add('on');
 
 /* ---------- detail panel ---------- */
 const mixBar = shares => `<div class="mix">${shares.map((x, k) => `<i style="width:${(x * 100).toFixed(1)}%;background:${VESSELS[k][1]}"></i>`).join('')}</div><div class="key">${VESSELS.map(([, c, l], k) => `<span><i style="background:${c}"></i>${l} ${Math.round(shares[k] * 100)}%</span>`).join('')}</div>`;
@@ -104,16 +121,14 @@ const showPanel = (item, quiet) => {
   if (item.kind === 'strait') {
     const s = item.s, r = globe.straitRatio(s), mix = globe.straitMix(s);
     const lanesThrough = globe.lanes.filter(L => (L.p.chokepoints || []).includes(s.name));
-    const worst = lanesThrough.map(L => ({ L, e: globe.laneEff(L) })).sort((a, b) => a.e - b.e).slice(0, 4);
     b.innerHTML = `<div class="tag">STRAIT · THIS WEEK</div><h2>${HW.esc(s.name)}</h2>
       <div class="stats">
-        <div><b>${HW.fPct((r - 1) * 100)}</b><span>VS 2023 BASELINE</span></div>
+        <div><b>${HW.fPct((r - 1) * 100)}</b><span>VS A NORMAL 2023 WEEK</span></div>
         <div><b>${HW.fInt(weeklyAt(s, 'total', i))}</b><span>SHIPS THIS WEEK</span></div>
-        <div><b>${HW.fInt(s.status.baseline_per_week)}</b><span>NORMAL WEEK (2023)</span></div>
+        <div><b>${HW.fInt(s.status.baseline_per_week)}</b><span>SHIPS IN A NORMAL WEEK</span></div>
         <div><b>${lanesThrough.length}</b><span>ROUTES THROUGH IT</span></div>
       </div>
-      <h3>WHO GOES THROUGH, THIS WEEK</h3>${mixBar(mix)}
-      ${worst.length ? `<h3>ROUTES THAT DEPEND ON IT</h3>${worst.map(({ L, e }) => `<div style="display:flex;justify-content:space-between;margin-top:6px"><span>${HW.esc(L.p.region_a)} → ${HW.esc(L.p.region_b)}</span><span class="tag" style="letter-spacing:.08em">EFF ${e.toFixed(2)}</span></div>`).join('')}` : ''}
+      <h3>WHO GOES THROUGH</h3>${mixBar(mix)}
       <h3>MARKETS</h3>${relatedMarkets(m => (m.series || '').includes(s.name) || (m.gate && D.gates.chokepoint_gate && D.gates.chokepoint_gate[s.name] === m.gate)) || '<p>No open market on this strait yet.</p>'}`;
   } else if (item.kind === 'lane') {
     const L = item.L, ri = HW.clamp(i + globe.rOff, 0, L.r.expected_days.length - 1);
@@ -126,20 +141,17 @@ const showPanel = (item, quiet) => {
         <div><b>${Math.round(blk * 100)}%</b><span>TRAFFIC BLOCKED</span></div>
       </div>
       <h3>PASSES THROUGH</h3><p>${(L.p.chokepoints || []).map(HW.esc).join(' · ') || 'Open water only'}</p>
-      <p style="font-size:12px;color:var(--dim)">Efficiency is a model built from PortWatch transits: traffic missing from a strait on this route, times the extra days of going around it.</p>
       <h3>MARKETS</h3>${relatedMarkets(m => (m.series || '').includes(L.id)) || '<p>No open market on this route yet.</p>'}`;
   } else if (item.kind === 'ship') {
     const s = item.ship, g = s.g || s.type_group || HW.vesselGroup(s.type);
-    b.innerHTML = `<div class="tag"><span class="dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${HW.groupColour(g)};margin-right:6px"></span>${HW.groupLabel(g)} · LIVE</div><h2>${HW.esc(s.name || 'MMSI ' + s.mmsi)}</h2>
+    b.innerHTML = `<div class="tag"><span class="dot" style="background:${HW.groupColour(g)}"></span>${HW.groupLabel(g)} · UNDERWAY</div><h2>${HW.esc(s.name || 'MMSI ' + s.mmsi)}</h2>
       <div class="stats">
         <div><b>${s.sog != null ? (+s.sog).toFixed(1) + ' kn' : '—'}</b><span>SPEED</span></div>
         <div><b>${s.cog != null ? Math.round(s.cog) + '°' : '—'}</b><span>COURSE</span></div>
-        <div><b>${HW.esc(s.destination || '—')}</b><span>DESTINATION (AS TYPED BY CREW)</span></div>
+        <div><b>${HW.esc(s.destination || '—')}</b><span>DESTINATION</span></div>
         <div><b>${HW.esc(s.eta || '—')}</b><span>ETA</span></div>
-        <div><b>${s.length ? s.length + ' m' : '—'}</b><span>LENGTH</span></div>
-        <div><b>${s.draught ? s.draught + ' m' : '—'}</b><span>DRAUGHT</span></div>
       </div>
-      <p style="font-size:12px;color:var(--dim)">IMO ${HW.esc(s.imo || '—')} · MMSI ${HW.esc(s.mmsi)} · ${(+s.lat).toFixed(3)}, ${(+s.lon).toFixed(3)}</p>
+      <p class="fine">IMO ${HW.esc(s.imo || '—')} · MMSI ${HW.esc(s.mmsi)} · ${(+s.lat).toFixed(3)}, ${(+s.lon).toFixed(3)}</p>
       <button class="cta" id="diveBtn">DIVE TO SHIP</button>`;
     $('diveBtn').addEventListener('click', () => dive(s));
   }
