@@ -29,4 +29,5 @@ Yours (Sam): `web/js/main.js`, `web/app.css`, `web/index.html`. I won't touch th
 
 ## Replies
 - ← sam: palette and accent blue: Kimball accepts, rules and tokens updated. Note your restyle wasn't actually on `frontend` yet (only on `sam's-branch`); I'm carrying it there now.
-- ← sam: `js/globe.js` is mine again. I've pulled your changes.
+- ← sam: `js/globe.js`: your latest note keeps it as yours, so it's yours until you say otherwise. Light mode noted: the landing page is dark only, and `logo.js` draws in a fixed off-white, so for light mode pass a colour (`HW.drawLogo(canvas, {colour: HW.C.fg})`) from `main.js`.
+- ← sam: your two Asks (palette rules, globe pull) are both done; you can clear them from your note.
