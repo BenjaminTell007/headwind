@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Headway · Forecasts</title>
+<meta name="description" content="Eight-week forecasts of ship traffic through every major strait, with ranges, a backtest and the model's odds on this week's markets.">
+<script>
+/* Self-update: GitHub Pages lets browsers reuse this page for 10 minutes. On open and
+   whenever you come back to the tab, check the published version (never cached) and,
+   if it's newer than this copy, reload once onto it. web/tools/stamp.sh sets both. */
+(function () {
+  var SITE_VERSION = '20261115T2134', URL_ = 'version.json';
+  function check() {
+    fetch(URL_ + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.v || d.v === SITE_VERSION) return;
+      var key = 'hw-updated-' + d.v;
+      try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) {}
+      var q = new URLSearchParams(location.search); q.set('v', d.v);
+      location.replace(location.pathname + '?' + q.toString() + location.hash);
+    }).catch(function () {});
+  }
+  check();
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+})();
+</script>
+<link rel="stylesheet" href="app.css?v=20261115T2134">
+<link rel="stylesheet" href="stats.css?v=20261115T2134">
+<link rel="stylesheet" href="forecasts.css?v=20261115T2134">
+</head>
+<body class="fc">
+
+<header class="topbar">
+  <a class="brand" href="../" title="Headway"><span class="word">HEADWAY</span></a>
+  <nav class="nav" aria-label="Pages"><a href="./"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><ellipse cx="8" cy="8" rx="2.7" ry="6.3"/><path d="M1.7 8h12.6"/></svg>GLOBE</a><a href="markets.html"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.8 12.2l3.6-4 2.8 2.4 5.6-6.4"/><path d="M10.2 4.2h3.6v3.6"/></svg>MARKETS</a><a class="on" aria-current="page" href="forecasts.html"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.6 11.2l3-2.6 2.6 1.4"/><path d="M7.2 10l2.8-3.6 4.4-2" stroke-dasharray="1.6 2.2"/><path d="M1.6 14h12.8"/></svg>FORECASTS</a></nav>
+  <span class="spacer"></span>
+  <button class="pill icon" id="theme" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
+</header>
+
+<script src="js/util.js?v=20261115T2134"></script>
+<script src="js/logo.js?v=20261115T2134"></script>
+<script src="js/brand.js?v=20261115T2134"></script>
+<script>
+/* The forecasts screen is Kimball's js/stats.js, built to slide up under the globe. Here it is
+   the whole page: it opens at once and stays open. stats.js itself is not changed. These two
+   listeners run before its own, so its "scroll up to close" and Escape never fire. */
+window.addEventListener('wheel', function (e) { e.stopImmediatePropagation(); }, { capture: true, passive: true });
+window.addEventListener('keydown', function (e) { if (e.key === 'Escape') e.stopImmediatePropagation(); }, { capture: true });
+</script>
+<script src="js/stats.js?v=20261115T2134"></script>
+<script>
+(function () {
+  var HW = window.HW, open = function () { var b = document.querySelector('.statsBtn'); if (b && !document.body.classList.contains('statsOpen')) b.click(); };
+  open();
+  new MutationObserver(open).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  var t = document.getElementById('theme'), paint = function () { t.textContent = HW.C.theme === 'light' ? '☾' : '☀'; };
+  paint();
+  t.addEventListener('click', function () { HW.setTheme(HW.C.theme === 'light' ? 'dark' : 'light'); paint(); });
+})();
+</script>
+</body>
+</html>

@@ -25,7 +25,6 @@
 })();
 </script>
 <link rel="stylesheet" href="app.css?v=20261115T2134">
-<link rel="stylesheet" href="stats.css?v=20261115T2134">
 </head>
 <body>
 
@@ -39,34 +38,16 @@
 
   <header>
     <a class="brand" href="../" title="Headway"><span class="word">HEADWAY</span></a>
-    <nav class="nav" aria-label="Switch between the globe and the markets"><a class="on" aria-current="page" href="./"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><ellipse cx="8" cy="8" rx="2.7" ry="6.3"/><path d="M1.7 8h12.6"/></svg>GLOBE</a><a href="markets.html"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.8 12.2l3.6-4 2.8 2.4 5.6-6.4"/><path d="M10.2 4.2h3.6v3.6"/></svg>MARKETS</a></nav>
+    <nav class="nav" aria-label="Pages"><a class="on" aria-current="page" href="./"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><ellipse cx="8" cy="8" rx="2.7" ry="6.3"/><path d="M1.7 8h12.6"/></svg>GLOBE</a><a href="markets.html"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.8 12.2l3.6-4 2.8 2.4 5.6-6.4"/><path d="M10.2 4.2h3.6v3.6"/></svg>MARKETS</a><a href="forecasts.html"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.6 11.2l3-2.6 2.6 1.4"/><path d="M7.2 10l2.8-3.6 4.4-2" stroke-dasharray="1.6 2.2"/><path d="M1.6 14h12.8"/></svg>FORECASTS</a></nav>
     <span class="live off tag" id="sysLive"><b id="sysShips">—</b> SHIPS UNDERWAY</span>
     <form class="search" id="search" autocomplete="off">
       <input id="q" placeholder="Find a ship: name, IMO or MMSI" aria-label="Find a ship">
       <span class="err" id="qerr"></span>
     </form>
-    <button class="pill" id="mtoggle" aria-expanded="true" title="Show or hide the quick market list on the left">SIDE LIST</button>
     <button class="pill icon" id="theme" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
-    <button class="pill" id="wallet">CONNECT WALLET</button>
   </header>
 
   <section class="overview" id="overview"></section>
-
-  <aside class="rail" id="rail">
-    <div class="head">
-      <span class="tag">MARKETS</span>
-      <div class="tabs" id="mtabs">
-        <button data-g="live" class="on">LIVE</button>
-        <button data-g="route">ROUTES</button>
-        <button data-g="weekly">STRAITS</button>
-        <button data-g="collapse">COLLAPSE</button>
-        <button data-g="vessel">VESSELS</button>
-        <button data-g="trade">TRADE</button>
-      </div>
-    </div>
-    <div class="mlist" id="mlist"></div>
-    <div class="note" id="mnote"></div>
-  </aside>
 
   <aside class="panel" id="panel"><button class="x" id="px" aria-label="Close">✕</button><div id="pbody"></div></aside>
 
@@ -124,7 +105,6 @@
 <script src="js/sky.js?v=20261115T2134"></script>
 <script src="js/globe.js?v=20261115T2134"></script>
 <script src="js/ship.js?v=20261115T2134"></script>
-<script src="js/stats.js?v=20261115T2134"></script>
 <script type="module" src="js/main.js?v=20261115T2134"></script>
 </body>
 </html>
