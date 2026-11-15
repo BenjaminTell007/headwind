@@ -1,0 +1,12 @@
+{
+  "name": "headway-contracts-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deployments": "node script/write_deployments.mjs",
+    "seed": "node script/seed_markets.mjs"
+  },
+  "dependencies": {
+    "viem": "2.21.0"
+  }
+}

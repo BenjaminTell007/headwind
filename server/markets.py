@@ -1,19 +1,23 @@
 """Market list for the page: /api/markets and /api/markets/{id}.
 
-Joins the market definitions in data/processed/market_seeds.json with what's
-onchain. Until the contracts are deployed and the keeper is running, the
-`chain` block of every market is empty (nulls) and the response shape is
-otherwise final, so the page can be built against it now.
+The list is Xavi's contracts/markets/examples.json (the markets the keeper opens),
+matched to what's actually onchain, plus every ship-arrival market opened from the
+page. The chain is the source of truth: markets are found by reading the contract,
+not from the keeper's memory, so this works on any server that has the deployments
+file, keeper or not.
 
-Things the keeper will use from here:
-  - to_onchain(series, value)      the one place numbers are scaled to integers
-  - live_window(minutes, now)      the clock-aligned window a live market covers
-  - set_chain(key, **fields)       record a market's onchain id, pools, outcome
-  - chain_key(market)              the registry key for a market (live: per window)
+Each market carries the fields the page already reads (web/js/main.js): id, group,
+question, series, threshold, closes, gate, minutes, probYes, chainId,
+historical_yes_share. `chainId` is the onchain market to trade, or null if it isn't
+open yet. `probYes` is the live price when it's onchain, else the starting prior.
 
-Replay seeds carry the real outcome (`actual`, `outcome`). Those stay on the
-server: the API never sends them before the market is resolved onchain, so
-the answer can't leak to the page ahead of the demo.
+Live gate markets: trading closes when the window starts, so a live card has two
+onchain markets in play. `chainId` is the one taking positions now (the NEXT window);
+`live.counting` is the window whose ships are crossing right now; `live.last` is the
+latest settled window.
+
+Thresholds are the onchain integers from examples.json, never rescaled here
+(CHAIN_SERVER.md item 3). `threshold_display` is the readable version.
 """
 import json
 import threading
@@ -23,54 +27,27 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
 
+from server.chain import chain
+
 ROOT = Path(__file__).resolve().parent.parent
-SEEDS_FILE = ROOT / "data" / "processed" / "market_seeds.json"
-
-GROUPS = ("live", "weekly", "route", "trade", "replay")
-
-# Route and trade seeds don't carry a close time. Route markets cover the same
-# week as the weekly ones (which close 2026-11-16), and trade markets settle on
-# data released weeks from now, so both stop taking positions at the same time.
-FORWARD_CLOSE = datetime(2026, 11, 16, tzinfo=timezone.utc)
-
+EXAMPLES = ROOT / "contracts" / "markets" / "examples.json"
+WEI = 10**18
+OPEN, YES, NO, INVALID = 0, 1, 2, 3
+OUTCOME_NAME = {OPEN: None, YES: "YES", NO: "NO", INVALID: "INVALID"}
+REFRESH_SECONDS = 8          # how stale onchain prices may be
 COUNT_CACHE_SECONDS = 10
 
-# Set by app.py to its gate_count function, so live markets can show the count
-# so far without importing app.py (which would be a circular import).
+# Set by app.py to its gate_count function.
 gate_counter = None
 
 router = APIRouter()
 
 
-# ---------- scaling: the one place numbers become onchain integers ----------
-
-def unit_and_scale(series):
-    """(unit, multiplier) for a series string. PLAN.md: days and efficiency
-    times 1000, dollars in whole dollars, counts as they are."""
-    kind = series.split(":")[-1]
-    if series.startswith("gate:") or kind == "weekly_transits":
-        return "ships", 1
-    if kind == "expected_days":
-        return "days", 1000
-    if kind in ("efficiency", "index"):
-        return "efficiency", 1000
-    if series.startswith("comtrade:"):
-        return "USD", 1
-    raise ValueError(f"unknown series kind: {series}")
-
-
-def to_onchain(series, value):
-    _, scale = unit_and_scale(series)
-    return int(round(value * scale))
-
-
-# ---------- time ----------
+# ---------- helpers the keeper uses ----------
 
 def live_window(minutes, now=None):
-    """The window a live market covers right now, lined up with the clock:
-    30-minute markets open at :00 and :30, 60-minute markets on the hour.
-    The server, the keeper and the page's countdown all agree this way, even
-    after a restart."""
+    """The clock-aligned window covering `now`: 30-minute windows start at :00 and :30,
+    60-minute windows on the hour."""
     now = now or datetime.now(timezone.utc)
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
     elapsed = int((now - midnight).total_seconds() // 60)
@@ -82,59 +59,117 @@ def iso(dt):
     return dt.isoformat().replace("+00:00", "Z") if dt else None
 
 
-# ---------- seeds ----------
-
-_seeds = {"mtime": None, "by_id": {}}
-_seeds_lock = threading.Lock()
-
-
-def seeds():
-    """id -> (group, seed). Reloaded when the file changes."""
-    with _seeds_lock:
-        mtime = SEEDS_FILE.stat().st_mtime
-        if mtime != _seeds["mtime"]:
-            data = json.loads(SEEDS_FILE.read_text())
-            by_id = {}
-            for group in GROUPS:
-                for seed in data.get(group, []):
-                    by_id[seed["id"]] = (group, seed)
-            _seeds.update(mtime=mtime, by_id=by_id)
-        return _seeds["by_id"]
-
-
-def seed_series(group, seed):
-    if group == "live":
-        return f"gate:{seed['gate']}:{seed['minutes']}min"
-    return seed["series"]
-
-
-# ---------- onchain registry (filled by the keeper) ----------
-
-_chain = {}
-_chain_lock = threading.Lock()
-
-EMPTY_CHAIN = {"market_id": None, "yes_pool": None, "no_pool": None, "odds_yes": None,
-               "resolved": False, "outcome_yes": None, "value": None}
-
-
 def chain_key(market_id, opens_at=None):
-    """Registry key. Live markets get one onchain market per window."""
+    """The keeper's name for a market: the example id, plus the window start for live ones."""
     return f"{market_id}@{iso(opens_at)}" if opens_at else market_id
 
 
 def set_chain(key, **fields):
-    """Keeper calls this after createMarket / on PositionTaken / after resolve."""
-    with _chain_lock:
-        entry = _chain.setdefault(key, dict(EMPTY_CHAIN))
-        entry.update(fields)
-        yes, no = entry.get("yes_pool"), entry.get("no_pool")
-        if yes is not None and no is not None and yes + no > 0:
-            entry["odds_yes"] = yes / (yes + no)
+    """Kept for the keeper; the list now reads the chain directly, so nothing to do."""
 
 
-def get_chain(key):
-    with _chain_lock:
-        return dict(_chain.get(key, EMPTY_CHAIN))
+def ts(unix):
+    return datetime.fromtimestamp(int(unix), timezone.utc)
+
+
+# ---------- examples ----------
+
+_examples = {"mtime": None, "list": []}
+
+
+def examples():
+    mtime = EXAMPLES.stat().st_mtime
+    if mtime != _examples["mtime"]:
+        _examples.update(mtime=mtime, list=json.loads(EXAMPLES.read_text())["markets"])
+    return _examples["list"]
+
+
+# ---------- what's onchain ----------
+
+class OnchainIndex:
+    """Every market on the contract, refreshed every few seconds. Settled markets never
+    change, so they're read once and kept."""
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.markets = {}        # id -> market dict
+        self.final = set()       # ids that are resolved and vault-settled
+        self.updated = 0.0
+        self.error = None
+
+    def get(self):
+        """The latest read. Requests never wait on the chain once the background thread
+        has done its first pass."""
+        if not self.updated:
+            self._refresh()
+        with self.lock:
+            return dict(self.markets)
+
+    def refresh_forever(self):
+        while True:
+            self._refresh()
+            time.sleep(REFRESH_SECONDS)
+
+    def _refresh(self):
+        if not chain.ready():
+            self.error = chain.why_off
+            self.updated = time.monotonic()
+            return
+        try:
+            count = chain.markets.functions.marketCount().call()
+            fresh = {}
+            for mid in range(count):
+                if mid in self.final:
+                    continue
+                m = chain.get_market(mid)
+                m["id"] = mid
+                fresh[mid] = m
+            with self.lock:
+                self.markets.update(fresh)
+                for mid, m in fresh.items():
+                    if m["outcome"] != OPEN and m["vaultSettled"]:
+                        self.final.add(mid)
+            self.error = None
+        except Exception as err:  # keep serving the last good read
+            self.error = str(err)[:200]
+        self.updated = time.monotonic()
+
+
+def start():
+    threading.Thread(target=index.refresh_forever, daemon=True).start()
+
+
+index = OnchainIndex()
+
+
+def chain_block(m):
+    """The onchain part of a market card."""
+    if m is None:
+        return None
+    pool = m["yesReserve"] + m["noReserve"]
+    return {
+        "market_id": m["id"],
+        "price_yes": m["priceYes"] / WEI,
+        "yes_reserve_mon": m["yesReserve"] / WEI,
+        "no_reserve_mon": m["noReserve"] / WEI,
+        "pool_mon": pool / WEI,
+        "collateral_mon": m["collateral"] / WEI,
+        "max_collateral_mon": m["maxCollateral"] / WEI,
+        "fee_bps": m["feeBps"],
+        "close": iso(ts(m["closeTime"])),
+        "resolve_by": iso(ts(m["resolveBy"])),
+        "outcome": OUTCOME_NAME[m["outcome"]],
+        "value": m["value"] if m["outcome"] != OPEN else None,
+        "vault_settled": m["vaultSettled"],
+    }
+
+
+def status_of(m, now):
+    if m is None:
+        return "not_open"
+    if m["outcome"] != OPEN:
+        return "resolved"
+    return "open" if now < ts(m["closeTime"]) else "closed"
 
 
 # ---------- live counts ----------
@@ -143,115 +178,169 @@ _counts = {}
 _counts_lock = threading.Lock()
 
 
-def count_so_far(gate, opens_at):
-    """Cargo ships and tankers across the gate since the window opened.
-    Cached briefly so a page polling every few seconds doesn't recount."""
+def count_between(gate, start, end):
+    """Cargo ships and tankers across the gate in [start, end), cached briefly."""
     if gate_counter is None:
         return None
-    key = (gate, opens_at)
+    key = (gate, start, end)
     now = time.monotonic()
     with _counts_lock:
         hit = _counts.get(key)
         if hit and now - hit[0] < COUNT_CACHE_SECONDS:
             return hit[1]
     try:
-        count = gate_counter(gate, since=opens_at.isoformat())["count"]
-    except Exception as err:  # a bad count shouldn't take down the market list
+        count = gate_counter(gate, since=start.isoformat(), until=end.isoformat())["count"]
+    except Exception as err:
         print("gate count error:", gate, err)
         return None
     with _counts_lock:
         _counts[key] = (now, count)
-        for k in [k for k in _counts if k[1] < opens_at - timedelta(hours=3)]:
-            del _counts[k]  # forget old windows
+        for k in [k for k in _counts if now - _counts[k][0] > 600]:
+            del _counts[k]
     return count
 
 
-# ---------- building one market ----------
+# ---------- building the list ----------
 
-def history_for(group, seed):
-    if group == "live":
-        return {"historical_yes_share": seed.get("historical_yes_share"),
-                "ships_per_hour": seed.get("ships_per_hour")}
-    if group == "weekly":
-        return {"last_8_weeks": seed.get("last_8_weeks"), "week": seed.get("week")}
-    if group == "route":
-        return {"last_8_weeks": seed.get("last_8_weeks"), "normal_days": seed.get("normal_days"),
-                "efficiency_now": seed.get("efficiency_now")}
-    if group == "trade":
-        return {"last_3_months": seed.get("last_3_months")}
-    if group == "replay":
-        return {"normal_days": seed.get("normal_days")}  # never `actual` or `outcome`
-    return {}
-
-
-def build(market_id, group, seed, now):
-    series = seed_series(group, seed)
-    unit, _ = unit_and_scale(series)
-    out = {
-        "id": market_id,
-        "group": group,
-        "question": seed["question"],
-        "series": series,
-        "threshold": seed["threshold"],
-        "threshold_onchain": to_onchain(series, seed["threshold"]),
-        "unit": unit,
-        "is_above": seed["is_above"],
-        "opens_at": None,
-        "closes_at": None,
-        "status": None,
-        "settles_on": seed.get("settles_on"),
-        "history": history_for(group, seed),
-        "live": None,
-        "story": seed.get("story"),
+def base(ex):
+    return {
+        "id": ex["id"],
+        "group": ex["group"],
+        "question": ex["question"],
+        "series": ex["series"],
+        "threshold": ex["threshold"],
+        "threshold_display": ex.get("threshold_display"),
+        "is_above": ex["is_above"],
+        "featured": ex.get("featured", False),
+        "settles_on": ex.get("settles_on"),
+        "why": ex.get("why"),
+        "prior_yes": ex["prior_yes_bps"] / 10_000,
     }
 
-    opens = None
-    if group == "live":
-        opens, closes = live_window(seed["minutes"], now)
-        out.update(opens_at=iso(opens), closes_at=iso(closes), status="open",
-                   live={"gate": seed["gate"], "minutes": seed["minutes"],
-                         "count_so_far": count_so_far(seed["gate"], opens)})
-    elif group == "replay":
-        out["status"] = "replay"  # the keeper gives it a real close time when it opens one
-    else:
-        closes = (datetime.fromisoformat(seed["closes"]).replace(tzinfo=timezone.utc)
-                  if seed.get("closes") else FORWARD_CLOSE)
-        out.update(closes_at=iso(closes), status="open" if now < closes else "closed")
 
-    chain = get_chain(chain_key(market_id, opens))
-    out["chain"] = chain
-    if chain["resolved"]:
-        out["status"] = "resolved"
-    elif chain.get("closes_at"):  # keeper-set close time (replay markets)
-        out["closes_at"] = chain["closes_at"]
-        out["status"] = "open" if now < datetime.fromisoformat(chain["closes_at"].replace("Z", "+00:00")) else "closed"
+def build_fixed(ex, onchain, now):
+    """A weekly, collapse, vessel, route or trade market: one onchain market at most."""
+    match = [m for m in onchain if m["series"] == ex["series"] and m["threshold"] == ex["threshold"]
+             and m["isAbove"] == ex["is_above"]]
+    m = max(match, key=lambda x: x["id"]) if match else None
+    out = base(ex)
+    out.update(
+        closes=iso(ts(m["closeTime"])) if m else ex.get("close_time"),
+        status=status_of(m, now),
+        chainId=m["id"] if m and status_of(m, now) == "open" else None,
+        probYes=m["priceYes"] / WEI if m else out["prior_yes"],
+        chain=chain_block(m),
+    )
     return out
+
+
+def build_live(ex, onchain, now):
+    """A live gate: the window taking positions, the window being counted, the last result."""
+    gate = ex["series"].split(":")[1]
+    minutes = ex["close_minutes"]
+    mine = sorted((m for m in onchain if m["series"] == ex["series"]), key=lambda m: m["closeTime"])
+    trading = next((m for m in mine if m["outcome"] == OPEN and ts(m["closeTime"]) > now), None)
+    counting = next((m for m in mine if m["outcome"] == OPEN and ts(m["closeTime"]) <= now
+                     < ts(m["closeTime"]) + timedelta(minutes=minutes)), None)
+    done = [m for m in mine if m["outcome"] != OPEN]
+    last = done[-1] if done else None
+
+    def window(m):
+        start = ts(m["closeTime"])
+        return start, start + timedelta(minutes=minutes)
+
+    out = base(ex)
+    out.update(
+        gate=gate,
+        minutes=minutes,
+        historical_yes_share=out["prior_yes"],
+        question=trading["question"] if trading else ex["question"],
+        closes=iso(ts(trading["closeTime"])) if trading else None,
+        status="open" if trading else "not_open",
+        chainId=trading["id"] if trading else None,
+        probYes=trading["priceYes"] / WEI if trading else out["prior_yes"],
+        chain=chain_block(trading),
+        live={
+            "trading": None if not trading else {
+                "market_id": trading["id"], "window_start": iso(window(trading)[0]),
+                "window_end": iso(window(trading)[1]), "trading_closes": iso(window(trading)[0])},
+            "counting": None if not counting else {
+                "market_id": counting["id"], "question": counting["question"],
+                "window_start": iso(window(counting)[0]), "window_end": iso(window(counting)[1]),
+                "count_so_far": count_between(gate, *window(counting)), "threshold": ex["threshold"],
+                "price_yes_at_close": counting["priceYes"] / WEI},
+            "last": None if not last else {
+                "market_id": last["id"], "question": last["question"],
+                "window_start": iso(window(last)[0]), "window_end": iso(window(last)[1]),
+                "count": last["value"] if last["outcome"] != INVALID else None,
+                "outcome": OUTCOME_NAME[last["outcome"]]},
+        },
+    )
+    return out
+
+
+def build_arrival(m, now):
+    """A ship-arrival hedge opened from the page. Not in examples.json, so built from the chain."""
+    _, ship, port = m["series"].split(":")
+    return {
+        "id": f"arrival_{m['id']}",
+        "group": "arrival",
+        "question": m["question"],
+        "series": m["series"],
+        "threshold": m["threshold"],
+        "threshold_display": f"deadline {iso(ts(m['threshold']))}",
+        "is_above": m["isAbove"],
+        "featured": False,
+        "settles_on": "AIS position at the port (contracts/pricing/arrival.py)",
+        "why": None,
+        "prior_yes": None,
+        "ship": ship,
+        "port": port,
+        "deadline": iso(ts(m["threshold"])),
+        "closes": iso(ts(m["closeTime"])),
+        "status": status_of(m, now),
+        "chainId": m["id"] if status_of(m, now) == "open" else None,
+        "probYes": m["priceYes"] / WEI,
+        "chain": chain_block(m),
+    }
+
+
+def all_markets():
+    now = datetime.now(timezone.utc)
+    onchain = list(index.get().values())
+    out = []
+    for ex in examples():
+        out.append(build_live(ex, onchain, now) if ex["group"] == "live" else build_fixed(ex, onchain, now))
+    for m in onchain:
+        if m["series"].startswith("arrival:"):
+            out.append(build_arrival(m, now))
+    return now, out
 
 
 # ---------- routes ----------
 
 @router.get("/api/markets")
 def list_markets(
-    group: str | None = Query(None, description="live, weekly, route, trade or replay"),
-    status: str | None = Query(None, description="open, closed, resolved or replay"),
+    group: str | None = Query(None, description="live, weekly, collapse, vessel, route, trade or arrival"),
+    status: str | None = Query(None, description="open, closed, resolved or not_open"),
+    onchain: bool = Query(False, description="only markets that exist onchain"),
 ):
-    if group and group not in GROUPS:
-        raise HTTPException(400, f"group must be one of {', '.join(GROUPS)}")
-    now = datetime.now(timezone.utc)
-    out = []
-    for market_id, (g, seed) in seeds().items():
-        if group and g != group:
-            continue
-        market = build(market_id, g, seed, now)
-        if status and market["status"] != status:
-            continue
-        out.append(market)
-    return {"now": iso(now), "count": len(out), "markets": out}
+    now, markets = all_markets()
+    if group:
+        markets = [m for m in markets if m["group"] == group]
+    if status:
+        markets = [m for m in markets if m["status"] == status]
+    if onchain:
+        markets = [m for m in markets if m["chain"] is not None or (m.get("live") or {}).get("counting")]
+    # Featured and tradable first, so the page's first cards are the ones people can use.
+    markets.sort(key=lambda m: (m["chainId"] is None, not m["featured"]))
+    return {"now": iso(now), "count": len(markets), "chain_error": index.error, "markets": markets}
 
 
 @router.get("/api/markets/{market_id}")
 def one_market(market_id: str):
-    found = seeds().get(market_id)
+    _, markets = all_markets()
+    found = next((m for m in markets if m["id"] == market_id), None)
     if found is None:
         raise HTTPException(404, f"no market {market_id}")
-    return build(market_id, *found, datetime.now(timezone.utc))
+    return found
