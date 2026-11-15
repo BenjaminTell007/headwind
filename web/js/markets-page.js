@@ -67,7 +67,7 @@ const need = (c, sideName, live) => {
 };
 const pf = makePortfolio({
   HW, left, sample: SAMPLE, pos, need,
-  list: () => list, chain: () => chain, onchain: () => onchain, busy: () => busy,
+  list: () => list, chain: () => chain, onchain: () => onchain, busy: () => busy, chainDown: () => chainDown,
   changed: () => { pill(); if (tab === 'mine') render(); },
 });
 const pill = () => {   // the small up/down figure on the "My trades" tab
@@ -368,14 +368,17 @@ const openHedgeMarket = async () => {
 };
 
 /* ---------- chain: Xavi's helpers, loaded when first needed ---------- */
-let chainP = null;
+let chainP = null, chainDown = false;
 const ensureChain = () => chainP || (chainP = (async () => {
   try {
     const [mk, wl, cfg, ev] = await Promise.all([import('../chain/markets.js'), import('../chain/wallet.js'), import('../chain/config.js'), import('../chain/events.js')]);
     const m = await mk.markets();
     chain = { mk, wl, cfg, m, wallet: null };
-    onchain = await m.list(); lastList = Date.now();
-    pairOdds();
+    chainDown = false;
+    // The public RPC rate-limits. If the first full read fails, keep going on the server's numbers
+    // (browsing, quotes and trading still work) and let the regular refresh fill the list in.
+    try { onchain = await m.list(); lastList = Date.now(); } catch (e) { onchain = []; lastList = 0; console.warn('onchain list not read yet', e); }
+    pairOdds(onchain.length > 0);
     ev.watchOdds(({ id, probYes, resolved, created }) => {
       const row = list.find(x => x.chainId != null && Number(x.chainId) === Number(id));
       const oc = onchain.find(x => Number(x.id) === Number(id));
@@ -384,7 +387,7 @@ const ensureChain = () => chainP || (chainP = (async () => {
       pf.schedule();
     }).catch(() => {});
     render();
-  } catch (e) { chain = null; chainP = null; console.warn('chain not available', e); }
+  } catch (e) { chain = null; chainP = null; chainDown = true; console.warn('chain not available', e); setTimeout(() => { ensureChain().then(c => { if (c) { render(); resumeWallet(); } }); }, 8000); render(); }
   return chain;
 })());
 const pairOdds = (fromChain = true) => {   // fromChain: the onchain list was read just now

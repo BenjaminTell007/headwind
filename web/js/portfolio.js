@@ -248,7 +248,7 @@ export function makePortfolio(ctx) {
 
   function html() {
     const chain = ctx.chain();
-    if (!chain) return '<div class="mk-empty">Loading…</div>';
+    if (!chain) return `<div class="mk-empty">${ctx.chainDown() ? 'The Monad test network is not answering right now. Trying again every few seconds.' : 'Loading…'}</div>`;
     if (!chain.wallet) return `<div class="pf-empty"><h2>Your trades</h2><p>Each trade you place shows up here with what you need, how it is going, and what you win or lose.</p><div class="pf-picks one"><button data-act="connect"><span>Connect your wallet to see them</span><b>CONNECT →</b></button></div></div>`;
     if (!totals) return '<div class="mk-empty">Loading your trades…</div>';
     if (!rows.length && !trades.some(t => !t.est)) return starter('Pick a market, choose YES or NO, and it will show up here.');
