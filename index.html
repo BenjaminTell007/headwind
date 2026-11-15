@@ -5,7 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Headway</title>
 <meta name="description" content="Forecast and hedge trade disruptions: every shipping route and strait, live ships, and markets that settle onchain on Monad.">
-<link rel="stylesheet" href="web/landing/landing.css?v=20261115d">
+<script>
+/* Self-update: GitHub Pages lets browsers reuse this page for 10 minutes. On open and
+   whenever you come back to the tab, check the published version (never cached) and,
+   if it's newer than this copy, reload once onto it. web/tools/stamp.sh sets both. */
+(function () {
+  var SITE_VERSION = '20261115T2107', URL_ = 'web/version.json';
+  function check() {
+    fetch(URL_ + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.v || d.v === SITE_VERSION) return;
+      var key = 'hw-updated-' + d.v;
+      try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) {}
+      var q = new URLSearchParams(location.search); q.set('v', d.v);
+      location.replace(location.pathname + '?' + q.toString() + location.hash);
+    }).catch(function () {});
+  }
+  check();
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+})();
+</script>
+<link rel="stylesheet" href="web/landing/landing.css?v=20261115T2107">
 </head>
 <body>
 
@@ -62,6 +81,6 @@
 
 </div>
 
-<script src="web/landing/landing.js?v=20261115d"></script>
+<script src="web/landing/landing.js?v=20261115T2107"></script>
 </body>
 </html>

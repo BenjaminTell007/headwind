@@ -22,7 +22,9 @@
   // (the ship in the clip is a tanker, so its hue is the tanker hue).
   const GREYS = ['#1d2024', '#26292e', '#30343a', '#3c4047', '#4b4f56', '#5f6369', '#787b80', '#96989b'];
   const BRIGHT = ['#f2f2f0', '#d6d6d4', '#ffffff', '#bdbdbb', '#f2f2f0'];   // black and white only
-  const COLOURS = GREYS.concat(BRIGHT);
+  // a little of the accent blue, only in the glyphs riding on the ships
+  const BLUE = ['#4c8dff', '#8fb6ff'];
+  const COLOURS = GREYS.concat(BRIGHT, BLUE);
   const N_SHAPES = 10;
 
   let W = 0, H = 0, DPR = 1, cell = 10, cols = 0, rows = 0;
@@ -248,8 +250,9 @@
           m = Math.max(m, mouse.s * (1 - smooth(lensR - lensEdge, lensR, dl)));
         }
         // the glyph pattern rides on the ships, shimmering in place
+        let ship = 0;
         if (lumL && R > 1) {
-          const ship = smooth(0.07, 0.2, Math.abs(lumL[idx] - blurB[idx]));
+          ship = smooth(0.07, 0.2, Math.abs(lumL[idx] - blurB[idx]));
           m = Math.max(m, ship * 0.85);
         }
         m *= appear;
@@ -280,6 +283,8 @@
           ci = clamp(Math.floor(L * 2 * GREYS.length + g * 0.4), 0, GREYS.length - 1);
         }
         if (Math.sin(t * 2.3 + r * 60) > 0.992) ci = GREYS.length;   // the odd glint
+        // on the ships, small patches drift through the accent blue
+        if (ship > 0.4 && wave(i + 90, j - 40, t, 0.09, 0.45) > 1.3) ci = GREYS.length + BRIGHT.length + (r > 0.5 ? 1 : 0);
 
         // black out the footage under the glyph, then draw it
         if (R > 1) {
