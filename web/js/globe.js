@@ -203,8 +203,8 @@
           S.by += (P.y - S.by) * (1 - Math.exp(-18 * dt));
         }
         S.bs = (S.bs || 0) + ((onIt ? 1 : 0) - (S.bs || 0)) * (1 - Math.exp(-7 * dt));
-        const SIG = 30 + 6 * Math.sqrt(S.zoom), TWO_SIG2 = 2 * SIG * SIG, REACH2 = 9 * SIG * SIG;
-        const SPREAD = 0.42, LIFT = 7;
+        const SIG = 15 + 3 * Math.sqrt(S.zoom), TWO_SIG2 = 2 * SIG * SIG, REACH2 = 9 * SIG * SIG;   // a small bump
+        const SPREAD = 0.3, LIFT = 4;
         const raised = [];   // dots inside the bump: drawn last, on top, one by one
         const bumpOf = (sx, sy) => {
           if (S.bs < 0.01) return 0;
@@ -218,7 +218,7 @@
             const Z = m6 * LX[i] + m7 * LY[i] + m8 * LZ[i]; if (Z < 0) continue;
             const sx = cx + (m0 * LX[i] + m1 * LY[i] + m2 * LZ[i]) * R, sy = cy - (m3 * LX[i] + m4 * LY[i] + m5 * LZ[i]) * R;
             if (sx < -4 || sx > W + 4 || sy < -4 || sy > H + 4) continue;
-            const dx = sx - px, dy = sy - py, d2 = dx * dx + dy * dy, near = d2 < 7000 ? Math.exp(-d2 / 2400) : 0;
+            const dx = sx - px, dy = sy - py, d2 = dx * dx + dy * dy, near = d2 < 2200 ? Math.exp(-d2 / 700) : 0;
             if (b === 0 && d2 < nearD) { nearD = d2; nearDot = i; }
             if (hc >= 0 && LC[i] === hc) continue;   // drawn bright below
             const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2;
@@ -255,7 +255,7 @@
           raised.sort((a, b) => a[3] - b[3]);
           for (const [, sx, sy, gb, alpha, inCountry] of raised) {
             const x = sx + (sx - S.bx) * SPREAD * gb, y = sy + (sy - S.by) * SPREAD * gb - LIFT * gb;
-            const sd = (inCountry ? ds * 1.25 : ds) * (1 + 1.1 * gb);
+            const sd = (inCountry ? ds * 1.25 : ds) * (1 + 0.7 * gb);
             ctx.fillStyle = inCountry ? C.accent : C.fg;
             ctx.globalAlpha = Math.min(1, alpha + 0.55 * gb);
             ctx.fillRect(x - sd / 2, y - sd / 2, sd, sd);
