@@ -12,7 +12,7 @@ body { font:400 13px/1.4 var(--sans); -webkit-font-smoothing:antialiased; }
 a { color:inherit; text-decoration:none; }
 .tag { font:300 10.5px/1.2 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--dim); }
 
-#cv { position:fixed; inset:0; width:100%; height:100%; display:block; cursor:crosshair; }
+#cv { position:fixed; inset:0; width:100%; height:100%; display:block; }
 video { display:none; }
 
 /* everything over the footage fades in once the reveal has started */
@@ -35,8 +35,8 @@ nav a.tag:hover { color:var(--fg); }
 
 .btn { font:400 11px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; padding:12px 18px; border-radius:999px; border:1px solid var(--line); color:var(--fg); background:rgba(10,10,10,.55); backdrop-filter:blur(8px); transition:border-color .25s, background .25s; display:inline-flex; gap:10px; align-items:center; cursor:pointer; }
 .btn:hover { border-color:var(--fg); }
-.btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
-.btn.primary:hover { background:#6aa0ff; border-color:#6aa0ff; }
+.btn.primary { background:var(--fg); border-color:var(--fg); color:var(--bg); }
+.btn.primary:hover { background:#fff; border-color:#fff; }
 .btn .arr { transition:transform .25s; } .btn:hover .arr { transform:translateX(3px); }
 
 .hero { position:absolute; left:32px; bottom:44px; max-width:640px; }
@@ -56,7 +56,7 @@ nav a.tag:hover { color:var(--fg); }
 .on .lock { opacity:1; transform:translate(-50%,-50%) scale(1); }
 .lock svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
 .lock .lab { position:absolute; left:0; top:-26px; display:flex; gap:14px; }
-.lock .lab .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--tanker); margin-right:7px; vertical-align:0; }
+.lock .lab .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--fg); margin-right:7px; vertical-align:0; }
 .lock .lab2 { position:absolute; right:0; bottom:-24px; }
 
 .credit { position:absolute; right:32px; top:58px; font-size:9.5px; color:var(--faint); }

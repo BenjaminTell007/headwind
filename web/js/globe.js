@@ -229,7 +229,8 @@
           });
           ctx.stroke();
         }
-        ctx.globalAlpha = 0.08; ctx.strokeStyle = C.fg; ctx.lineWidth = 0.6; ctx.beginPath();
+        // country outlines, clearly visible (Kimball wants them back)
+        ctx.globalAlpha = 0.26 * S.quiet + 0.06; ctx.strokeStyle = C.fg; ctx.lineWidth = 0.7; ctx.beginPath();
         for (const f of rings) {
           let pen = false;
           for (let i = 0; i < f.length; i += 3) {
