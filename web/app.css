@@ -130,24 +130,28 @@ body.nomarkets .rail { transform:translateX(-360px); opacity:0; pointer-events:n
 #intro .tag { opacity:.8; }
 #intro.out { opacity:0; pointer-events:none; }
 
-/* single ship view: the ship on the sea, big name on top, info card on the right */
-#dive { position:fixed; inset:0; z-index:10; display:none; background:#0e1826; overflow:hidden; }
-:root[data-theme="light"] #dive { background:#dbe7f5; }
-#dive.on { display:block; animation:divein .5s ease; }
-@keyframes divein { from { opacity:0; } }
-#divesvg { position:absolute; left:0; top:0; width:calc(100% - 300px); height:100%; overflow:visible; }
-#dive .back { position:absolute; left:24px; top:20px; z-index:2; color:var(--fg); }
-.dhead { position:absolute; left:0; right:0; top:22px; text-align:center; pointer-events:none; padding:0 170px; }
-.dhead h1 { font:600 clamp(32px, 5.2vw, 68px)/1.02 var(--sans); letter-spacing:-.025em; margin:8px 0 10px; overflow-wrap:anywhere; }
-.dhead .tag { font-size:12px; }
-.dhead .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:8px; }
-.dcard { position:absolute; right:24px; top:50%; transform:translateY(-46%); width:340px; max-height:calc(100% - 190px); overflow-y:auto; background:var(--glass); backdrop-filter:blur(14px); border:1px solid var(--line); border-radius:16px; padding:20px; box-shadow:var(--shadow); }
-.dcard h3 { font-size:11px; font-weight:400; letter-spacing:.16em; color:var(--dim); margin:0 0 12px; }
-.dcard h3:not(:first-child) { margin-top:18px; padding-top:16px; border-top:1px solid var(--line2); }
-.dcard .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 14px; }
-.dcard .grid b { display:block; font:500 18px/1.15 var(--sans); overflow-wrap:anywhere; }
-.dcard .grid span { display:block; margin-top:3px; color:var(--dim); letter-spacing:.12em; font-size:10px; }
-.dcard .fine { color:var(--dim); font:12px/1.5 var(--sans); margin:14px 0 0; }
+/* ship dive */
+#dive { position:fixed; inset:0; z-index:10; display:none; background:#000; }
+#dive.on { display:block; }
+#shipcv { position:absolute; inset:0; width:100%; height:100%; }
+.hud { position:absolute; inset:0; pointer-events:none; }
+.hud > * { pointer-events:auto; }
+.hud .back { position:absolute; left:24px; top:20px; border:1px solid rgba(236,236,236,.35); border-radius:20px; padding:6px 14px; letter-spacing:.18em; font-size:10.5px; background:rgba(20,20,20,.35); backdrop-filter:blur(6px); }
+.hud .back:hover { border-color:var(--fg); }
+.hud .cams { position:absolute; left:50%; top:20px; transform:translateX(-50%); display:inline-flex; border:1px solid rgba(236,236,236,.35); border-radius:20px; padding:2px; background:rgba(20,20,20,.35); backdrop-filter:blur(6px); }
+.hud .cams button { padding:4px 14px; border-radius:18px; letter-spacing:.16em; font-size:10.5px; color:#cfcfcf; }
+.hud .cams button.on { background:var(--fg); color:#1a1a1a; }
+.hud .card { position:absolute; background:rgba(22,22,23,.62); backdrop-filter:blur(14px); border:1px solid rgba(236,236,236,.12); border-radius:14px; padding:16px 18px; }
+.hud .ident { left:24px; bottom:24px; width:330px; }
+.hud .ident h2 { font:500 24px/1.1 var(--sans); margin:6px 0 4px; letter-spacing:-.01em; }
+.hud .wx { right:24px; bottom:24px; width:300px; }
+.hud .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-top:12px; }
+.hud .grid b { display:block; font:500 16px/1.15 var(--sans); }
+.hud .grid span { color:#a8a8a8; letter-spacing:.14em; font-size:9.5px; }
+.hud .cross { position:absolute; left:50%; top:50%; width:54px; height:54px; margin:-27px 0 0 -27px; pointer-events:none; opacity:.0; transition:opacity 1s; }
+.hud .cross.on { opacity:.6; }
+.hud .scale { position:absolute; right:24px; top:22px; text-align:right; color:#cfcfcf; }
+.hud .compass { position:absolute; left:24px; top:70px; width:62px; height:62px; pointer-events:none; }
 
 @media (max-width: 1180px) {
   .rail { width:290px; }
@@ -165,7 +169,6 @@ body.nomarkets .rail { transform:translateX(-360px); opacity:0; pointer-events:n
   .overview .cell:nth-child(n+3) { display:none; }
   .search input { width:110px; }
   .brand canvas { width:120px; height:22px; }
-  #divesvg { width:100%; height:62%; }
-  .dhead { padding:0 16px; top:56px; }
-  .dcard { left:16px; right:16px; width:auto; top:auto; bottom:16px; transform:none; max-height:40%; }
+  .hud .ident, .hud .wx { left:16px; right:16px; width:auto; }
+  .hud .wx { bottom:auto; top:70px; }
 }

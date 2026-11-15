@@ -1,5 +1,5 @@
 /* Wires the page together: intro, overview strip, globe, replay timeline, markets,
-   the detail panel, ship search and the dive into the single ship view. */
+   the detail panel, ship search and the dive into the ship scene. */
 
 const HW = window.HW, C = HW.C;
 const $ = id => document.getElementById(id);
@@ -36,7 +36,7 @@ weeks = D.status.weeks; nW = weeks.length;
 $('introtag').textContent = `SYS.ROUTES: ${D.corridors.features.length} · STRAITS: ${D.straits.length} · DATA TO ${HW.fDate(D.overview.as_of)}`;
 
 globe = HW.makeGlobe($('globe'), D, { onSelect: item => showPanel(item) });
-scene = HW.makeDive($('divesvg'));
+scene = HW.makeShipScene($('shipcv'));
 
 // let the logo play for a moment, then reveal the globe
 setTimeout(() => { $('intro').classList.add('out'); setTimeout(() => { intro.stop(); $('intro').remove(); $('overview').classList.add('in'); }, 1000); }, Math.max(0, 2600 - (performance.now() - introStart)));
@@ -103,7 +103,7 @@ $('overview').addEventListener('click', e => { const c = e.target.closest('[data
 /* ---------- light / dark, and the markets drawer ---------- */
 const themeBtn = () => { $('theme').textContent = HW.C.theme === 'light' ? '☾' : '☀'; };
 themeBtn();
-$('theme').addEventListener('click', () => { HW.setTheme(HW.C.theme === 'light' ? 'dark' : 'light'); themeBtn(); if (HW.drawLogo) HW.drawLogo($('brandcv')); scene.redraw(); if (panelItem) showPanel(panelItem, true); });
+$('theme').addEventListener('click', () => { HW.setTheme(HW.C.theme === 'light' ? 'dark' : 'light'); themeBtn(); if (panelItem) showPanel(panelItem, true); });
 $('mtoggle').addEventListener('click', () => {
   const open = !document.body.classList.toggle('nomarkets');
   $('mtoggle').setAttribute('aria-expanded', open); $('mtoggle').classList.toggle('on', open);
@@ -257,40 +257,63 @@ const SKY = c => c === 0 ? 'CLEAR' : c <= 2 ? 'PARTLY CLOUDY' : c === 3 ? 'OVERC
 const COMPASS = d => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(((+d % 360) + 360) % 360 / 45) % 8];
 const dive = async ship => {
   const lat = +ship.lat, lon = +ship.lon;
-  const s = { ...ship, g: ship.g || ship.type_group || HW.vesselGroup(ship.type) };
+  globe.flyTo(lat, lon, 9, null, 2.2);
   const wxP = HW.weatherAt(lat, lon).catch(() => null);
+  await new Promise(r => setTimeout(r, 1500));
   $('dive').classList.add('on');
-  scene.open(s);
-  renderDive(s, null);
+  scene.open(ship, null);
+  renderHUD(ship, null);
   const w = await wxP;
-  if (w && scene.S.ship === s) { scene.setWeather(w); renderDive(s, w); }
+  if (w) { scene.setWeather(w); renderHUD(ship, w); }
+  setTimeout(() => $('cross').classList.add('on'), 2400);
 };
-const renderDive = (s, w) => {
-  const g = s.g;
-  $('dtype').innerHTML = `<span class="dot" style="background:${HW.groupColour(g)}"></span>${HW.groupLabel(g)} · UNDERWAY`;
-  $('dname').textContent = s.name || 'MMSI ' + s.mmsi;
-  $('dsub').textContent = s.destination ? 'BOUND FOR ' + s.destination : 'NO DESTINATION REPORTED';
-  const f = (v, u, d = 1) => v == null ? '—' : (+v).toFixed(d) + u;
-  const wx = !w ? '<p class="fine">Loading live conditions…</p>' : `<div class="grid">
-      <div><b>${SKY(+w.weather_code)}</b><span>SKY${w.is_day === 0 ? ' · NIGHT' : ''}</span></div>
-      <div><b>${f(w.wind_speed_10m, ' kn')}</b><span>WIND FROM ${w.wind_direction_10m != null ? COMPASS(w.wind_direction_10m) : '—'}</span></div>
-      <div><b>${f(w.wave_height, ' m')}</b><span>WAVES</span></div>
-      <div><b>${f(w.sea_surface_temperature, '°C')}</b><span>SEA TEMPERATURE</span></div>
-    </div>`;
-  $('dcard').innerHTML = `<h3>SHIP</h3>
+const renderHUD = (s, w) => {
+  const g = s.g || s.type_group || HW.vesselGroup(s.type), kind = scene.S.kind;
+  $('ident').innerHTML = `<div class="tag"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${HW.groupColour(g)};margin-right:7px"></span>${HW.groupLabel(g)}</div>
+    <h2>${HW.esc(s.name || 'MMSI ' + s.mmsi)}</h2><div class="tag">${s.destination ? 'BOUND FOR ' + HW.esc(s.destination) : 'NO DESTINATION REPORTED'}</div>
     <div class="grid">
       <div><b>${s.sog != null ? (+s.sog).toFixed(1) + ' kn' : '—'}</b><span>SPEED</span></div>
       <div><b>${s.cog != null ? Math.round(s.cog) + '° ' + COMPASS(s.cog) : '—'}</b><span>COURSE</span></div>
-      <div><b>${HW.esc(s.destination || '—')}</b><span>DESTINATION</span></div>
-      <div><b>${HW.esc(s.eta || '—')}</b><span>ETA</span></div>
       <div><b>${s.length ? s.length + ' m' : '—'}</b><span>LENGTH</span></div>
       <div><b>${s.draught ? s.draught + ' m' : '—'}</b><span>DRAUGHT</span></div>
-    </div>
-    <h3>WEATHER AT THE SHIP · LIVE</h3>${wx}
-    <p class="fine">IMO ${HW.esc(s.imo || '—')} · MMSI ${HW.esc(s.mmsi)} · ${lat2(s)}</p>`;
+      <div><b>${HW.esc(s.eta || '—')}</b><span>ETA</span></div>
+      <div><b>${(+s.lat).toFixed(2)}, ${(+s.lon).toFixed(2)}</b><span>POSITION</span></div>
+    </div>`;
+  if (!w) { $('wx').innerHTML = '<div class="tag">WEATHER AT THE SHIP</div><p style="color:#bbb;font:13px var(--sans);margin:10px 0 0">Loading live conditions…</p>'; }
+  else {
+    const f = (v, u, d = 1) => v == null ? '—' : (+v).toFixed(d) + u;
+    $('wx').innerHTML = `<div class="tag">WEATHER AT THE SHIP · LIVE</div>
+      <div class="num" style="margin-top:8px">${SKY(+w.weather_code)}${w.is_day === 0 ? ' · NIGHT' : ''}</div>
+      <div class="grid">
+        <div><b>${f(w.wind_speed_10m, ' kn')}</b><span>WIND FROM ${w.wind_direction_10m != null ? COMPASS(w.wind_direction_10m) : '—'}</span></div>
+        <div><b>${f(w.wind_gusts_10m, ' kn')}</b><span>GUSTS</span></div>
+        <div><b>${f(w.wave_height, ' m')}</b><span>WAVES</span></div>
+        <div><b>${f(w.swell_wave_height, ' m')}</b><span>SWELL</span></div>
+        <div><b>${f(w.sea_surface_temperature, '°C')}</b><span>SEA</span></div>
+        <div><b>${f(w.temperature_2m, '°C')}</b><span>AIR</span></div>
+      </div>
+      <div class="tag" style="margin-top:12px;letter-spacing:.1em">OPEN-METEO · DRAWN AS ${kind === 'cargo' ? 'CONTAINER SHIP' : kind.toUpperCase()}</div>`;
+  }
+  // compass: north up, ship course and where the wind comes from
+  const cog = s.cog != null ? +s.cog : 0, wd = w && w.wind_direction_10m != null ? +w.wind_direction_10m : null;
+  // the drone view keeps the bow pointing up, so the compass card turns with the ship
+  $('compass').innerHTML = `<g transform="rotate(${-cog} 31 31)"><circle cx="31" cy="31" r="28" fill="none" stroke="#ececec" stroke-opacity=".35"/><text x="31" y="11" fill="#ececec" font-size="8" text-anchor="middle" font-family="${HW.MONO}">N</text>
+    <line x1="31" y1="31" x2="${31 + 22 * Math.sin(cog * Math.PI / 180)}" y2="${31 - 22 * Math.cos(cog * Math.PI / 180)}" stroke="${HW.groupColour(g)}" stroke-width="2"/>
+    ${wd != null ? `<line x1="${31 + 26 * Math.sin(wd * Math.PI / 180)}" y1="${31 - 26 * Math.cos(wd * Math.PI / 180)}" x2="${31 + 14 * Math.sin(wd * Math.PI / 180)}" y2="${31 - 14 * Math.cos(wd * Math.PI / 180)}" stroke="#ececec" stroke-dasharray="2 2"/>` : ''}</g>`;
 };
-const lat2 = s => `${(+s.lat).toFixed(2)}, ${(+s.lon).toFixed(2)}`;
-$('back').addEventListener('click', () => { scene.close(); $('dive').classList.remove('on'); });
+document.querySelectorAll('#cams button').forEach(b => b.addEventListener('click', () => {
+  scene.setMode(b.dataset.m); document.querySelectorAll('#cams button').forEach(o => o.classList.toggle('on', o === b));
+}));
+$('back').addEventListener('click', () => {
+  scene.close(); $('dive').classList.remove('on'); $('cross').classList.remove('on');
+  document.querySelectorAll('#cams button').forEach(o => o.classList.toggle('on', o.dataset.m === 'top'));
+  globe.zoomBy(0.35);
+});
+const altTick = () => {
+  if (scene.S.on) $('hudScale').textContent = 'ALT ' + Math.round(HW.lerp(1800, 320, HW.ease(scene.S.intro))) + ' M · ' + (scene.S.mode === 'top' ? 'DRONE' : 'PROFILE');
+  requestAnimationFrame(altTick);
+};
+altTick();
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (scene.S.on) $('back').click(); else globe.select(null); } });
 
 window.__hw = { D, globe, scene, dive };
