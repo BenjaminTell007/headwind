@@ -31,6 +31,7 @@ from pathlib import Path
 from contracts.pricing import quote as pricing  # noqa: F401  (puts contracts/pricing on sys.path)
 import arrival as arrival_rule  # noqa: E402  (Xavi's contracts/pricing/arrival.py)
 import model as pricing_model  # noqa: E402
+from contracts.pricing import reprice  # noqa: E402  (Xavi's market-making step, CHAIN_SERVER.md item 7)
 
 from server import markets as market_list
 from server.chain import chain, setting
@@ -42,10 +43,16 @@ LIVE_SETTLE_DELAY = timedelta(seconds=90)   # let the logger write the window's 
 OPEN_LEAD_MIN = timedelta(minutes=2)        # don't open a window that starts in under 2 minutes
 RETRY_AFTER = timedelta(minutes=2)          # after a failed open, wait this long before trying again
 LIVE_RESOLVE_GRACE = timedelta(hours=2)     # resolveBy for live markets, past the window end
+# Re-pricing bot (arrival markets only). Xavi's reprice.py caps each step at 0.05 MON and each
+# market at 0.30 MON; these caps protect the gas the keeper itself needs from the same key.
+REPRICE_EVERY = timedelta(minutes=3)
+REPRICE_TOTAL_MON = float(os.environ.get("KEEPER_REPRICE_BUDGET_MON", "1.0"))  # all markets together
+REPRICE_KEEP_MON = 1.0                      # never trade if the server key would drop below this
 
 # Set by app.py.
 gate_counter = None     # gate_count(gate_id, since=..., until=...)
 ship_lookup = None      # find_ship(query) -> ship dict with mmsi, lat, lon, sog, nav_status, time
+ships_in_bbox = None    # ships_in_bbox("minLon,minLat,maxLon,maxLat") -> list of ship dicts
 live_dir = None         # where keeper_state.json goes
 
 
@@ -70,6 +77,9 @@ class Keeper:
         self.log = []                    # recent actions, for /api/keeper
         self.running = False
         self.last_cycle = None
+        self.open_arrivals = {}          # market id -> latest getMarket, for the re-pricing bot
+        self.last_reprice = None
+        self.port_queue = reprice.PortQueue()  # remembers each port's recent queue
 
     # ---------- state ----------
 
@@ -178,6 +188,8 @@ class Keeper:
             self.note(f"settleVault #{mid}")
         m = chain.get_market(mid)
         market_list.set_chain(key, resolved=True, outcome_yes=m["outcome"] == 1, value=m["value"])
+        self.open_arrivals.pop(mid, None)
+        self.redeem_bot(mid)
 
     def settle_live(self, now):
         for key, e in list(self.state["opened"].items()):
@@ -213,13 +225,18 @@ class Keeper:
             if not m["series"].startswith("arrival:"):
                 continue
             entry = arrivals.setdefault(str(mid), {"market_id": mid, "resolved": m["outcome"] != 0, "settled": False})
+            if m["outcome"] == 0:
+                m["id"] = mid
+                self.open_arrivals[mid] = m
+            else:
+                self.open_arrivals.pop(mid, None)
             try:
                 _, ship_id, port_code = m["series"].split(":")
                 ship = ship_lookup(ship_id)
                 self.tracks.setdefault(ship["mmsi"], {})[ship["time"]] = ship  # one point per report
                 deadline = datetime.fromtimestamp(m["threshold"], timezone.utc)
                 if not entry["resolved"]:
-                    port = pricing_model.find_port(port_code)
+                    port = find_port_code(port_code)
                     positions = list(self.tracks[ship["mmsi"]].values())
                     how, value = arrival_rule.settle(positions, arrival_rule.port_area(port), deadline, now)
                     if how == "wait":
@@ -238,6 +255,63 @@ class Keeper:
                     self.note(f"arrival #{mid}: {err}")
             self.save()
 
+    # ---------- re-pricing bot ----------
+
+    def _bot(self, mid):
+        return self.state.setdefault("bot", {}).setdefault(str(mid), {"spent": 0, "redeemed": False})
+
+    def reprice_arrivals(self, now):
+        """Every few minutes, trade open arrival markets toward Xavi's model on fresh data."""
+        if self.last_reprice and now - self.last_reprice < REPRICE_EVERY:
+            return
+        self.last_reprice = now
+        spent_total = sum(b["spent"] for b in self.state.get("bot", {}).values())
+        for mid, m in list(self.open_arrivals.items()):
+            bot = self._bot(mid)
+            try:
+                plan = reprice.plan_for_market(m, now=now, ship_lookup=_ship_or_empty,
+                                               ships_lookup=ships_in_bbox, queue=self.port_queue,
+                                               spent_wei=bot["spent"])
+            except Exception as err:
+                self.note(f"reprice #{mid}: {err}")
+                continue
+            if not plan:
+                continue
+            amount = plan["amount_wei"]
+            if (spent_total + amount) / 1e18 > REPRICE_TOTAL_MON:
+                self.note(f"reprice #{mid}: total budget {REPRICE_TOTAL_MON} MON used, skipping")
+                return
+            balance = chain.w3.eth.get_balance(chain.account.address)
+            if (balance - amount) / 1e18 < REPRICE_KEEP_MON:
+                self.note(f"reprice #{mid}: server key low ({balance / 1e18:.2f} MON), skipping")
+                return
+            try:
+                chain.send(chain.markets.functions.buy(mid, plan["yes"], plan["min_shares"]), value=amount)
+            except Exception as err:
+                self.note(f"reprice #{mid} buy failed: {err}")
+                continue
+            bot["spent"] += amount
+            spent_total += amount
+            self.save()
+            side = "YES" if plan["yes"] else "NO"
+            self.note(f"reprice #{mid}: bought {side} {amount / 1e18:.3f} MON, "
+                      f"{plan['p_market']} -> {plan['p_after']} (model {plan['p_model']})")
+
+    def redeem_bot(self, mid):
+        """After a market the bot traded settles, cash in its shares."""
+        bot = self.state.get("bot", {}).get(str(mid))
+        if not bot or not bot["spent"] or bot["redeemed"]:
+            return
+        try:
+            chain.send(chain.markets.functions.redeem(mid))
+            self.note(f"bot redeemed #{mid}")
+        except Exception as err:
+            if "NothingToPay" not in str(err):  # the bot was on the losing side
+                self.note(f"bot redeem #{mid} failed: {err}")
+                return
+        bot["redeemed"] = True
+        self.save()
+
     # ---------- loop ----------
 
     def cycle(self):
@@ -246,6 +320,7 @@ class Keeper:
             self.open_markets(now)
             self.settle_live(now)
             self.settle_arrivals(now)
+            self.reprice_arrivals(now)
             self.last_cycle = iso(now)
 
     def run_forever(self):
@@ -268,7 +343,35 @@ class Keeper:
         with self.lock:
             return {"running": self.running, "last_cycle": self.last_cycle,
                     "opened": self.state["opened"], "arrivals": self.state.get("arrivals", {}),
+                    "bot": self.state.get("bot", {}),
                     "log": self.log[-20:]}
+
+
+_find_port = pricing_model.find_port
+
+
+def find_port_code(code):
+    """The port in an arrival series. Ports without a UN LOCODE go in as their id in capitals
+    ("PORT815" for New York-New Jersey), which find_port doesn't read back, so try the id too."""
+    try:
+        return _find_port(code)
+    except KeyError:
+        by_id = {p["id"].upper(): p for p in pricing_model.ports().values()}
+        if code.upper() in by_id:
+            return by_id[code.upper()]
+        raise
+
+
+# Every pricing call (the quote, reprice.py, the arrival rule) goes through model.find_port, so
+# give them all the fallback.
+pricing_model.find_port = find_port_code
+
+
+def _ship_or_empty(query):
+    try:
+        return ship_lookup(str(query))
+    except Exception:
+        return {}
 
 
 def live_question(m, start, end):

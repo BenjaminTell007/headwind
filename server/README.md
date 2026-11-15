@@ -62,6 +62,7 @@ Without the key or the file, the chain endpoints answer 503 and everything else 
 - Live gates: keeps the next clock-aligned window open for trading while the current one runs. Trading closes at the window start; 90 seconds after the window ends it counts the gate between start and end, calls `resolve`, then `settleVault`.
 - Arrival markets opened from the page: tracks the ship's positions and settles with `pricing.arrival.settle`, then `settleVault`. A ship that's gone dark 6 hours past its deadline is called invalid.
 - Weekly, route and trade markets settle on data released after the demo, so it leaves them.
+- Re-pricing bot (Xavi's `contracts/pricing/reprice.py`): every 3 minutes, for each open arrival market, re-runs the model on fresh data and buys toward it when it disagrees by more than the fee plus 3 points. Caps: 0.05 MON a step, 0.30 MON a market, 1 MON in total (`KEEPER_REPRICE_BUDGET_MON`), and never below 1 MON left on the server key. It redeems its shares after settlement.
 - Saves what it opened in `keeper_state.json` next to the ship logs (the Railway volume), so restarts don't reopen anything.
 
 Railway variables for the chain: `SERVER_PRIVATE_KEY`, `HEADWAY_KEEPER=1`, optionally `KEEPER_GROUPS`.

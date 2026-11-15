@@ -364,6 +364,18 @@ app.include_router(quotes.router)
 from server import keeper as keeper_module  # noqa: E402
 keeper_module.gate_counter = gate_count
 keeper_module.ship_lookup = find_ship
+
+
+def ships_in_bbox(bbox, max_age_minutes=60):
+    """Live ships inside "minLon,minLat,maxLon,maxLat" (the re-pricing bot's port queue)."""
+    x0, y0, x1, y1 = (float(v) for v in bbox.split(","))
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=max_age_minutes)
+    with state.lock:
+        return [state.describe(p) for p in state.latest.values()
+                if p["time"] >= cutoff and x0 <= p["lon"] <= x1 and y0 <= p["lat"] <= y1]
+
+
+keeper_module.ships_in_bbox = ships_in_bbox
 keeper_module.live_dir = LIVE
 
 
