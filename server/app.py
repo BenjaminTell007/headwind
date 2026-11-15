@@ -26,7 +26,6 @@ On Railway the same command runs with RUN_LOGGER=1, so the server also starts
 the ship logger and keeps it running (see railway.json).
 """
 import csv
-import hmac
 import io
 import json
 import os
@@ -40,7 +39,7 @@ from pathlib import Path
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Header, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -364,7 +363,6 @@ app.include_router(markets.router)
 
 
 from server.chain import ChainOff, TxFailed, chain  # noqa: E402
-from server.chain import setting as chain_setting  # noqa: E402
 from server import quotes  # noqa: E402
 quotes.ship_lookup = find_ship
 app.include_router(quotes.router)
@@ -396,7 +394,6 @@ def keeper_status():
 # ---------- demo round: a short gate market started by hand ----------
 
 class DemoStart(BaseModel):
-    key: str | None = None          # the demo password (or send it as the X-Demo-Key header)
     gate: str = "singapore"
     bet_seconds: int = keeper_module.DEMO_BET_SECONDS
     count_seconds: int = keeper_module.DEMO_COUNT_SECONDS
@@ -412,14 +409,10 @@ def demo_status():
 
 
 @app.post("/api/demo/start")
-def demo_start(req: DemoStart, x_demo_key: str | None = Header(None)):
-    """Open a demo round now. Needs the demo password (DEMO_KEY in Railway's variables)."""
-    expected = chain_setting("DEMO_KEY")
-    if not expected:
-        raise HTTPException(503, "DEMO_KEY is not set on this server")
-    given = req.key or x_demo_key or ""
-    if not hmac.compare_digest(given.encode(), expected.encode()):
-        raise HTTPException(403, "wrong demo password")
+def demo_start(req: DemoStart | None = None):
+    """Open a demo round now. No password (Ben's call): anyone with the link can start one,
+    but only one runs at a time."""
+    req = req or DemoStart()
     gates = json.loads(GATES_FILE.read_text())
     if not any(g["id"] == req.gate for g in gates["lines"] + gates["boxes"]):
         raise HTTPException(400, f"no gate {req.gate}")
@@ -534,7 +527,6 @@ button{background:#4c8dff;border-color:#4c8dff;color:#fff;letter-spacing:.14em;c
 .steps{display:flex;gap:6px;margin:12px 0 4px}.steps i{flex:1;height:4px;border-radius:2px;background:#2a2a2c}.steps i.on{background:#4c8dff}
 .q{font:16px/1.4 -apple-system,"Helvetica Neue",Arial,sans-serif;margin:10px 0}#msg{min-height:1.5em;color:#f08a3c;margin-top:10px}</style></head>
 <body><main><h1>HEADWAY</h1><div class="tag">Demo round: bet, count real ships, settle onchain</div>
-<input id="key" type="password" placeholder="demo password" autocomplete="off">
 <button id="go">START A DEMO ROUND</button><div id="msg"></div>
 <div class="box"><div class="tag" id="phase">no round yet</div><div class="big" id="clock">&mdash;</div>
 <div class="steps"><i id="s0"></i><i id="s1"></i><i id="s2"></i><i id="s3"></i></div>
@@ -542,7 +534,6 @@ button{background:#4c8dff;border-color:#4c8dff;color:#fff;letter-spacing:.14em;c
 <p class="tag" style="margin-top:22px">The round shows on the markets page as the first Live card.</p></main>
 <script>
 const $=id=>document.getElementById(id);let round=null,skew=0;
-try{$('key').value=localStorage.getItem('hw.demo.key')||''}catch(e){}
 const left=t=>{const s=Math.max(0,Math.round((Date.parse(t)-(Date.now()+skew))/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 const paint=()=>{const r=round,ph=r?r.phase:null,order=['betting','counting','settling','settled'];
   order.forEach((p,i)=>$('s'+i).className=r&&order.indexOf(ph)>=i?'on':'');
@@ -555,8 +546,8 @@ const paint=()=>{const r=round,ph=r?r.phase:null,order=['betting','counting','se
   else{$('phase').textContent='settled';$('clock').textContent=(r.outcome||'')+' · '+r.value+' of '+r.threshold;$('detail').textContent='market #'+r.market_id+' · winners can claim on the markets page'}};
 const poll=async()=>{try{const d=await(await fetch('/api/demo')).json();round=d.round;if(round&&round.now)skew=Date.parse(round.now)-Date.now();
   if(!d.keeper_running)$('msg').textContent='The keeper is not running on this server.';paint()}catch(e){}};
-$('go').onclick=async()=>{$('msg').textContent='';$('go').disabled=true;try{localStorage.setItem('hw.demo.key',$('key').value)}catch(e){}
-  try{const r=await fetch('/api/demo/start',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key:$('key').value})});
+$('go').onclick=async()=>{$('msg').textContent='';$('go').disabled=true;
+  try{const r=await fetch('/api/demo/start',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
     const d=await r.json();if(!r.ok)$('msg').textContent=d.detail||('error '+r.status)}catch(e){$('msg').textContent=String(e)}
   await poll()};
 poll();setInterval(poll,2000);setInterval(paint,500);
