@@ -1,7 +1,7 @@
 /* The globe. Filled countries, every corridor between world regions drawn as a blue lane whose
-   brightness is its efficiency this week, flow particles in vessel colours moving along
-   the lanes (slower and thinner when a route is losing efficiency), a valve at every
-   strait that opens and closes with its traffic, and the live ships from the server.
+   brightness is its efficiency this week (static, no animation), a ring at every
+   strait whose gap is its traffic vs 2023, and the live cargo ships and tankers from the
+   server as arrows pointing along their course. Buttons and keys reorient it (see api).
    Drag left/right to spin and up/down to tilt, all the way over the poles (it keeps its momentum), scroll to zoom, click a strait, lane or ship. */
 
 (() => {
@@ -63,27 +63,21 @@
       return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
     };
 
-    // flow particles: more on longer, busier lanes
-    const parts = [];
-    for (const L of lanes) {
-      const n = Math.max(2, Math.round(L.len / (2.2 * RAD)));
-      for (let i = 0; i < n; i++) parts.push({ L, s: rnd() * L.len, v: (0.7 + rnd() * 0.6), dir: rnd() < 0.5 ? 1 : -1, pick: rnd(), off: (rnd() - 0.5) * 0.004 });
-    }
-
     // straits
     const straits = D.straits.map(s => ({ ...s, v: vec(s.lat, s.lon), sx: 0, sy: 0, vis: false }));
 
     /* ---------- state ---------- */
     const S = {
       ti: nW - 1, zoom: 1, zoomT: 1, idle: 9, wAxis: [0, 1, 0], wSpeed: 0, dragAng: 0, fly: null,
-      hover: null, sel: null, quiet: 1, ships: [], shipsAt: 0, shipsFade: 0, showShips: true, dive: null,
+      hover: null, sel: null, quiet: 1, autoSpin: false, anim: null, ships: [], shipsAt: 0, shipsFade: 0, showShips: true, dive: null,
     };
     const rotM = (axis, ang) => {
       const [x, y, z] = axis, c = Math.cos(ang), s = Math.sin(ang), t = 1 - c;
       return [t * x * x + c, t * x * y - s * z, t * x * z + s * y, t * x * y + s * z, t * y * y + c, t * y * z - s * x, t * x * z - s * y, t * y * z + s * x, t * z * z + c];
     };
     const mul = (a, b) => { const o = new Array(9); for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) o[r * 3 + c] = a[r * 3] * b[c] + a[r * 3 + 1] * b[3 + c] + a[r * 3 + 2] * b[6 + c]; return o; };
-    let M = mul(rotM([1, 0, 0], 18 * RAD), rotM([0, 1, 0], -58 * RAD));   // start over the Indian Ocean: Suez, Hormuz and Malacca in view
+    const HOME = () => mul(rotM([1, 0, 0], 18 * RAD), rotM([0, 1, 0], -58 * RAD));   // over the Indian Ocean: Suez, Hormuz and Malacca in view
+    let M = HOME();
     const spin = (axis, ang) => { if (ang) M = mul(rotM(axis, ang), M); };
     const view = v => [M[0] * v[0] + M[1] * v[1] + M[2] * v[2], M[3] * v[0] + M[4] * v[1] + M[5] * v[2], M[6] * v[0] + M[7] * v[1] + M[8] * v[2]];
     const unview = v => [M[0] * v[0] + M[3] * v[1] + M[6] * v[2], M[1] * v[0] + M[4] * v[1] + M[7] * v[2], M[2] * v[0] + M[5] * v[1] + M[8] * v[2]];
@@ -113,7 +107,7 @@
 
     /* ---------- drawing ---------- */
     const obj = {
-      down() { S.wSpeed = 0; S.dragAng = 0; S.fly = null; S.idle = 0; },
+      down() { S.wSpeed = 0; S.dragAng = 0; S.fly = null; S.anim = null; S.idle = 0; },
       drag(st, dx, dy) {
         // left/right spins about the screen's vertical axis, up/down tilts about its horizontal
         // axis, with no limit, so you can roll the globe over the poles and upside down
@@ -145,7 +139,12 @@
             if (S.fly.zoom) S.zoomT = S.fly.zoom;
             if (rem < 0.003 || l < 1e-7) { if (S.fly.done) S.fly.done(); S.fly = null; }
             else spin([ax[0] / l, ax[1] / l, ax[2] / l], rem * (1 - Math.exp(-(S.fly.rate || 3.4) * dt)));
-          } else if (!S.sel && !P.inside && S.zoomT < 1.6) spin([0, 1, 0], 0.045 * dt * HW.smooth((S.idle - 2) / 3));
+          } else if (S.anim) {
+            // a button turn: ease the remaining angle down
+            const step = S.anim.left * (1 - Math.exp(-7 * dt));
+            if (Math.abs(S.anim.left) < 0.002) { spin(S.anim.axis, S.anim.left); S.anim = null; }
+            else { spin(S.anim.axis, step); S.anim.left -= step; }
+          } else if (S.autoSpin && !P.down) spin([0, 1, 0], 0.12 * dt);
         }
         const m0 = M[0], m1 = M[1], m2 = M[2], m3 = M[3], m4 = M[4], m5 = M[5], m6 = M[6], m7 = M[7], m8 = M[8];
         const proj = (v, out) => { out[0] = cx + (m0 * v[0] + m1 * v[1] + m2 * v[2]) * R; out[1] = cy - (m3 * v[0] + m4 * v[1] + m5 * v[2]) * R; return m6 * v[0] + m7 * v[1] + m8 * v[2]; };
@@ -154,12 +153,12 @@
 
         /* sphere body and rim */
         const g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.05, cx, cy, R);
-        g.addColorStop(0, '#16171a'); g.addColorStop(0.7, '#111214'); g.addColorStop(1, '#0d0d0f');
+        g.addColorStop(0, C.sphere[0]); g.addColorStop(0.7, C.sphere[1]); g.addColorStop(1, C.sphere[2]);
         ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.2832); ctx.fill();
         const halo = ctx.createRadialGradient(cx, cy, R * 0.99, cx, cy, R * 1.16);
-        halo.addColorStop(0, 'rgba(76,141,255,0.08)'); halo.addColorStop(1, 'rgba(76,141,255,0)');
+        halo.addColorStop(0, `rgba(${C.glow},0.1)`); halo.addColorStop(1, `rgba(${C.glow},0)`);
         ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, R * 1.16, 0, 6.2832); ctx.arc(cx, cy, R, 0, 6.2832, true); ctx.fill();
-        ctx.strokeStyle = 'rgba(236,236,236,0.16)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.2832); ctx.stroke();
+        ctx.strokeStyle = C.rim; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.2832); ctx.stroke();
 
         /* ocean grid dots */
         ctx.fillStyle = C.fg; ctx.globalAlpha = 0.045; ctx.beginPath();
@@ -186,7 +185,7 @@
           land.closePath();
         }
         ctx.globalAlpha = 1; ctx.fillStyle = C.land; ctx.fill(land);
-        ctx.strokeStyle = 'rgba(242,242,240,0.28)'; ctx.lineWidth = 0.7; ctx.stroke(land);
+        ctx.strokeStyle = C.border; ctx.lineWidth = 0.7; ctx.stroke(land);
         const px = P.inside ? P.x : -1e4, py = P.y;
 
         /* lanes: brightness is efficiency, blocked share turns the lane into a dotted grey line */
@@ -200,9 +199,9 @@
             if (L.sv[j] && P.inside && !P.down && j % 2 === 0) { const d2 = (tmp[0] - px) ** 2 + (tmp[1] - py) ** 2; if (d2 < laneD) { laneD = d2; lanePick = L; } }
           }
           const eff = laneEff(L), blk = laneBlocked(L), hi = L === hovLane || L === selLane;
-          ctx.strokeStyle = hi ? '#9cc0ff' : blk > 0.3 ? '#6b6b6b' : C.accent;
+          ctx.strokeStyle = hi ? C.laneHi : blk > 0.3 ? C.dim : C.accent;
           ctx.lineWidth = hi ? 1.6 : 0.6 + 0.6 * eff;
-          ctx.globalAlpha = hi ? 1 : (0.25 + 0.45 * Math.pow(eff, 3)) * S.quiet;
+          ctx.globalAlpha = hi ? 1 : (0.35 + 0.45 * Math.pow(eff, 3)) * S.quiet;
           ctx.setLineDash(blk > 0.3 ? [2, 4] : []);
           ctx.beginPath(); let pen = false;
           for (let j = 0; j < n; j++) { if (!L.sv[j]) { pen = false; continue; } if (pen) ctx.lineTo(L.sx[j], L.sy[j]); else { ctx.moveTo(L.sx[j], L.sy[j]); pen = true; } }
@@ -210,56 +209,47 @@
         }
         ctx.setLineDash([]);
 
-        /* flow particles: speed and length scale with lane efficiency; blocked lanes hold their ships as dots */
-        const tail = 0.012 * Math.min(2.2, S.zoom);
-        for (const p of parts) {
-          const L = p.L, eff = laneEff(L), blk = laneBlocked(L);
-          const sp = 0.05 * p.v * (0.25 + 0.75 * eff) * (blk > 0.5 ? 0.08 : 1);
-          p.s += p.dir * sp * dt; if (p.s > L.len) p.s -= L.len; if (p.s < 0) p.s += L.len;
-          const a = laneAt(L, p.s), Z = proj(a, tmp); if (Z < 0.03) continue;
-          const x = tmp[0], y = tmp[1]; if (x < -10 || x > W + 10 || y < -10 || y > H + 10) continue;
-          const col = '#cfe0ff', hi = L === hovLane || L === selLane;   // light blue, so the routes read as blue and vessel colours are kept for ships
-          ctx.globalAlpha = (hi ? 1 : 0.4 * S.quiet) * (Z < 0.2 ? Z * 5 : 1);
-          if (blk > 0.5) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.5, 0, 6.2832); ctx.fill(); continue; }
-          const b = laneAt(L, HW.clamp(p.s - p.dir * tail * (0.4 + eff), 0, L.len)); proj(b, tmp);
-          ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(tmp[0], tmp[1]); ctx.lineTo(x, y); ctx.stroke();
-        }
-
         /* live ships, only at "now" */
         const atNow = S.ti >= nW - 1.01;
         S.shipsFade += ((atNow && S.showShips ? 1 : 0) - S.shipsFade) * (1 - Math.exp(-4 * dt));
         let shipPick = null, shipD = 64;
         if (S.shipsFade > 0.02 && S.ships.length) {
-          // every ship is a dot in its vessel colour with a dark ring; zoomed in, cargo ships and
-          // tankers become pins whose tip sits exactly on the ship's position
-          const pins = S.zoom >= 2.2;
-          for (let pass = 0; pass < 2; pass++) {   // other ships first, cargo and tankers on top
-            for (const s of S.ships) {
-              const main = s.g === 'cargo' || s.g === 'tanker';
-              if (main !== (pass === 1)) continue;
-              const Z = proj(s.v, tmp); if (Z < 0.03) continue;
-              const x = tmp[0], y = tmp[1]; if (x < -12 || x > W + 12 || y < -20 || y > H + 6) continue;
-              const fade = S.shipsFade * (Z < 0.2 ? Z * 5 : 1), col = HW.groupColour(s.g);
-              ctx.fillStyle = col; ctx.strokeStyle = C.bg;
-              if (main && pins) {
-                const r = 4, top = y - 13;
-                ctx.globalAlpha = fade;
-                ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, top + r); ctx.strokeStyle = col; ctx.stroke();
-                ctx.beginPath(); ctx.arc(x, top, r, 0, 6.2832); ctx.fill();
-                ctx.lineWidth = 1.2; ctx.strokeStyle = C.bg; ctx.stroke();
-                ctx.fillStyle = C.bg; ctx.beginPath(); ctx.arc(x, top, 1.4, 0, 6.2832); ctx.fill();
-                ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.3, 0, 6.2832); ctx.fill();
-              } else {
-                const r = main ? 2.4 : 1.5;
-                ctx.globalAlpha = fade * (main ? 1 : 0.5);
-                ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); ctx.stroke();
-              }
-              if (main && P.inside && !P.down) { const hy = pins ? y - 13 : y, d2 = (x - px) ** 2 + (hy - py) ** 2; if (d2 < shipD) { shipD = d2; shipPick = s; } }
+          // cargo ships and tankers only (every one is underway, 3 kn or more), drawn as an arrow
+          // pointing along its course. Zoomed in, each gets a pin whose tip sits on its position.
+          const pins = S.zoom >= 2.2, len = pins ? 6 : 3.6 + 0.8 * Math.sqrt(S.zoom);
+          for (const s of S.ships) {
+            const Z = proj(s.v, tmp); if (Z < 0.03) continue;
+            const x = tmp[0], y = tmp[1]; if (x < -14 || x > W + 14 || y < -24 || y > H + 8) continue;
+            const col = HW.groupColour(s.g);
+            // course on screen: clockwise from north, using the local north and east at the ship
+            const c = (s.cog || 0) * RAD, sl = Math.sin(s.lat * RAD), cl = Math.cos(s.lat * RAD), so = Math.sin(s.lon * RAD), co = Math.cos(s.lon * RAD);
+            const north = view([-sl * so, cl, -sl * co]), east = view([co, 0, -so]);
+            let vx = Math.sin(c) * east[0] + Math.cos(c) * north[0], vy = -(Math.sin(c) * east[1] + Math.cos(c) * north[1]);
+            const vl = Math.hypot(vx, vy) || 1; vx /= vl; vy /= vl;
+            ctx.globalAlpha = S.shipsFade * (Z < 0.2 ? Z * 5 : 1);
+            const hx = x, hy = pins ? y - 15 : y;   // where the arrow sits
+            if (pins) {
+              ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(hx, hy + 7); ctx.stroke();
+              ctx.fillStyle = C.bg; ctx.beginPath(); ctx.arc(hx, hy, 7.5, 0, 6.2832); ctx.fill();
+              ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
+              ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 6.2832); ctx.fill();
             }
+            // arrow: tip ahead along course, two back corners
+            const px2 = -vy, py2 = vx, w = len * 0.55;
+            ctx.fillStyle = col; ctx.strokeStyle = C.bg; ctx.lineWidth = pins ? 0 : 0.8;
+            ctx.beginPath();
+            ctx.moveTo(hx + vx * len, hy + vy * len);
+            ctx.lineTo(hx - vx * len * 0.7 + px2 * w, hy - vy * len * 0.7 + py2 * w);
+            ctx.lineTo(hx - vx * len * 0.35, hy - vy * len * 0.35);
+            ctx.lineTo(hx - vx * len * 0.7 - px2 * w, hy - vy * len * 0.7 - py2 * w);
+            ctx.closePath();
+            if (!pins) ctx.stroke();
+            ctx.fill();
+            if (P.inside && !P.down) { const d2 = (hx - px) ** 2 + (hy - py) ** 2; if (d2 < shipD) { shipD = d2; shipPick = s; } }
           }
         }
 
-        /* strait valves: two arcs whose gap is the traffic vs baseline, filled with dots in the strait's vessel mix */
+        /* strait rings: two arcs whose gap is the traffic vs 2023 (wide open = normal) */
         let straitPick = null, straitD = 260;
         const vr = HW.clamp(7 + 2.2 * Math.sqrt(S.zoom), 8, 15);
         for (const s of straits) {
@@ -268,20 +258,14 @@
           const ratio = straitRatio(s), open = HW.clamp(ratio, 0, 1.2), hi = (S.hover && S.hover.s === s) || (S.sel && S.sel.s === s);
           const busy = s.status.baseline_per_week > 250 || hi;
           ctx.globalAlpha = (hi ? 1 : busy ? 0.9 : 0.45) * (Z < 0.25 ? Z * 4 : 1);
-          ctx.strokeStyle = ratio < 0.6 ? '#9a9a9a' : C.fg; ctx.lineWidth = hi ? 1.6 : 1.1;
+          ctx.strokeStyle = ratio < 0.6 ? C.dim : C.fg; ctx.lineWidth = hi ? 1.8 : 1.3;
           const gap = 0.12 + 0.95 * HW.clamp(open, 0, 1);   // radians of opening on each side
           ctx.beginPath(); ctx.arc(x, y, vr, -Math.PI / 2 + gap, Math.PI / 2 - gap); ctx.stroke();
           ctx.beginPath(); ctx.arc(x, y, vr, Math.PI / 2 + gap, Math.PI * 1.5 - gap); ctx.stroke();
-          const m = straitMix(s), n = 10; let a = 0;
-          for (let k = 0; k < n; k++) {
-            const ang = st.t * (0.6 + open) + k * 0.628, rr = vr * 0.55;
-            let acc = 0, kind = 0; const r = (k + 0.5) / n; for (let q = 0; q < 5; q++) { acc += m[q]; if (r <= acc) { kind = q; break; } }
-            ctx.fillStyle = VCOL[VESSELS[kind]]; ctx.beginPath(); ctx.arc(x + Math.cos(ang) * rr * open, y + Math.sin(ang) * rr * open, 1.25, 0, 6.2832); ctx.fill();
-          }
           if (P.inside && !P.down) { const d2 = (x - px) ** 2 + (y - py) ** 2; if (d2 < straitD) { straitD = d2; straitPick = s; } }
-          if (busy && !hi && S.zoom < 3.5) {
+          if (Math.abs(ratio - 1) > 0.2 && !hi && S.zoom < 3.5) {   // label only the disrupted ones; the rest on hover
             const pct = (ratio - 1) * 100, right = x >= cx;
-            HW.label(ctx, (right ? '' : '') + s.name.replace(' Strait', '').replace(' Canal', '').toUpperCase() + ' ' + HW.fPct(pct), x + (right ? vr + 5 : -vr - 5), y + 4, ratio < 0.6 ? '#b0b0b0' : '#9a9a9a', right ? 'left' : 'right', 10);
+            HW.label(ctx, (right ? '' : '') + s.name.replace(' Strait', '').replace(' Canal', '').toUpperCase() + ' ' + HW.fPct(pct), x + (right ? vr + 5 : -vr - 5), y + 4, ratio < 0.6 ? C.fg : C.dim, right ? 'left' : 'right', 10.5);
           }
         }
 
@@ -301,7 +285,7 @@
             const r = straitRatio(h.s); x = h.s.sx; y = h.s.sy; title = h.s.name.toUpperCase();
             sub = `${HW.fPct((r - 1) * 100)} VS 2023 · ${HW.fInt(r * h.s.status.baseline_per_week)} SHIPS/WK`;
           } else if (h.kind === 'ship') {
-            proj(h.ship.v, tmp); x = tmp[0]; y = tmp[1]; title = (h.ship.name || 'MMSI ' + h.ship.mmsi).toUpperCase();
+            proj(h.ship.v, tmp); x = tmp[0]; y = tmp[1] - (S.zoom >= 2.2 ? 15 : 0); title = (h.ship.name || 'MMSI ' + h.ship.mmsi).toUpperCase();
             sub = `${HW.groupLabel(h.ship.g)} · ${h.ship.sog != null ? h.ship.sog.toFixed(1) + ' KN' : ''}`; sub2 = h.ship.destination ? '→ ' + h.ship.destination.toUpperCase() : '';
           } else {
             const L = h.L, mid = L.pts[Math.floor(L.pts.length / 2)]; proj(mid, tmp); x = P.x; y = P.y;
@@ -309,12 +293,12 @@
             sub = `${(L.r ? L.r.expected_days[HW.clamp(wi() + rOff, 0, L.r.expected_days.length - 1)] : L.p.days).toFixed(1)} DAYS · EFFICIENCY ${e.toFixed(2)}`;
           }
           const right = x < W - 300, lx = x + (right ? 42 : -42), ly = Math.max(70, y - 48);
-          ctx.globalAlpha = 0.8; ctx.strokeStyle = '#bbb'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(lx, ly + 4); ctx.stroke();
+          ctx.globalAlpha = 0.8; ctx.strokeStyle = C.dim; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(lx, ly + 4); ctx.stroke();
           ctx.globalAlpha = 1; ctx.fillStyle = C.fg; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 6.2832); ctx.fill();
           const al = right ? 'left' : 'right', tx = lx + (right ? 6 : -6);
           HW.label(ctx, title, tx, ly - 12, C.fg, al, 12, 500);
-          HW.label(ctx, sub, tx, ly + 3, '#b8b8b8', al, 10.5);
-          if (sub2) HW.label(ctx, sub2, tx, ly + 17, '#8c8c8c', al, 10.5);
+          HW.label(ctx, sub, tx, ly + 3, C.fg, al, 10.5);
+          if (sub2) HW.label(ctx, sub2, tx, ly + 17, C.dim, al, 10.5);
         }
 
         if (opts.onFrame) opts.onFrame(S);
@@ -326,7 +310,8 @@
       laneEff, straitRatio, straitMix, worldMix,
       setWeek(f) { S.ti = HW.clamp(f, 0, nW - 1); },
       setShips(list) {
-        S.ships = list.map(s => ({ ...s, v: vec(s.lat, s.lon), g: s.type_group || HW.vesselGroup(s.type) }));
+        S.ships = list.map(s => ({ ...s, v: vec(s.lat, s.lon), g: s.type_group || HW.vesselGroup(s.type) }))
+          .filter(s => (s.g === 'cargo' || s.g === 'tanker') && s.sog >= 3);
         S.shipsAt = Date.now();
       },
       flyTo(lat, lon, zoom, done, rate) { S.fly = { v: vec(lat, lon), zoom, done, rate }; S.wSpeed = 0; S.idle = 0; },
@@ -337,6 +322,18 @@
         if (opts.onSelect) opts.onSelect(item);
       },
       zoomBy(f) { S.zoomT = HW.clamp(S.zoomT * f, 0.85, 9); },
+      /* orientation: each turn eases in over a moment. Angles in degrees. */
+      turn(deg) { S.fly = null; S.wSpeed = 0; S.anim = { axis: [0, 1, 0], left: deg * RAD }; },    // + spins the front to the right
+      tilt(deg) { S.fly = null; S.wSpeed = 0; S.anim = { axis: [1, 0, 0], left: deg * RAD }; },    // + rolls the top toward you (see more of the north)
+      roll(deg) { S.fly = null; S.wSpeed = 0; S.anim = { axis: [0, 0, 1], left: -deg * RAD }; },   // + turns the picture clockwise
+      northUp() {   // turn the picture so north points straight up
+        const n = view([0, 1, 0]); if (Math.hypot(n[0], n[1]) < 1e-3) return;
+        S.fly = null; S.wSpeed = 0; S.anim = { axis: [0, 0, 1], left: Math.atan2(n[0], n[1]) };
+      },
+      flip() { api.roll(180); },
+      home() { M = HOME(); S.fly = null; S.anim = null; S.wSpeed = 0; S.zoomT = 1; api.select(null); },
+      setAutoSpin(on) { S.autoSpin = on; },
+      isUpsideDown() { return view([0, 1, 0])[1] < 0; },
       screenOf(lat, lon) { const out = [0, 0]; const v = vec(lat, lon); const Z = M[6] * v[0] + M[7] * v[1] + M[8] * v[2]; out[0] = cx + (M[0] * v[0] + M[1] * v[1] + M[2] * v[2]) * R; out[1] = cy - (M[3] * v[0] + M[4] * v[1] + M[5] * v[2]) * R; return { x: out[0], y: out[1], visible: Z > 0 }; },
     };
     canvas.style.cursor = 'grab';
