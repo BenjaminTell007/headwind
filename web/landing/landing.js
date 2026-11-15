@@ -21,7 +21,7 @@
   // Glyph colours. Greys for the sea, white and tanker purple for the ship and wake
   // (the ship in the clip is a tanker, so its hue is the tanker hue).
   const GREYS = ['#1d2024', '#26292e', '#30343a', '#3c4047', '#4b4f56', '#5f6369', '#787b80', '#96989b'];
-  const BRIGHT = ['#f2f2f0', '#8f82f2', '#6f62d8', '#f2f2f0', '#d9d6ff'];
+  const BRIGHT = ['#f2f2f0', '#d6d6d4', '#ffffff', '#bdbdbb', '#f2f2f0'];   // black and white only
   const COLOURS = GREYS.concat(BRIGHT);
   const N_SHAPES = 10;
 
@@ -121,43 +121,25 @@
     Math.sin(x * f + t * s) + Math.sin(y * f * 1.3 - t * s * 0.8) +
     Math.sin((x + y) * f * 0.7 + t * s * 0.6) + Math.sin((x - y) * f * 0.9 - t * s * 0.5);
 
-  /* ---------- act 2: route arcs ----------
-     Dotted half-circles in the vessel colours rising off a horizon line, each with a
-     bright dot travelling along it like a ship on a route. They draw themselves in. */
-  const ARCS = [
-    { x: 0.30, r: 0.20, col: '#f08a3c', sp: 0.11 },
-    { x: 0.42, r: 0.27, col: '#ea86b5', sp: 0.08 },
-    { x: 0.50, r: 0.17, col: '#f2f2f0', sp: 0.14 },
-    { x: 0.58, r: 0.27, col: '#4c8dff', sp: 0.09 },
-    { x: 0.70, r: 0.20, col: '#8f82f2', sp: 0.12 },
-    { x: 0.50, r: 0.36, col: '#46b36f', sp: 0.06 },
-  ];
-  const drawArcs = ta => {
-    if (ta < 0.6) return;
-    const base = H * 0.66, scale = Math.min(W, H * 1.6);
-    ctx.lineCap = 'round';
-    ARCS.forEach((a, n) => {
-      const grow = ease((ta - 0.6 - n * 0.18) / 1.6);
-      if (grow <= 0) return;
-      const ax = W * a.x, r = scale * a.r;
-      const end = Math.PI + Math.PI * grow;          // from the left foot over the top
-      ctx.globalAlpha = 0.95 * (leaving ? 1 - ease((performance.now() - leaving) / 500) : 1);
-      ctx.strokeStyle = a.col;
-      ctx.lineWidth = 2.4;
-      ctx.setLineDash([2, 6]);
-      ctx.beginPath();
-      ctx.arc(ax, base, r, Math.PI, end);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      // the ship on the route
-      const p = Math.PI + Math.PI * ((ta * a.sp + n * 0.17) % 1) * grow;
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = a.col;
-      ctx.beginPath();
-      ctx.arc(ax + Math.cos(p) * r, base + Math.sin(p) * r, 3.4, 0, 6.2832);
-      ctx.fill();
-    });
-    ctx.globalAlpha = 1;
+  // separable box blur: src -> tmp (rows) -> out (columns)
+  let lumL = null, blurA = null, blurB = null;
+  const boxBlur = (src, tmp, out, w, h, r) => {
+    for (let y = 0; y < h; y++) {
+      let acc = 0;
+      for (let x = -r; x <= r; x++) acc += src[y * w + clamp(x, 0, w - 1)];
+      for (let x = 0; x < w; x++) {
+        tmp[y * w + x] = acc / (2 * r + 1);
+        acc += src[y * w + clamp(x + r + 1, 0, w - 1)] - src[y * w + clamp(x - r, 0, w - 1)];
+      }
+    }
+    for (let x = 0; x < w; x++) {
+      let acc = 0;
+      for (let y = -r; y <= r; y++) acc += tmp[clamp(y, 0, h - 1) * w + x];
+      for (let y = 0; y < h; y++) {
+        out[y * w + x] = acc / (2 * r + 1);
+        acc += tmp[clamp(y + r + 1, 0, h - 1) * w + x] - tmp[clamp(y - r, 0, h - 1) * w + x];
+      }
+    }
   };
 
   /* ---------- the frame ---------- */
@@ -200,7 +182,7 @@
     const ready = src.readyState >= 2 && src.videoWidth > 0;
 
     // smooth the cursor lens in and out
-    mouse.s += ((mouse.x > -999 ? 1 : 0) - mouse.s) * 0.12;
+    mouse.s = 0;   // the cursor lens is off (too noisy); kept in the code in case we want it back
 
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ctx.fillStyle = '#0a0a0a';
@@ -215,12 +197,24 @@
     let lum = null;
     if (ready) {
       const [x, y, w, h] = coverRect(src.videoWidth, src.videoHeight, W, H, zoom);
-      if (R > 1) ctx.drawImage(src, x, y, w, h);
+      if (R > 1) {
+        ctx.drawImage(src, x, y, w, h);
+        // black and white: knock the colour out of the footage
+        ctx.globalCompositeOperation = 'saturation';
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalCompositeOperation = 'source-over';
+      }
       // one pixel per cell (clear first, so a pulled-back frame has black edges)
       sctx.fillStyle = '#000';
       sctx.fillRect(0, 0, cols, rows);
       sctx.drawImage(src, x / cell, y / cell, w / cell, h / cell);
       lum = sctx.getImageData(0, 0, cols, rows).data;
+      // Ships stand out from the water around them: compare each cell's brightness with
+      // a blurred copy (a box 7 cells wide). Big differences are hulls, decks and wakes.
+      if (!lumL || lumL.length !== cols * rows) { lumL = new Float32Array(cols * rows); blurA = new Float32Array(cols * rows); blurB = new Float32Array(cols * rows); }
+      for (let q = 0, p = 0; q < cols * rows; q++, p += 4) lumL[q] = (0.2126 * lum[p] + 0.7152 * lum[p + 1] + 0.0722 * lum[p + 2]) / 255;
+      boxBlur(lumL, blurA, blurB, cols, rows, 3);
     }
 
     if (!uiShown && t > REVEAL_AT + 0.9) {
@@ -253,6 +247,11 @@
           const dl = Math.hypot(x - mouse.x, y - mouse.y);
           m = Math.max(m, mouse.s * (1 - smooth(lensR - lensEdge, lensR, dl)));
         }
+        // the glyph pattern rides on the ships, shimmering in place
+        if (lumL && R > 1) {
+          const ship = smooth(0.07, 0.2, Math.abs(lumL[idx] - blurB[idx]));
+          m = Math.max(m, ship * 0.85);
+        }
         m *= appear;
         if (m < 0.03) continue;
 
@@ -283,7 +282,7 @@
         if (Math.sin(t * 2.3 + r * 60) > 0.992) ci = GREYS.length;   // the odd glint
 
         // black out the footage under the glyph, then draw it
-        if (R > 1 || mouse.s > 0.01) {
+        if (R > 1) {
           ctx.globalAlpha = m;
           ctx.fillStyle = '#0a0a0a';
           ctx.fillRect(x - cell / 2, y - cell / 2, cell, cell);
@@ -294,7 +293,6 @@
     }
     ctx.globalAlpha = 1;
 
-    if (act === 2) drawArcs(t - SWITCH_AT - CLOSE_FOR);
 
     if (leaving && now - leaving > 950) {
       window.location.href = target;
