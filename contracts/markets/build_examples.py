@@ -26,7 +26,14 @@ OUT = Path(__file__).resolve().parent / "examples.json"
 SEED_MON = 0.2  # default seed per market
 FEATURED_SEED_MON = 1.0  # deeper pools for the demo markets
 FEE_BPS = 100  # 1%
-PRIOR_WEEKS = 12  # starting price = smoothed share of the last 12 weeks that would have settled YES
+PRIOR_WEEKS = 12
+# Weekly, collapse, vessel and route markets stop trading here. The demo is Nov 15, 7:30 pm Pacific
+# (Nov 16 03:30 UTC), so closing at the start of the week (Nov 16 00:00 UTC) would shut them before it.
+# PortWatch publishes each day's counts about a week later, so trading into Nov 16 gives no edge.
+WEEKLY_CLOSE = datetime(2026, 11, 17, tzinfo=timezone.utc)
+# Changing a close time needs new example ids, or the server's keeper (which records what it opened
+# by example id) won't open the new markets. Bump this whenever the weekly terms change.
+WEEKLY_ROUND = "c17"  # starting price = smoothed share of the last 12 weeks that would have settled YES
 
 FEATURED = {
     "weekly_suez_canal", "collapse_suez_canal", "vessel_strait_of_hormuz_tanker",
@@ -76,6 +83,8 @@ def nice(x):
 def market(id_, group, question, series, threshold, is_above, close, prior, settles_on, why,
            threshold_display, vessel_type=None, close_minutes=None):
     base = id_.rsplit("_", 1)[0] if id_[-1].isdigit() else id_
+    if group in ("weekly", "collapse", "vessel", "route"):
+        id_ = f"{id_}_{WEEKLY_ROUND}"
     m = {
         "id": id_,
         "group": group,
@@ -107,7 +116,7 @@ def main():
 
     # The next week PortWatch hasn't reported: same window as market_seeds.json
     week = seeds["weekly"][0]["week"]
-    close = end_of_day(seeds["weekly"][0]["closes"])  # trading stops when the week starts
+    close = max(end_of_day(seeds["weekly"][0]["closes"]), WEEKLY_CLOSE)
     week_label = datetime.fromisoformat(week[1]).strftime("%b %-d, %Y")
     portwatch = "IMF PortWatch daily transit counts, summed Monday to Sunday"
 
