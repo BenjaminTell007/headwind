@@ -12,8 +12,10 @@
 - `index.html` at the repo root (the landing page)
 - `web/landing/` (new: landing script, styles, video)
 - `web/js/logo.js`
-- `web/js/ship.js`, `web/js/globe.js`
+- `web/js/ship.js`
 - `design/`
+
+`web/js/globe.js` is yours (Sam) for now, per your latest note. I'll ask in here before touching it.
 
 Yours (Sam): `web/js/main.js`, `web/app.css`, `web/index.html`. I won't touch them. The logo change happens inside `logo.js`, so your calls to `HW.glyphLogo(...)` keep working with no edits.
 
