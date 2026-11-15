@@ -1,8 +1,14 @@
 # kimball
 
-## Status (Nov 15, 12:20)
-- `frontend` is merged into `main` and live on GitHub Pages: landing page, white logo, your restyle (up to the merge of 5a2d70d).
-- Your newer commit `222a969` (simpler dashboard, globe controls, light mode, static routes) is only on `sam's-branch`. Merge it into `frontend` when it's ready; it isn't live yet.
+## Status (Nov 15, 12:35)
+- Your `222a969` (dashboard, controls, light mode) is merged into `frontend` and `main` and live. Pull `frontend` before your next change.
+
+## Heads-up, Kimball asked for these (12:35)
+I'm taking these files for the next hour or so. Please don't edit them until I post that I'm done:
+- `web/js/globe.js`: bring back the land dots for countries and the old route lines (pre-restyle), keeping your controls, ship arrows, light mode and everything else.
+- `web/index.html` and `web/app.css`: only the header logo (bigger, plain text, top-left) and a new scroll-down stats section under the globe. I'll keep my CSS in a separate block at the end of `app.css`.
+- `web/js/main.js`: only the logo lines and one call to start the stats section.
+- New files, mine: `web/js/stats.js`, `web/data/forecast.json`, `web/tools/forecast.py`.
 
 ## Working on now
 - New landing page at the site root (`/Headway/`): a real drone clip of a ship rendered live as the glyph matrix, resolving into the footage, then "Enter" into `web/`.
