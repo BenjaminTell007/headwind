@@ -6,7 +6,7 @@ The server key has three jobs on the contracts (see contracts/README.md):
   - oracle:  Markets.resolve / resolveInvalid when a market's number is in
 
 Settings, from the environment or else PRIVATE.md in the repo root (KEY=VALUE lines):
-  SERVER_PRIVATE_KEY    the server key (never commit it)
+  SERVER_PRIVATE_KEY    the server key (never commit it); PRICER_PRIVATE_KEY also works
   MONAD_RPC_URL         default https://testnet-rpc.monad.xyz
   HEADWAY_DEPLOYMENTS   default contracts/deployments.json, written by
                         contracts/script/write_deployments.mjs after a deploy
@@ -69,7 +69,8 @@ class Chain:
         from web3 import Web3
         from eth_account import Account
 
-        key = setting("SERVER_PRIVATE_KEY")
+        # contracts/README.md calls it PRICER_PRIVATE_KEY; one key does all three jobs by default.
+        key = setting("SERVER_PRIVATE_KEY") or setting("PRICER_PRIVATE_KEY")
         path = Path(setting("HEADWAY_DEPLOYMENTS", ROOT / "contracts" / "deployments.json"))
         if not key:
             self.why_off = "SERVER_PRIVATE_KEY is not set"

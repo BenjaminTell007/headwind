@@ -46,7 +46,7 @@ The logger reads the aisstream key from `PRIVATE.md` in the repo root (the line 
 
 `server/chain.py` holds the server key's three jobs: faucet relayer, quote signer (pricer) and oracle. It reads, from the environment or `PRIVATE.md`:
 
-- `SERVER_PRIVATE_KEY`: the server key. On Railway, put it in Variables
+- `SERVER_PRIVATE_KEY` (or `PRICER_PRIVATE_KEY`, the name in `contracts/README.md`): the server key. On Railway, put it in Variables
 - `MONAD_RPC_URL`: defaults to `https://testnet-rpc.monad.xyz`
 - `HEADWAY_DEPLOYMENTS`: defaults to `contracts/deployments.json` (addresses and ABIs, written by `contracts/script/write_deployments.mjs`)
 
