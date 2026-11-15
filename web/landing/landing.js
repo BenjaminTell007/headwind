@@ -261,7 +261,9 @@
         let ship = 0;
         if (lumL && R > 1) {
           ship = smooth(0.07, 0.2, Math.abs(lumL[idx] - blurB[idx]));
-          m = Math.max(m, ship * 0.85);
+          // only a few glyphs ride on the ship: about 1 in 12 of its cells, changing slowly
+          const few = ((r * 977 + Math.floor(t * 0.25)) % 1) < 0.08;
+          if (few) m = Math.max(m, ship * 0.85); else ship = 0;
         }
         m *= appear;
         if (m < 0.03) continue;
