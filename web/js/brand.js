@@ -102,6 +102,8 @@
   /* ---------- wire up whatever this page has ---------- */
   const init = () => {
     document.querySelectorAll('.brand .word, header .logo').forEach(mountLogo);
+    // the landing's big centred word: same glyphs, filling its width, with a solid underlay
+    document.querySelectorAll('canvas.hw-bigword').forEach(cv => { if (HW.glyphIntro) HW.glyphIntro(cv, { step: 13, bg: null, fit: true, underlay: 0.28 }); });
 
     const landing = document.getElementById('loader');
     const intro = document.getElementById('intro');
