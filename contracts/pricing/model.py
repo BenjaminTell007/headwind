@@ -425,7 +425,9 @@ def price_arrival(ship, port, deadline, now=None, weather=None, queue_factor=1.0
     expected = max(expected, now + timedelta(minutes=15))  # never forecast an arrival in the past
 
     sigma_h = math.sqrt(
-        (0.5 + 0.07 * sail_h) ** 2          # speed and routing error, shrinks as the ship nears
+        # speed and routing error, shrinks as the ship nears. 12% of sailing time: AIS speed-over-ground
+        # jumps 10-15% between reports (traffic lanes, currents), so one report mustn't swing the odds.
+        (0.5 + 0.12 * sail_h) ** 2
         + (0.03 * sail_h * max(0.0, wave - 2.5)) ** 2  # rough seas
         + strait_sd ** 2
         + (0.0 if at_port else 0.75 * cong) ** 2  # approach and anchoring
