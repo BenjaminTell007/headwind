@@ -8,7 +8,9 @@
   const HW = window.HW;
   const FONT = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 
-  HW.drawLogo = (canvas, { colour = '#f2f2f0', bg = null, weight = 300, spacing = 0.42 } = {}) => {
+  // colour defaults to the theme's text colour (HW.C.fg), so light mode gets a dark logo.
+  // Call it again after HW.setTheme() to redraw in the new colour.
+  HW.drawLogo = (canvas, { colour = (HW.C && HW.C.fg) || '#f2f2f0', bg = null, weight = 300, spacing = 0.42 } = {}) => {
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
     const word = 'HEADWAY';
