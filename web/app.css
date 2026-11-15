@@ -258,3 +258,7 @@ body:has(#panel.open) .wx-legend { opacity:0 !important; pointer-events:none !im
   .hud .wx { display:none; }
   .hud .ident { width:auto; right:24px; }
 }
+
+/* Ship view, cleaner (Kimball, Nov 15): ship, weather and the hedge only. The readout strip,
+   compass and crosshair are hidden; main.js still fills them. */
+.hud .strip, .hud .compass, .hud .cross { display:none !important; }

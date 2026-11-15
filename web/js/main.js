@@ -165,7 +165,7 @@ const dive = async ship => {
   const lat = +ship.lat, lon = +ship.lon;
   globe.flyTo(lat, lon, 9, null, 2.2);
   const wxP = HW.weatherAt(lat, lon).catch(() => null);
-  await new Promise(r => setTimeout(r, 650));   // the satellite zoom fades in over the globe while it's still flying
+  await new Promise(r => setTimeout(r, 1100));   // let the globe fly most of the way, then the footage fades in over it
   $('dive').classList.add('on');
   scene.open(ship, null);
   window.dispatchEvent(new CustomEvent('headway:dive', { detail: ship }));   // js/story.js prices a hedge for it
