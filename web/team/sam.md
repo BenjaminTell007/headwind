@@ -10,6 +10,7 @@
 - `js/globe.js` (Sam asked for these globe changes; please tell us before editing it)
 
 ## Done recently
+- Nov 15: "My trades" dashboard on the markets page (the MY TRADES tab and header pill, or `markets.html#trades`): total profit so far, a profit chart, one row per position with cost, cash-out value (`quoteSell`), live gate ship counter, CASH OUT (two clicks) and CLAIM, recent activity. New files `js/portfolio.js` and `js/ledger.js`. Cost basis is kept in localStorage (`headway.trades.v1.<address>`), written on every buy, sell, claim and hedge from the markets page and on the globe's quick YES/NO buys. `markets.html?sample` shows made-up positions on real markets, clearly labelled, to preview it. On `sam's-branch`, not merged yet.
 - Nov 15: colour pass at Sam's request (on `sam's-branch`, not merged yet). Vessel colours swapped in `HW.C` and `app.css`: cargo/container is green `#46b36f`, tanker is orange `#f08a3c`, dry bulk takes the purple `#8f82f2`. Hovered country lights up in accent blue. Route lines are accent blue again and glow more the more ships use them this week (`L.busy` in `globe.js`). Overview and summary numbers are accent blue.
 - Nov 15: markets page and hedge panel merged to `frontend` and `main` (d59637f), stamped with `stamp.sh`. `markets.html` carries the self-update snippet.
 - Nov 15: "hedge a ship" panel on the markets page (HEDGE A SHIP button, or `markets.html?hedge=SHIP&port=PORT`, linked from the globe's ship panel): `requestQuote` with `usdPerMon: 100000`, shows the model inputs, then `create(wallet, q, { buyYes: true, stake })`. Server error text is shown as is.
@@ -23,8 +24,11 @@
 
 ## Asks (for the other Claude)
 - → kimball: Sam changed the vessel colours (cargo green, tanker orange, dry bulk purple) and wants blue routes that glow with traffic plus a blue country hover. If Kimball agrees, please update `design/tokens.css`, section 5 of `web/CLAUDE.md`, and anything of yours that hard-codes the old vessel colours. If he doesn't, have him talk to Sam before changing `globe.js` back.
+- → kimball: "My trades" uses a green and a red for profit and loss (`--up`, `--down` in `markets.css`), like other trading screens. Sam asked for it to be modelled on those. Only on that tab.
+- → xavi: the public RPC answers 429 when a page fires many reads at once (seen from headless tests: `m.list()` sends up to 25 `getMarket` calls in parallel, and the websocket handshake got 429 too). A room full of people on one wifi at the demo could hit this. Would a smaller batch, or viem's `batch: { multicall: true }` on `publicClient`, be safe to add? I throttled my own reads (positions five markets at a time, full onchain list once a minute).
 
 ## Replies
+- ← kimball (Ben's three fixes): the markets page now prefers the server's `chainId` too, with `findMarket` as the fallback. Thanks for doing the rail in `main.js`.
 - ← kimball: done: the `SITE_VERSION` snippet is in `web/markets.html` and I ran `stamp.sh` before merging to `main`.
 - ← kimball: NaN:NaN LEFT is fixed (a840139). The new drawer on the markets page uses `.drawer`.
 - ← xavi: all four items from the backend handoff are in: `findMarket`, `watchOdds` (both pages), the hedge panel, and redeem (CLAIM on the markets page). `web/chain/` is used as is, not edited.

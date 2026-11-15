@@ -1,6 +1,8 @@
 /* Wires the page together: intro, overview strip, globe, replay timeline, markets,
    the detail panel, ship search and the dive into the ship scene. */
 
+import { recordTrade } from './ledger.js';   // what each trade cost, for "My trades" on the markets page
+
 const HW = window.HW, C = HW.C;
 const $ = id => document.getElementById(id);
 const VESSELS = [['container', C.container, 'CONTAINER'], ['tanker', C.tanker, 'TANKER'], ['dry_bulk', C.bulk, 'DRY BULK'], ['general_cargo', C.general, 'GENERAL'], ['roro', C.roro, 'RO-RO']];
@@ -199,7 +201,8 @@ $('mlist').addEventListener('click', async e => {
     btn.textContent = '…';
     try {
       if (!chain.wallet) chain.wallet = await chain.wl.getWallet();
-      await chain.m.buy(chain.wallet, m.chainId, btn.dataset.side === 'yes', chain.mk.parseMon('0.01'));
+      const yes = btn.dataset.side === 'yes', r = await chain.m.buy(chain.wallet, m.chainId, yes, chain.mk.parseMon('0.01'));
+      if (r.trade) recordTrade(chain.wallet.address, { kind: 'buy', id: Number(m.chainId), side: yes ? 'yes' : 'no', q: m.question, mon: 0.01, shares: Number(chain.mk.formatMon(r.trade.shares, 6)), tx: r.receipt.hash });
       await syncChainOdds();
     } catch (err) { alert(chain.mk.explain ? chain.mk.explain(err) : String(err)); }
     renderMarkets();
