@@ -31,7 +31,7 @@
   root.id = 'stats';
   root.setAttribute('aria-hidden', 'true');
   root.innerHTML = `
-    <div class="back"><span class="word">HEADWAY</span><button id="statsBack">↑ BACK TO THE GLOBE</button></div>
+    <div class="back"><span class="hw-wordmark sm">HEADWAY</span><button id="statsBack">↑ BACK TO THE GLOBE</button></div>
     <div class="wrap">
       <section class="rh">
         <div class="rh-main">
