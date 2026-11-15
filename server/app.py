@@ -34,7 +34,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -304,6 +304,40 @@ def gate_count(gate_id: str, minutes: int = Query(30, ge=1, le=120), since: str 
 @app.post("/api/faucet")
 def faucet():
     raise HTTPException(501, "Not built yet: the relayer should call Faucet.drip(address). See PLAN.md.")
+
+
+@app.get("/", response_class=HTMLResponse)
+def home():
+    """A plain status page, so opening the server's link shows something."""
+    now = datetime.now(timezone.utc)
+    with state.lock:
+        total = len(state.latest)
+        recent = [p for p in state.latest.values() if p["time"] >= now - timedelta(minutes=30)]
+        counts = {}
+        for p in recent:
+            group = type_group(state.static.get(p["mmsi"], {}).get("type"))
+            counts[group] = counts.get(group, 0) + 1
+        last = state.last_poll
+    age = f"{(now - last).total_seconds():.0f} seconds ago" if last else "not yet"
+    rows = "".join(f"<tr><td>{g}</td><td>{n:,}</td></tr>" for g, n in sorted(counts.items(), key=lambda kv: -kv[1]))
+    links = [
+        ("/api/health", "health"),
+        ("/api/ships?types=cargo,tanker&moving_only=true&limit=20", "20 moving cargo ships and tankers"),
+        ("/api/ship/COSCO", "find a ship by name (COSCO)"),
+        ("/api/gates/singapore/count?minutes=30", "Singapore Strait crossings, last 30 minutes"),
+        ("/data/overview.json", "overview numbers"),
+        ("/docs", "all endpoints"),
+    ]
+    link_html = "".join(f'<li><a href="{href}">{label}</a></li>' for href, label in links)
+    return f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Headway server</title><meta http-equiv="refresh" content="15">
+<style>body{{margin:0;background:#222;color:#ececec;font:14px/1.6 ui-monospace,"SF Mono",Menlo,monospace}}
+main{{max-width:720px;margin:0 auto;padding:40px 16px}}h1{{font-weight:300;letter-spacing:.4em;margin:0}}
+.tag{{color:#8c8c8c;font-size:11px;letter-spacing:.18em}}td{{padding:2px 24px 2px 0}}a{{color:#f08a3c}}</style></head>
+<body><main><h1>HEADWAY</h1><p class="tag">SERVER: RUNNING · LAST READ OF THE SHIP LOG {age.upper()}</p>
+<p>{total:,} ships in memory, {len(recent):,} seen in the last 30 minutes:</p><table>{rows}</table>
+<p class="tag" style="margin-top:28px">TRY</p><ul>{link_html}</ul>
+<p class="tag">This page refreshes every 15 seconds.</p></main></body></html>"""
 
 
 @app.get("/data/gates.json")
