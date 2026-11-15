@@ -65,7 +65,8 @@
   window.addEventListener('click', e => {
     if (!hover || !e.target || e.target.id !== 'globe') return;
     const g = window.__hw && window.__hw.globe; if (!g) return;
-    e.stopPropagation();
-    g.flyTo(hover.lat, hover.lon, 6);
+    const p = hover;
+    // the globe handles the same click (it may pick a route underneath), so fly after it
+    setTimeout(() => { g.select(null); g.flyTo(p.lat, p.lon, 6); }, 0);
   }, true);
 })();
