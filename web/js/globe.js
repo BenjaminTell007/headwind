@@ -372,6 +372,8 @@
 
         /* strait rings: two arcs whose gap is the traffic vs 2023 (wide open = normal) */
         let straitPick = null, straitD = 260;
+        // labels: only the three most disrupted straits this week; the rest show on hover
+        const top3 = new Set(straits.map(s2 => [Math.abs(straitRatio(s2) - 1), s2]).filter(([d]) => d > 0.2 && d < 0.99).sort((x, y) => y[0] - x[0]).slice(0, 3).map(([, s2]) => s2));
         const vr = HW.clamp(7 + 2.2 * Math.sqrt(S.zoom), 8, 15);
         for (const s of straits) {
           const Z = proj(s.v, tmp); s.vis = Z > 0.05; if (!s.vis) continue;
@@ -384,7 +386,7 @@
           ctx.beginPath(); ctx.arc(x, y, vr, -Math.PI / 2 + gap, Math.PI / 2 - gap); ctx.stroke();
           ctx.beginPath(); ctx.arc(x, y, vr, Math.PI / 2 + gap, Math.PI * 1.5 - gap); ctx.stroke();
           if (P.inside && !P.down) { const d2 = (x - px) ** 2 + (y - py) ** 2; if (d2 < straitD) { straitD = d2; straitPick = s; } }
-          if (Math.abs(ratio - 1) > 0.2 && !hi && S.zoom < 3.5) {   // label only the disrupted ones; the rest on hover
+          if (top3.has(s) && !hi && S.zoom < 3.5) {   // label the three most disrupted; the rest on hover
             const pct = (ratio - 1) * 100, right = x >= cx;
             HW.label(ctx, (right ? '' : '') + s.name.replace(' Strait', '').replace(' Canal', '').toUpperCase() + ' ' + HW.fPct(pct), x + (right ? vr + 5 : -vr - 5), y + 4, ratio < 0.6 ? C.fg : C.dim, right ? 'left' : 'right', 10.5);
           }
