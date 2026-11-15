@@ -1,18 +1,25 @@
 // Contract helpers the page calls. Reads go straight to the chain; writes go through a wallet
 // from wallet.js. Amounts are bigint wei (1 MON = 10n ** 18n); use parseMon/formatMon at the edges.
 //
-//   const m = await markets();                       // bound to the deployed address
-//   const list = await m.list();                     // every market, with odds
-//   const r = await m.buy(wallet, id, true, parseMon('0.01'));
-//   r.trade.shares, r.trade.priceYes, r.receipt.hash
+// The hedge flow (a trade manager covering a shipment):
+//   const q = await requestQuote({ ship: 'COSCO SAGITTARIUS', port: 'Rotterdam', deadline, cargoUsd: 500_000 });
+//   q.model.p_yes, q.hedge.cover_mon                     // what the model says, before paying anything
+//   const m = await markets();
+//   const r = await m.create(wallet, q, { buyYes: true, stake: parseMon('0.2') });   // open + hedge, one tx
+//
+// Everyone else:
+//   await m.list()                                        // every market with odds
+//   await m.buy(wallet, id, true, parseMon('0.01'))       // trade
+//   await m.vault.deposit(wallet, parseMon('5'))          // underwrite
 import {
   parseAbi, encodeFunctionData, parseEventLogs, formatEther, parseEther,
   BaseError, ContractFunctionRevertedError,
 } from './lib.js';
-import { MARKETS_ABI, ERROR_TEXT } from './abi.js';
-import { loadDeployments } from './config.js';
+import { MARKETS_ABI, ERROR_TEXT, OUTCOME } from './abi.js';
+import { loadDeployments, SERVER } from './config.js';
 import { publicClient } from './wallet.js';
 
+export { OUTCOME };
 export const abi = parseAbi(MARKETS_ABI);
 const WAD = 10n ** 18n;
 
@@ -21,27 +28,46 @@ export const formatMon = (wei, digits = 4) => Number(formatEther(wei)).toFixed(d
 /** priceYes (1e18 = 100%) as a number from 0 to 1. */
 export const toProb = (p) => Number((p * 10_000n) / WAD) / 10_000;
 
+/** What a market is about, from its series string. */
+export function describeSeries(series) {
+  const [kind, a, b, c] = series.split(':');
+  if (kind === 'arrival') return { kind, ship: a, port: b };
+  if (kind === 'gate') return { kind: 'live', gate: a, window: b };
+  if (kind === 'portwatch') return { kind: 'strait', strait: a, measure: b };
+  if (kind === 'route_efficiency') return { kind: 'route', corridor: a, measure: b };
+  if (kind === 'comtrade') return { kind: 'trade', partner: c, measure: b };
+  return { kind };
+}
+
 function shapeMarket(id, m) {
   const pool = m.yesReserve + m.noReserve;
   const priceYes = pool === 0n ? 0n : (m.noReserve * WAD) / pool;
+  const now = Date.now() / 1000;
   return {
     id: BigInt(id),
     question: m.question,
     series: m.series,
-    threshold: m.threshold,
+    about: describeSeries(m.series),
+    subject: m.subject,
+    threshold: m.threshold, // for arrivals: the deadline, unix seconds
     isAbove: m.isAbove,
-    closeTime: Number(m.closeTime), // unix seconds
+    closeTime: Number(m.closeTime),
+    resolveBy: Number(m.resolveBy),
     feeBps: Number(m.feeBps),
     creator: m.creator,
-    resolved: m.resolved,
-    outcomeYes: m.outcomeYes,
+    outcome: Number(m.outcome), // OUTCOME.OPEN / YES / NO / INVALID
+    resolved: Number(m.outcome) !== OUTCOME.OPEN,
     value: m.value,
     yesReserve: m.yesReserve,
     noReserve: m.noReserve,
     lpSupply: m.lpSupply,
+    collateral: m.collateral,
+    maxCollateral: m.maxCollateral,
+    vaultSeed: m.vaultSeed,
+    vaultSettled: m.vaultSettled,
     priceYes,
     probYes: toProb(priceYes),
-    open: !m.resolved && Date.now() / 1000 < Number(m.closeTime),
+    open: Number(m.outcome) === OUTCOME.OPEN && now < Number(m.closeTime),
   };
 }
 
@@ -55,6 +81,41 @@ export function explain(err) {
     return err.shortMessage || err.message;
   }
   return String(err?.message || err);
+}
+
+/**
+ * Ask the pricing server for a signed quote. Body for an arrival market:
+ *   { ship: name|IMO|MMSI, port: name|LOCODE, deadline: ISO time, cargoUsd?: number }
+ * Returns { quote, signature, model, hedge? } (see contracts/pricing/quote.py).
+ */
+export async function requestQuote(body) {
+  const res = await fetch(`${SERVER}/api/quote`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ...body, deadline: body.deadline instanceof Date ? body.deadline.toISOString() : body.deadline }),
+  });
+  if (!res.ok) throw new Error(`quote failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+/** Quote JSON (numbers as strings) -> the tuple createMarket takes. */
+function quoteArgs(q) {
+  return {
+    question: q.question,
+    series: q.series,
+    subject: q.subject,
+    threshold: BigInt(q.threshold),
+    isAbove: q.isAbove === true || q.isAbove === 'true',
+    closeTime: BigInt(q.closeTime),
+    resolveBy: BigInt(q.resolveBy),
+    feeBps: Number(q.feeBps),
+    priorYesBps: Number(q.priorYesBps),
+    seed: BigInt(q.seed),
+    maxCollateral: BigInt(q.maxCollateral),
+    creationFee: BigInt(q.creationFee),
+    expiry: BigInt(q.expiry),
+    quoteId: q.quoteId,
+  };
 }
 
 export async function markets(address) {
@@ -91,9 +152,9 @@ export async function markets(address) {
     quoteSell: (id, yes, shares) => read('quoteSell', [BigInt(id), yes, shares]),
     costForShares: (id, yes, shares) => read('costForShares', [BigInt(id), yes, shares]),
     async position(id, who) {
-      const [yes, no, lp, , feesOwed] = await read('accounts', [BigInt(id), who]);
+      const [yes, no, lp] = await read('accounts', [BigInt(id), who]);
       const fees = await read('pendingFees', [BigInt(id), who]);
-      return { yes, no, lp, fees: fees > feesOwed ? fees : feesOwed };
+      return { yes, no, lp, fees };
     },
 
     // ---- writes (slippage in basis points of the quote)
@@ -111,24 +172,24 @@ export async function markets(address) {
     addLiquidity: (wallet, id, amount) => write(wallet, 'addLiquidity', [BigInt(id)], amount),
     removeLiquidity: (wallet, id, lp) => write(wallet, 'removeLiquidity', [BigInt(id), lp]),
     claimFees: (wallet, id) => write(wallet, 'claimFees', [BigInt(id)]),
+    /** Anyone can call a market invalid once its resolveBy has passed without a settlement. */
+    resolveInvalid: (wallet, id) => write(wallet, 'resolveInvalid', [BigInt(id)]),
 
-    /** Open a market. `m` is an entry from contracts/markets/examples.json, or the same fields. */
-    async create(wallet, m) {
-      const closeTime = m.close_minutes
-        ? Math.floor(Date.now() / 1000) + m.close_minutes * 60
-        : Math.floor(new Date(m.close_time).getTime() / 1000);
-      const r = await write(wallet, 'createMarket', [
-        m.question, m.series, BigInt(m.threshold), m.is_above, BigInt(closeTime),
-        m.fee_bps ?? 100, m.prior_yes_bps ?? 5_000,
-      ], parseMon(m.seed_mon ?? 0.2));
+    /**
+     * Open a market from a signed quote. With `stake`, buy a side in the same transaction
+     * (a hedger buys YES = late). The vault seeds the pool at the quoted price.
+     */
+    async create(wallet, signed, { buyYes = true, stake = 0n, minShares = 0n } = {}) {
+      const q = quoteArgs(signed.quote);
+      const r = await write(wallet, 'createMarket', [q, signed.signature, buyYes, minShares], q.creationFee + stake);
       r.id = r.events.find((e) => e.eventName === 'MarketCreated').args.id;
       return r;
     },
 
     /**
-     * Size a hedge. A delay of `delayDays` costs `costPerDayPct`% of cargo value per day
-     * (Hummels & Schaur: 0.6 to 2.1). Cover that loss with YES shares, each paying 1 MON.
-     * `usdPerMon` is the demo exchange rate.
+     * Size a hedge on an open market. A delay of `delayDays` costs `costPerDayPct`% of cargo value
+     * per day (Hummels & Schaur: 0.6 to 2.1; the quote's model gives one from the Comtrade cargo mix).
+     * Cover that loss with YES shares, each paying 1 MON. `usdPerMon` is the demo exchange rate.
      */
     async hedge(id, { cargoUsd, delayDays, costPerDayPct = 1.2, usdPerMon = 1000 }) {
       const lossUsd = cargoUsd * delayDays * (costPerDayPct / 100);
@@ -142,6 +203,23 @@ export async function markets(address) {
         premium: Number((cost * 10_000n) / shares) / 10_000, // cost per unit of cover
         probYes: toProb(price),
       };
+    },
+
+    // ---- the underwriter vault
+    vault: {
+      async info(who) {
+        const [value, idle, deployed, total, mine, cap] = await Promise.all([
+          read('vaultValue'), read('vaultIdle'), read('vaultDeployed'), read('vaultTotalShares'),
+          who ? read('vaultShares', [who]) : Promise.resolve(0n), read('subjectCap'),
+        ]);
+        return { value, idle, deployed, totalShares: total, myShares: mine,
+                 myValue: total === 0n ? 0n : (mine * value) / total, subjectCap: cap };
+      },
+      deposit: (wallet, amount) => write(wallet, 'deposit', [], amount),
+      withdraw: (wallet, shares) => write(wallet, 'withdraw', [shares]),
+      /** After a market settles: move the vault's share back into the vault. Anyone can call. */
+      settle: (wallet, id) => write(wallet, 'settleVault', [BigInt(id)]),
+      exposure: (subject) => read('subjectExposure', [subject]),
     },
   };
   return api;

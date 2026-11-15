@@ -5,7 +5,7 @@
 //   const stop = await watch({
 //     onTrade:   (t) => {...},   // { id, who, yes, isBuy, amount, shares, priceYes, probYes, txHash, commitState }
 //     onCreated: (m) => {...},
-//     onResolved:(r) => {...},
+//     onResolved:(r) => {...},   // { id, value, outcome: OUTCOME.YES | NO | INVALID }
 //     onBlock:   (b) => {...},   // { number, hash, timestamp, txCount, commitState }
 //   });
 //
