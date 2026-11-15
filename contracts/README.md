@@ -47,11 +47,45 @@ FAUCET_FUND=5000000000000000000 # 5 MON for the faucet
 forge script script/Deploy.s.sol --rpc-url monad_testnet --broadcast
 ```
 
-Then write the two addresses and the ABIs (`out/Markets.sol/Markets.json`, `out/Faucet.sol/Faucet.json`) to `contracts/deployments.json`.
+Then write the addresses and ABIs to `contracts/deployments.json`, which the page and server read:
+
+```bash
+npm install
+```
+
+```bash
+node script/write_deployments.mjs
+```
+
+## Open the example markets
+
+`markets/examples.json` holds 65 markets built from the current data by `markets/build_examples.py`:
+- **weekly** (27): total transits next week, every PortWatch strait
+- **collapse** (8): traffic falling below its bad-week level, the hedge markets for Suez, Bab el-Mandeb, Hormuz, Panama, Malacca, Taiwan, Bosporus and Gibraltar
+- **vessel** (8): one vessel type through one strait, such as Hormuz tankers or Cape container ships
+- **route** (10): corridor transit times and the world index
+- **trade** (6): US imports in October 2026, the next month with no data yet
+- **live** (6): gate crossings in the next 30 to 60 minutes
+
+Each market's starting price is the smoothed share of the last 12 weeks that would have settled YES, so it opens near fair odds. Its `why` field says where the threshold and price came from. Rebuild after the data updates with `python3 -I markets/build_examples.py`.
+
+```bash
+node script/seed_markets.mjs
+```
+
+That's a dry run of the 7 featured markets. Add `--groups all` (or `weekly,collapse,...`) to pick others, and `--send` to open them. Opened markets are recorded in `markets/created.json`, so a rerun skips them. Live markets get their close time when opened, so open those just before you need them.
 
 Network: chain ID `10143`, RPC `https://testnet-rpc.monad.xyz`, websocket `wss://testnet-rpc.monad.xyz`, explorer `https://testnet.monadvision.com`, faucet `https://faucet.monad.xyz`. Mainnet is chain `143` if we ever need it.
 
-A budget for the 50 MON wallet: 5 MON for the faucet (100 burner wallets at 0.05), about 1 MON seed per demo market (say 15 markets), and the rest for gas, test trades and spare.
+Gas on testnet is not free: the base fee was about 100 gwei on Nov 15, so a trade costs about 0.012 MON and opening a market about 0.03. A budget for the 50 MON wallet:
+
+| What | MON |
+|---|---|
+| Deploy both contracts | ~0.5 |
+| Faucet: 40 burner wallets at 0.25 | 10 |
+| Seeds for all 65 example markets (7 featured at 1, the rest at 0.2) | 18.6 |
+| Gas to open them | ~2 |
+| Your own test trades and spare | ~19 |
 
 ## The pricing math
 
@@ -205,7 +239,7 @@ and then dividing by `1 − f` for the fee. The premium as a share of cover is `
 ## Faucet.sol
 
 - Holds testnet MON, funded at deploy.
-- `drip(address to)`: relayer only (the server's key), sends `amount` (0.05 MON) once per address.
+- `drip(address to)`: relayer only (the server's key), sends `amount` (0.25 MON) once per address.
 - `setRelayer`, `setAmount`, `withdraw`: owner only.
 
 ## Roadmap, not built
