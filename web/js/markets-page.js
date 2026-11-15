@@ -2,8 +2,11 @@
    with the data behind the question, and a trade box wired to Xavi's web/chain helpers
    (burner wallet, buy, sell, redeem on Monad testnet). Odds update live as anyone trades. */
 
+import { makePortfolio } from './portfolio.js';
+
 const HW = window.HW;
 const $ = id => document.getElementById(id);
+const SAMPLE = new URLSearchParams(location.search).has('sample');   // preview "my trades" with made-up positions
 const SERVER = location.search.includes('local') ? 'http://localhost:8787' : 'https://headway-production-83bb4bd7.up.railway.app';
 const esc = HW.esc;
 
@@ -16,6 +19,7 @@ const pos = {};                // chain id -> { yes, no } share balances (bigint
 let openId = null;             // market shown in the drawer
 let side = true, amount = '0.02';
 let series = null;             // the data files behind the charts, loaded once
+let busy = false;              // one of our own trades is landing (the dashboard waits before reconciling)
 
 /* ---------- small helpers ---------- */
 const STRAIT_GROUPS = ['weekly', 'collapse', 'vessel'];
@@ -37,6 +41,20 @@ const left = ms => {
 };
 const sourceTag = m => m.group === 'live' ? 'LIVE · AIS GATE' : m.group === 'trade' ? 'TRADE · US CENSUS' : m.group === 'route' ? 'ROUTE · PORTWATCH' : 'STRAIT · PORTWATCH';
 const outcomeText = o => o == null ? '' : typeof o === 'number' ? ['', 'YES', 'NO', 'INVALID'][o] || String(o) : String(o).toUpperCase();
+
+/* ---------- "my trades": the dashboard (js/portfolio.js) ---------- */
+const pf = makePortfolio({
+  HW, left, sample: SAMPLE, pos,
+  list: () => list, chain: () => chain, onchain: () => onchain, busy: () => busy,
+  changed: () => { pill(); if (tab === 'mine') render(); },
+});
+const pill = () => {
+  const T = pf.totals(), el = $('pfPill'); if (!el) return;
+  if (!T || !(T.staked > 0)) { el.textContent = 'MY TRADES'; el.className = 'pill pfpill' + (tab === 'mine' ? ' on' : ''); return; }
+  const d = T.pnl > 0.00005 ? 'up' : T.pnl < -0.00005 ? 'down' : 'flat';
+  el.innerHTML = `MY TRADES <b>${d === 'up' ? '▲ +' : d === 'down' ? '▼ −' : ''}${Math.abs(T.pnl).toFixed(4)}</b>`;
+  el.className = `pill pfpill ${d}` + (tab === 'mine' ? ' on' : '');
+};
 
 /* ---------- the data behind a market, for the sparkline and the chart ---------- */
 const getJSON = async f => { for (const u of ['../data/processed/' + f, SERVER + '/data/' + f]) { try { const r = await fetch(u); if (r.ok) return await r.json(); } catch { /* next */ } } return null; };
@@ -125,27 +143,12 @@ const card = m => {
     <div class="foot">${foot}<span class="tag">${cn && cn.count_so_far != null ? `NOW COUNTING ${cn.count_so_far} / ${cn.threshold}` : mine && (mine.yes || mine.no) ? 'YOU HOLD A POSITION' : ''}</span></div>
     ${action}</article>`;
 };
-const positionCard = c => {
-  const p = pos[Number(c.id)], mk = chain.mk, settled = c.resolved;
-  const rows = [['YES', p.yes], ['NO', p.no]].filter(([, v]) => v > 0n).map(([k, v]) => `<span class="tag">${mk.formatMon(v, 3)} ${k} SHARES</span>`).join('');
-  return `<article class="kc" data-chain="${c.id}" tabindex="0">
-    <div class="top"><span class="tag src">${settled ? 'SETTLED ' + outcomeText(c.outcome) : c.open ? 'OPEN' : 'WAITING TO SETTLE'}</span><span class="tag">${settled ? '' : left(c.closeTime * 1000)}</span></div>
-    <div class="q">${esc(c.question)}</div>
-    <div class="mid"><div class="pct">${Math.round(c.probYes * 100)}%<small>YES</small></div></div>
-    <div class="bar"><i style="width:${(c.probYes * 100).toFixed(1)}%"></i></div>
-    <div class="foot">${rows}</div>
-    <div class="btns">${settled ? `<button data-act="claim">CLAIM</button><span></span>` : `<button data-act="sell-yes" ${c.open && p.yes > 0n ? '' : 'disabled'}>SELL YES</button><button data-act="sell-no" ${c.open && p.no > 0n ? '' : 'disabled'}>SELL NO</button>`}</div></article>`;
-};
 const render = () => {
   renderSum();
   const grid = $('grid');
-  if (tab === 'mine') {
-    if (!chain || !chain.wallet) { grid.innerHTML = '<div class="mk-empty">Connect your wallet (top right) to see your positions.</div>'; }
-    else {
-      const mine = onchain.filter(c => { const p = pos[Number(c.id)]; return p && (p.yes > 0n || p.no > 0n); });
-      grid.innerHTML = mine.map(positionCard).join('') || '<div class="mk-empty">No positions yet. Pick a market and take a side.</div>';
-    }
-  } else {
+  grid.className = tab === 'mine' ? 'mk-grid pf' : 'mk-grid';
+  if (tab === 'mine') { grid.innerHTML = pf.html(); pf.afterRender(); }
+  else {
     const q = query.trim().toLowerCase();
     const rows = list.filter(inTab).filter(m => !q || m.question.toLowerCase().includes(q));
     const by = { close: (a, b) => (isOpen(b) - isOpen(a)) || ((closeMs(a) || 9e15) - (closeMs(b) || 9e15)), pool: (a, b) => pool(b) - pool(a), yes: (a, b) => prob(b) - prob(a), no: (a, b) => prob(a) - prob(b) }[sort];
@@ -291,18 +294,18 @@ const getQuote = async () => {
 };
 const openHedgeMarket = async () => {
   if (!hq) return;
+  if (SAMPLE) return say(SAMPLE_NOTE);
   $('hGo').disabled = true; say('Getting your wallet ready…');
   const w = await connect(); if (!w) { $('hGo').disabled = false; return say('Could not set up a wallet.'); }
   say('Opening the market and buying your cover…');
   try {
-    const stake = chain.mk.parseMon(Math.min(0.05, (hq.hedge.fair_premium_mon || 0.01) * 1.2).toFixed(4));
+    const stakeMon = +Math.min(0.05, (hq.hedge.fair_premium_mon || 0.01) * 1.2).toFixed(4), stake = chain.mk.parseMon(String(stakeMon));
+    busy = true;
     const r = await chain.m.create(w, hq, { buyYes: true, stake });
-    const got = r.trade ? chain.mk.formatMon(r.trade.shares, 3) : '';
-    say(`Done. Market #${r.id} is open and you hold ${got} MON of cover. <a href="${chain.cfg.txUrl(r.receipt.transactionHash || r.receipt.hash)}" target="_blank" rel="noopener">View transaction</a>. It is listed under My positions.`);
-    const msg = $('tmsg').innerHTML;
-    onchain = await chain.m.list(); pairOdds(); await loadPositions(); connect();
-    if ($('tmsg')) $('tmsg').innerHTML = msg;
-  } catch (e) { say(esc(chain.mk.explain(e))); if ($('hGo')) $('hGo').disabled = false; }
+    const got = r.trade ? num(r.trade.shares) : 0;
+    await afterTrade(r, `Done. Market #${r.id} is open and you hold ${got.toFixed(3)} MON of cover. Watch it under My trades.`,
+      { kind: 'buy', id: Number(r.id), side: 'yes', q: hq.quote.question, mon: stakeMon, shares: got });
+  } catch (e) { busy = false; say(esc(chain.mk.explain(e))); if ($('hGo')) $('hGo').disabled = false; }
 };
 
 /* ---------- chain: Xavi's helpers, loaded when first needed ---------- */
@@ -312,23 +315,28 @@ const ensureChain = () => chainP || (chainP = (async () => {
     const [mk, wl, cfg, ev] = await Promise.all([import('../chain/markets.js'), import('../chain/wallet.js'), import('../chain/config.js'), import('../chain/events.js')]);
     const m = await mk.markets();
     chain = { mk, wl, cfg, m, wallet: null };
-    onchain = await m.list();
+    onchain = await m.list(); lastList = Date.now();
     pairOdds();
     ev.watchOdds(({ id, probYes, resolved, created }) => {
       const row = list.find(x => x.chainId != null && Number(x.chainId) === Number(id));
       const oc = onchain.find(x => Number(x.id) === Number(id));
-      if (probYes != null) { if (row) row.probYes = probYes; if (oc) oc.probYes = probYes; }
-      if (resolved || created || !row) refresh(); else render();
+      if (probYes != null) { if (row) row.probYes = probYes; if (oc) { oc.probYes = probYes; oc.liveAt = Date.now(); } }
+      if (resolved || created || !row) refresh(true); else render();
+      pf.schedule();
     }).catch(() => {});
     render();
   } catch (e) { chain = null; chainP = null; console.warn('chain not available', e); }
   return chain;
 })());
-const pairOdds = () => {
+const pairOdds = (fromChain = true) => {   // fromChain: the onchain list was read just now
   if (!chain) return;
   for (const m of list) {
-    const c = chain.mk.findMarket(onchain, m); if (!c) continue;
-    m.chainId = Number(c.id); m.probYes = c.probYes;
+    // the server's own pairing wins (Ben: matching can land on an old live window); findMarket is the fallback
+    const c = m.chainId != null ? onchain.find(x => Number(x.id) === Number(m.chainId)) : chain.mk.findMarket(onchain, m);
+    if (!c) continue;
+    m.chainId = Number(c.id);
+    // newest odds win: a fresh chain read or a live trade we just heard, else the server's number
+    if (fromChain || m.probYes == null || (c.liveAt && Date.now() - c.liveAt < 20000)) m.probYes = c.probYes; else c.probYes = m.probYes;
     // the server has not caught up on this market yet: fill in its numbers from the chain
     if (!m.chain) m.chain = {
       pool_mon: Number(chain.mk.formatMon(c.yesReserve + c.noReserve, 6)), close: new Date(c.closeTime * 1000).toISOString(),
@@ -336,10 +344,26 @@ const pairOdds = () => {
     };
   }
 };
-const loadPositions = async () => {
-  if (!chain || !chain.wallet) return;
-  await Promise.all(onchain.map(async c => { try { const p = await chain.m.position(c.id, chain.wallet.address); pos[Number(c.id)] = { yes: p.yes, no: p.no }; } catch { /* skip */ } }));
+/* Positions only change when this wallet trades, so read them all when the wallet connects and after
+   each of its trades. The timer reads markets it has not seen yet, and everything every few minutes
+   (a trade made from the globe page in another tab). The public RPC rate-limits, so keep reads few. */
+let lastFullRead = 0;
+const readPositions = async (all = true) => {
+  if (all) lastFullRead = Date.now();
+  const todo = onchain.filter(c => all || !(Number(c.id) in pos));
+  for (let i = 0; i < todo.length; i += 5) {   // five markets at a time (two reads each), to stay under the RPC's rate limit
+    await Promise.all(todo.slice(i, i + 5).map(async c => { try { const p = await chain.m.position(c.id, chain.wallet.address); pos[Number(c.id)] = { yes: p.yes, no: p.no }; } catch { /* skip */ } }));
+  }
+};
+const loadPositions = async (all = true) => {
+  if (!chain || !chain.wallet || SAMPLE || busy) return;
+  await readPositions(all || Date.now() - lastFullRead > 180000);
   render();
+  await pf.compute();
+};
+const showWallet = async () => {
+  const a = chain.wallet.address, bal = await chain.wallet.balance().catch(() => null);
+  $('wallet').textContent = a.slice(0, 6) + '…' + a.slice(-4) + (bal != null ? ' · ' + chain.mk.formatMon(bal, 3) + ' MON' : '');
 };
 const connect = async () => {
   await ensureChain();
@@ -347,11 +371,18 @@ const connect = async () => {
   if (!chain.wallet) {
     $('wallet').textContent = 'CONNECTING…';
     try { chain.wallet = await chain.wl.getWallet(); } catch (e) { $('wallet').textContent = 'WALLET ERROR'; return null; }
+    loadPositions();
   }
-  const a = chain.wallet.address, bal = await chain.wallet.balance().catch(() => null);
-  $('wallet').textContent = a.slice(0, 6) + '…' + a.slice(-4) + (bal != null ? ' · ' + chain.mk.formatMon(bal, 3) + ' MON' : '');
-  loadPositions();
+  showWallet();
   return chain.wallet;
+};
+/* A burner wallet already saved in this browser: show its trades straight away. Reading it sends
+   nothing and asks the faucet for nothing; a new wallet is only ever made when you press a button. */
+const resumeWallet = async () => {
+  let saved = null; try { saved = localStorage.getItem('headway.burner.v1'); } catch { /* blocked */ }
+  if (!saved || SAMPLE) return;
+  await ensureChain(); if (!chain || chain.wallet) return;
+  try { chain.wallet = await chain.wl.getWallet({ fund: false }); showWallet(); loadPositions(); } catch { /* connect by hand instead */ }
 };
 
 /* ---------- quote and trade ---------- */
@@ -370,61 +401,101 @@ const quote = async () => {
     set(sh.toFixed(3), sh > 0 ? Math.round(amt / sh * 100) + '¢ a share' : '—', sh.toFixed(3) + ' MON');
   } catch (e) { if (n === quoteN) set('—', '—', '—'); }
 };
-const say = html => { if ($('tmsg')) $('tmsg').innerHTML = html; };
-const afterTrade = async (r, text) => {
-  const m = current();
-  say(`${text} <a href="${chain.cfg.txUrl(r.receipt.transactionHash || r.receipt.hash)}" target="_blank" rel="noopener">View transaction</a>`);
-  const msg = $('tmsg').innerHTML;
-  onchain = await chain.m.list(); pairOdds(); await loadPositions(); connect();
-  if (m && $('tmsg')) $('tmsg').innerHTML = msg;
+const say = html => { if ($('tmsg')) $('tmsg').innerHTML = html; if (tab === 'mine' && openId == null && !hedgeOpen) pf.setMsg(html); };
+const num = wei => Number(chain.mk.formatMon(wei, 6));
+const txLink = r => `<a href="${chain.cfg.txUrl(r.receipt.hash || r.receipt.transactionHash)}" target="_blank" rel="noopener">View transaction</a>`;
+const SAMPLE_NOTE = 'This is the sample view, so nothing was sent. Remove “?sample” from the address to trade.';
+/* After every trade: write it to the cost record, re-read the chain, then let the dashboard catch up. */
+const afterTrade = async (r, text, entry) => {
+  const html = `${text} ${txLink(r)}`;
+  say(html);
+  try {
+    if (entry) pf.record({ ...entry, tx: r.receipt.hash || r.receipt.transactionHash });
+    onchain = await chain.m.list(); pairOdds();
+    await readPositions();
+  } finally { busy = false; }
+  render(); showWallet();
+  await pf.compute();
+  say(html);
 };
 const place = async () => {
   const m = current(); if (!m) return;
   const amt = parseFloat($('amt').value);
   if (!(amt > 0)) return say('Enter an amount first.');
+  if (SAMPLE) return say(SAMPLE_NOTE);
   $('go').disabled = true; say('Getting your wallet ready…');
   const w = await connect(); if (!w) { $('go').disabled = false; return say('Could not set up a wallet.'); }
   say('Sending your trade…');
+  busy = true;
   try {
-    const r = await chain.m.buy(w, m.chainId, side, chain.mk.parseMon(String(amt)));
-    const got = r.trade ? chain.mk.formatMon(r.trade.shares, 3) : '';
-    await afterTrade(r, `Done. You bought ${got} ${side ? 'YES' : 'NO'} shares.`);
-  } catch (e) { say(esc(chain.mk.explain(e))); if ($('go')) $('go').disabled = false; }
+    const yes = side, r = await chain.m.buy(w, m.chainId, yes, chain.mk.parseMon(String(amt)));
+    const got = r.trade ? num(r.trade.shares) : 0;
+    await afterTrade(r, `Done. You bought ${got.toFixed(3)} ${yes ? 'YES' : 'NO'} shares. Watch it under My trades.`,
+      { kind: 'buy', id: m.chainId, side: yes ? 'yes' : 'no', q: m.question, mon: amt, shares: got });
+  } catch (e) { busy = false; say(esc(chain.mk.explain(e))); if ($('go')) $('go').disabled = false; }
 };
 const sell = async (id, yes) => {
+  if (SAMPLE) return say(SAMPLE_NOTE);
   const w = await connect(); if (!w) return;
   const p = pos[Number(id)]; if (!p) return;
-  say('Selling…');
-  try { const r = await chain.m.sell(w, id, yes, yes ? p.yes : p.no); await afterTrade(r, 'Sold.'); }
-  catch (e) { say(esc(chain.mk.explain(e))); alertIfNoDrawer(e); }
+  const shares = yes ? p.yes : p.no, c = onchain.find(x => Number(x.id) === Number(id));
+  say('Cashing out…');
+  busy = true;
+  try {
+    const r = await chain.m.sell(w, id, yes, shares), out = r.trade ? num(r.trade.amount) : 0;
+    await afterTrade(r, `Cashed out for ${out.toFixed(4)} MON.`, { kind: 'sell', id: Number(id), side: yes ? 'yes' : 'no', q: c && c.question, mon: out, shares: num(shares) });
+  } catch (e) { busy = false; say(esc(chain.mk.explain(e))); }
 };
 const claim = async id => {
+  if (SAMPLE) return say(SAMPLE_NOTE);
   const w = await connect(); if (!w) return;
+  const c = onchain.find(x => Number(x.id) === Number(id));
   say('Claiming…');
-  try { const r = await chain.m.redeem(w, id); await afterTrade(r, 'Claimed.'); }
-  catch (e) { say(esc(chain.mk.explain(e))); alertIfNoDrawer(e); }
+  busy = true;
+  try {
+    const r = await chain.m.redeem(w, id), ev = r.events.find(e => e.eventName === 'Redeemed'), out = ev ? num(ev.args.amount) : 0;
+    await afterTrade(r, `Claimed ${out.toFixed(4)} MON.`, { kind: 'claim', id: Number(id), side: 'both', q: c && c.question, mon: out, shares: 0 });
+  } catch (e) { busy = false; say(esc(chain.mk.explain(e))); }
 };
-const alertIfNoDrawer = e => { if (openId == null) $('note').textContent = chain.mk.explain(e); };
 
 /* ---------- loading and refreshing ---------- */
-const refresh = async () => {
+let lastList = 0;
+const refresh = async force => {
   try {
     const r = await fetch(SERVER + '/api/markets'); if (!r.ok) throw new Error(r.status);
     const d = await r.json(), fresh = d.markets || d;
     // keep odds we already heard live for markets the server has not caught up on
     list = fresh;
-    if (chain) { try { onchain = await chain.m.list(); pairOdds(); } catch { /* keep the server's numbers */ } }
+    // the server already carries each listed market's onchain numbers and live odds arrive by
+    // websocket, so the full onchain list is only re-read once a minute (or when a market opens or settles)
+    let listed = false;
+    if (chain && (force === true || Date.now() - lastList > 55000)) { try { onchain = await chain.m.list(); lastList = Date.now(); listed = true; } catch { /* keep what we have */ } }
+    if (chain) pairOdds(listed);
     render();
+    pf.schedule();
   } catch (e) { if (!list.length) $('grid').innerHTML = '<div class="mk-empty">Could not reach the markets server. Retrying…</div>'; }
 };
 
 /* ---------- events ---------- */
-$('tabs').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; tab = b.dataset.t; document.querySelectorAll('#tabs button').forEach(o => o.classList.toggle('on', o === b)); if (tab === 'mine') connect(); render(); });
+const setTab = t => { tab = t; document.body.classList.toggle('tab-mine', t === 'mine'); document.querySelectorAll('#tabs button').forEach(o => o.classList.toggle('on', o.dataset.t === t)); pf.setMsg(''); pill(); render(); if (t === 'mine') { window.scrollTo({ top: 0 }); pf.schedule(0); } };
+$('tabs').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) setTab(b.dataset.t); });
+$('pfPill').addEventListener('click', () => setTab('mine'));
 $('find').addEventListener('input', e => { query = e.target.value; render(); });
 $('sort').addEventListener('change', e => { sort = e.target.value; render(); });
 $('grid').addEventListener('click', e => {
+  const go = e.target.closest('button[data-go]'); if (go) return openDrawer(go.dataset.go);
   const act = e.target.closest('button[data-act]'), pc = e.target.closest('[data-chain]');
-  if (act && pc) { const id = BigInt(pc.dataset.chain); return act.dataset.act === 'claim' ? claim(id) : sell(id, act.dataset.act === 'sell-yes'); }
+  if (act && act.dataset.act === 'connect') return connect();
+  if (pc) {   // a row on "my trades"
+    const id = Number(pc.dataset.chain), yes = pc.dataset.side === 'yes', m = list.find(x => x.chainId != null && Number(x.chainId) === id);
+    if (!act || act.dataset.act === 'add') { if (m) openDrawer(m.id, yes); return; }
+    if (act.dataset.act === 'claim') return claim(BigInt(id));
+    if (act.dataset.act === 'cash') {   // two clicks: the first shows what you would get
+      if (pf.arm(id + ':' + pc.dataset.side)) return sell(BigInt(id), yes);
+      return render();
+    }
+    return;
+  }
   const c = e.target.closest('.kc[data-id]'); if (!c) return;
   const b = e.target.closest('button[data-side]');
   openDrawer(c.dataset.id, b ? b.dataset.side === 'yes' : null);
@@ -465,6 +536,9 @@ await refresh();
   if (qs.has('hedge')) openHedge(qs.get('hedge') || '', qs.get('port') || '');
 }
 loadSeries();
-ensureChain();
+if (location.hash === '#trades') setTab('mine');
+if (SAMPLE) { await ensureChain(); if (chain) { pf.seedSample(); showWallet(); setTab('mine'); await pf.compute(); } }
+else { ensureChain(); resumeWallet(); }
 setInterval(refresh, 15000);
-window.__mk = { get list() { return list; }, get chain() { return chain; }, openDrawer };
+setInterval(() => loadPositions(false), 60000);
+window.__mk = { get list() { return list; }, get chain() { return chain; }, openDrawer, pf };
