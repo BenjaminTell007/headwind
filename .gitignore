@@ -39,3 +39,4 @@ contracts/lib/
 # local editor and tool settings
 .claude/
 
+web/data/.land_elev.part.json

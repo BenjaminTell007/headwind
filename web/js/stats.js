@@ -374,7 +374,7 @@
     const resize = () => { DPR = Math.min(2, window.devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); };
     resize(); window.addEventListener('resize', resize);
 
-    const SX = 1.35, SZ = 1.12, HY = 0.58;
+    const SX = 1.35, SZ = 1.12, HY = 0.66;
     let cyw = 1, syw = 0, cp = 1, sp = 0, f = 1;
     const proj = (x, y, z, out) => {
       const x1 = x * cyw + z * syw, z1 = -x * syw + z * cyw, y2 = y * cp + z1 * sp, z2 = -y * sp + z1 * cp, k = f / (z2 + 3.7);
@@ -490,16 +490,28 @@
           for (let y = 0; y < top + 0.03; y += DY * 0.7) { proj(xOf(c), y, z, tmp); ctx.rect(tmp[0] - 0.8, tmp[1] - 0.8, 1.7, 1.7); }
         }
         ctx.fill();
-        // the tops: the ridge itself, a line with a dot on every week
-        ctx.strokeStyle = isH ? acc : fg; ctx.globalAlpha = (isH ? 0.95 : 0.5) * a0; ctx.lineWidth = isH ? 1.6 : 1; ctx.beginPath();
-        for (let c = 0; c < C; c++) { const i = r * C + c; if (c) ctx.lineTo(PX[i], PY[i]); else ctx.moveTo(PX[i], PY[i]); }
-        ctx.stroke();
-        ctx.fillStyle = isH ? acc : fg; ctx.globalAlpha = (isH ? 1 : 0.85) * a0; ctx.beginPath();
-        for (let c = 0; c < C; c++) { const i = r * C + c; if (low[i]) continue; ctx.rect(PX[i] - size / 2, PY[i] - size / 2, size, size); }
-        ctx.fill();
-        ctx.fillStyle = acc; ctx.globalAlpha = a0; ctx.beginPath();
-        for (let c = 0; c < C; c++) { const i = r * C + c; if (!low[i]) continue; ctx.rect(PX[i] - size * 0.7, PY[i] - size * 0.7, size * 1.4, size * 1.4); }
-        ctx.fill();
+        // the top of the band: three lines of dots side by side, like a strip of the dotted surface
+        // on my 423 page. Brighter the higher they stand; blue in the weeks under 60% of normal.
+        // Only the row under the cursor gets a drawn line.
+        if (isH) {
+          ctx.strokeStyle = acc; ctx.globalAlpha = 0.95; ctx.lineWidth = 1.6; ctx.beginPath();
+          for (let c = 0; c < C; c++) { const i = r * C + c; if (c) ctx.lineTo(PX[i], PY[i]); else ctx.moveTo(PX[i], PY[i]); }
+          ctx.stroke();
+        }
+        const BAND = 0.03;
+        for (let pass = 0; pass < 3; pass++) {   // 0: low dots, 1: high dots, 2: blue dots
+          ctx.fillStyle = pass === 2 || isH ? acc : fg; ctx.globalAlpha = (pass === 0 ? 0.5 : 1) * a0; ctx.beginPath();
+          for (let c = 0; c < C; c++) {
+            const i = r * C + c, hgt = Math.max(0, h[i]);
+            if (pass === 2 ? !low[i] : (low[i] || (pass === 1) !== (hgt > 0.55))) continue;
+            const sz = size * (pass === 2 ? 1.25 : 1) * (0.8 + 0.5 * hgt);
+            for (let b2 = -1; b2 <= 1; b2++) {
+              if (b2 === 0) { tmp[0] = PX[i]; tmp[1] = PY[i]; } else proj(xOf(c), hgt * HY, z + b2 * BAND, tmp);
+              ctx.rect(tmp[0] - sz / 2, tmp[1] - sz / 2, sz, sz);
+            }
+          }
+          ctx.fill();
+        }
         proj(xOf(0), 0, z, tmp); rowLabels.push([r, tmp[0], tmp[1], nearK]);
       }
       // strait names at the 2019 end of each row, drawn after the rows so none is covered
