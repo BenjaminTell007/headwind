@@ -395,21 +395,22 @@
         let straitPick = null, straitD = 260;
         // labels: only the three most disrupted straits this week; the rest show on hover
         const top3 = new Set(straits.map(s2 => [Math.abs(straitRatio(s2) - 1), s2]).filter(([d]) => d > 0.2 && d < 0.99).sort((x, y) => y[0] - x[0]).slice(0, 3).map(([, s2]) => s2));
-        const vr = HW.clamp(7 + 2.2 * Math.sqrt(S.zoom), 8, 15);
+        const vr = HW.clamp(9 + 2.4 * Math.sqrt(S.zoom), 10, 18), MARK = '#ffd23f';   // straits are amber so they stand out (Kimball, Nov 15)
         for (const s of straits) {
           const Z = proj(s.v, tmp); s.vis = Z > 0.05; if (!s.vis) continue;
           const x = tmp[0], y = tmp[1]; s.sx = x; s.sy = y;
           const ratio = straitRatio(s), open = HW.clamp(ratio, 0, 1.2), hi = (S.hover && S.hover.s === s) || (S.sel && S.sel.s === s);
           const busy = s.status.baseline_per_week > 250 || hi;
-          ctx.globalAlpha = (hi ? 1 : busy ? 0.9 : 0.45) * (Z < 0.25 ? Z * 4 : 1);
-          ctx.strokeStyle = ratio < 0.6 ? C.dim : C.fg; ctx.lineWidth = hi ? 1.8 : 1.3;
+          ctx.globalAlpha = (hi ? 1 : busy ? 0.95 : 0.6) * (Z < 0.25 ? Z * 4 : 1);
+          ctx.strokeStyle = MARK; ctx.lineWidth = hi ? 2.6 : 2;
+          ctx.fillStyle = MARK; ctx.beginPath(); ctx.arc(x, y, 2.2, 0, Math.PI * 2); ctx.fill();
           const gap = 0.12 + 0.95 * HW.clamp(open, 0, 1);   // radians of opening on each side
           ctx.beginPath(); ctx.arc(x, y, vr, -Math.PI / 2 + gap, Math.PI / 2 - gap); ctx.stroke();
           ctx.beginPath(); ctx.arc(x, y, vr, Math.PI / 2 + gap, Math.PI * 1.5 - gap); ctx.stroke();
           if (P.inside && !P.down) { const d2 = (x - px) ** 2 + (y - py) ** 2; if (d2 < straitD) { straitD = d2; straitPick = s; } }
           if (top3.has(s) && !hi && S.zoom < 3.5) {   // label the three most disrupted; the rest on hover
             const pct = (ratio - 1) * 100, right = x >= cx;
-            HW.label(ctx, (right ? '' : '') + s.name.replace(' Strait', '').replace(' Canal', '').toUpperCase() + ' ' + HW.fPct(pct), x + (right ? vr + 5 : -vr - 5), y + 4, ratio < 0.6 ? C.fg : C.dim, right ? 'left' : 'right', 10.5);
+            HW.label(ctx, (right ? '' : '') + s.name.replace(' Strait', '').replace(' Canal', '').toUpperCase() + ' ' + HW.fPct(pct), x + (right ? vr + 5 : -vr - 5), y + 4, MARK, right ? 'left' : 'right', 11, 500);
           }
         }
 

@@ -86,6 +86,7 @@ Split work by file where you can. Two people editing `main.js` or `app.css` at t
 
 - Vessel hues only ever mean vessel type: container/cargo green `#46b36f`, tanker orange `#f08a3c`, dry bulk purple `#8f82f2`, general cargo `#ea86b5`, ro-ro `#e9c84b`, other `#f2f2f2` (swapped on Nov 15 in Sam's colour pass, approved by Kimball).
 - The one other hue is the accent blue `#4c8dff` (`--accent`, `HW.C.accent`): route lines (brighter the busier they are this week), the hovered country, selection, buttons, and the headline numbers. Nothing else gets a hue.
+- Straits (rings, labels, sonar rings) and the centre of each port marker are amber `#ffd23f` so they stand out on the globe (Kimball, Nov 15).
 - Efficiency, odds and drops use brightness, thickness, opacity or length, never a new hue.
 - Background `#0a0a0a`, text `#f2f2f0`, dim `#8a8a8a`. YES `#f2f2f2`, NO `#6b6b6b`. Land is dots in the text colour, with faint country outlines.
 - Labels: light monospace, caps, wide letter spacing. Numbers: the sans stack. The header logo is the word HEADWAY in that monospace, plain text; the map page's intro is the animated glyph word.

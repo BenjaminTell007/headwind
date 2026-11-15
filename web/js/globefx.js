@@ -5,7 +5,7 @@
        faster on the routes more ships use this week. Blocked routes get none.
      - Sonar rings: a strait running well under its normal traffic sends out slow rings,
        quicker the worse it is.
-   Colours follow the rules: accent blue and the text colour only. */
+   Pulses are accent blue and the text colour; the rings are the straits' amber. */
 
 (() => {
   const HW = window.HW;
@@ -49,8 +49,8 @@
       const sev = HW.clamp(1 - r, 0, 1), period = 3.4 - 1.8 * sev, reach = 26 + 34 * sev;
       for (let k = 0; k < 2; k++) {
         const ph = ((clock + (s.lat + s.lon) * 0.01) / period + k * 0.5) % 1;
-        ctx.globalAlpha = 0.55 * (1 - ph) * (1 - ph) * sev;
-        ctx.strokeStyle = C.accent; ctx.lineWidth = 1.2;
+        ctx.globalAlpha = 0.7 * (1 - ph) * (1 - ph) * sev;
+        ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 1.4;
         ctx.beginPath(); ctx.arc(s.sx, s.sy, base + reach * ph, 0, Math.PI * 2); ctx.stroke();
       }
     }
