@@ -8,7 +8,7 @@ body.mk { overflow:auto; }
 /* three numbers */
 .mk-sum { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
 .mk-sum .cell { padding:16px 18px; background:var(--glass); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); }
-.mk-sum .num { font-size:30px; margin:8px 0 4px; }
+.mk-sum .num { font-size:30px; margin:8px 0 4px; color:var(--accent); }
 .mk-sum .sub { color:var(--dim); font:12px/1.35 var(--sans); }
 
 /* filter bar */
@@ -42,7 +42,7 @@ body.mk { overflow:auto; }
 .kc .top { display:flex; justify-content:space-between; gap:10px; align-items:center; }
 .kc .src { display:inline-flex; align-items:center; gap:6px; }
 .kc .src::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--dim); }
-.kc.is-live .src::before { background:var(--bulk); animation:pulse 2s infinite; }
+.kc.is-live .src::before { background:var(--container); animation:pulse 2s infinite; }
 .kc .q { font:500 15px/1.4 var(--sans); min-height:63px; }
 .kc .mid { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; }
 .kc .pct { font:600 34px/1 var(--sans); letter-spacing:-.02em; }

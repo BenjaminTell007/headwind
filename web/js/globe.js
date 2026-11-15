@@ -68,6 +68,14 @@
       return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
     };
 
+    // how travelled each lane is: ships this week through the straits it passes, scaled 0 to 1
+    {
+      const latest = {}; for (const st of D.straits) { const t = st.weekly && st.weekly.total; latest[st.name] = t && t.length ? t[t.length - 1] : 0; }
+      for (const L of lanes) L.traffic = (L.p.chokepoints || []).reduce((a, n) => a + (latest[n] || 0), 0);
+      const top = Math.max(1, ...lanes.map(L => L.traffic));
+      for (const L of lanes) L.busy = Math.sqrt(L.traffic / top);
+    }
+
     // straits
     const straits = D.straits.map(s => ({ ...s, v: vec(s.lat, s.lon), sx: 0, sy: 0, vis: false }));
 
@@ -202,6 +210,7 @@
           ctx.fill();
         }
         if (hc >= 0) {
+          ctx.fillStyle = C.accent;   // the hovered country lights up in the accent blue
           ctx.globalAlpha = 0.95 * S.countryFade; ctx.beginPath();
           const hd = ds * 1.25, hh = hd / 2;
           for (let i = 0; i < nL; i++) {
@@ -219,7 +228,7 @@
 
         /* country outlines, faint; the hovered country's outline brighter */
         if (hc >= 0) {
-          ctx.globalAlpha = 0.6 * S.countryFade; ctx.strokeStyle = C.fg; ctx.lineWidth = 1; ctx.beginPath();
+          ctx.globalAlpha = 0.9 * S.countryFade; ctx.strokeStyle = C.accent; ctx.lineWidth = 1.2; ctx.beginPath();
           rings.forEach((f, k) => {
             if (RC[k] !== hc) return;
             let pen = false;
@@ -256,11 +265,19 @@
             if (L.sv[j] && P.inside && !P.down && j % 2 === 0) { const d2 = (tmp[0] - px) ** 2 + (tmp[1] - py) ** 2; if (d2 < laneD) { laneD = d2; lanePick = L; } }
           }
           const eff = laneEff(L), blk = laneBlocked(L), hi = L === hovLane || L === selLane;
-          // the original look: thin off-white lines, brighter the more efficient the route this
-          // week; the accent blue only marks the hovered or selected lane
-          ctx.strokeStyle = hi ? C.accent : blk > 0.3 ? C.dim : C.fg;
-          ctx.lineWidth = hi ? 1.6 : 0.6 + 0.6 * eff;
-          ctx.globalAlpha = hi ? 1 : (0.05 + 0.2 * Math.pow(eff, 3)) * S.quiet;
+          // blue lines that glow more the more ships use the route this week (L.busy, 0 to 1,
+          // from the traffic through its straits); a blocked route is a dotted grey line
+          const busy = L.busy, blocked = blk > 0.3;
+          if (!blocked && !hi && busy > 0.25) {   // the glow: a wide, soft stroke under the line
+            ctx.setLineDash([]);
+            ctx.strokeStyle = C.accent; ctx.lineWidth = 3 + 6 * busy; ctx.globalAlpha = 0.10 * busy * S.quiet;
+            ctx.beginPath(); let pg = false;
+            for (let j = 0; j < n; j++) { if (!L.sv[j]) { pg = false; continue; } if (pg) ctx.lineTo(L.sx[j], L.sy[j]); else { ctx.moveTo(L.sx[j], L.sy[j]); pg = true; } }
+            ctx.stroke();
+          }
+          ctx.strokeStyle = hi ? C.laneHi : blocked ? C.dim : C.accent;
+          ctx.lineWidth = hi ? 2 : 0.7 + 0.9 * busy;
+          ctx.globalAlpha = hi ? 1 : (blocked ? 0.3 : 0.22 + 0.6 * busy) * S.quiet;
           ctx.setLineDash(blk > 0.3 ? [2, 4] : []);
           ctx.beginPath(); let pen = false;
           for (let j = 0; j < n; j++) { if (!L.sv[j]) { pen = false; continue; } if (pen) ctx.lineTo(L.sx[j], L.sy[j]); else { ctx.moveTo(L.sx[j], L.sy[j]); pen = true; } }
@@ -339,7 +356,7 @@
         /* the hovered country's name, when nothing else is under the cursor */
         if (!S.hover && S.country >= 0 && !P.down && COUNTRIES[S.country]) {
           ctx.globalAlpha = S.countryFade;
-          HW.label(ctx, COUNTRIES[S.country].name.toUpperCase(), P.x + 14, P.y - 10, C.fg, 'left', 11, 500);
+          HW.label(ctx, COUNTRIES[S.country].name.toUpperCase(), P.x + 14, P.y - 10, C.laneHi, 'left', 11, 500);
           ctx.globalAlpha = 1;
         }
 

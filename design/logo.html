@@ -36,9 +36,9 @@ const BG = v("--bg") || "#222222";
 // Colours come from tokens.css; the hex after each name is the fallback if
 // the stylesheet isn't loaded, so this file also works on its own.
 const COLOURS = [
-  ["--container", "#f08a3c"], ["--container-deep", "#f26b1d"],
-  ["--tanker", "#8f82f2"], ["--tanker-deep", "#6f62d8"],
-  ["--dry-bulk", "#46b36f"], ["--dry-bulk-deep", "#1f7a45"],
+  ["--container", "#46b36f"], ["--container-deep", "#1f7a45"],
+  ["--tanker", "#f08a3c"], ["--tanker-deep", "#f26b1d"],
+  ["--dry-bulk", "#8f82f2"], ["--dry-bulk-deep", "#6f62d8"],
   ["--general", "#ea86b5"], ["--roro", "#e9c84b"], ["--roro-deep", "#b39a2a"],
   ["--peach", "#f3d0b4"], ["--mint", "#e6f4ec"],
 ].map(([name, fallback]) => v(name) || fallback);
