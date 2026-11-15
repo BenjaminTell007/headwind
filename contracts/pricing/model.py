@@ -58,21 +58,49 @@ def _load(name):
 
 @lru_cache(maxsize=None)
 def ports():
-    """Ports by normalised name and by LOCODE (no space), from PortWatch."""
+    """Ports by normalised name and by LOCODE (no space), from PortWatch. Where several ports
+    share a name, the busiest (most vessel calls) wins."""
     out = {}
-    for p in _load("portwatch_ports.json"):
-        out.setdefault(p["name"].lower(), p)
+    for p in sorted(_load("portwatch_ports.json"), key=lambda p: -(p.get("vessels") or 0)):
+        out.setdefault(_norm(p["name"]), p)
         if p.get("locode"):
             out.setdefault(p["locode"].replace(" ", "").upper(), p)
     return out
 
 
+def _norm(text):
+    return " ".join("".join(c if c.isalnum() else " " for c in text.lower()).split())
+
+
 def find_port(query):
-    q = query.strip()
-    p = ports().get(q.replace(" ", "").upper()) or ports().get(q.lower())
-    if not p:
-        raise KeyError(f"unknown port: {query}")
-    return p
+    """A port from what people and crews type: 'Ulsan', 'ULSAN,KOREA', 'KR USN', 'KRUSN',
+    'DEHAM > BEANR' (the last stop wins), 'Rotterdam, Netherlands'."""
+    q = (query or "").strip()
+    if not q:
+        raise KeyError("no port given")
+    table = ports()
+    # Several stops ("A > B", "A TO B", "A/B"): try the last one first, it's where the ship is going.
+    stops = [s for s in q.replace(">", "|").replace("/", "|").replace(" TO ", "|").replace(" to ", "|").split("|") if s.strip()]
+    for stop in reversed(stops or [q]):
+        s = stop.strip()
+        for key in (s.replace(" ", "").upper(), _norm(s)):
+            if key in table:
+                return table[key]
+        # "ULSAN,KOREA" or "Ulsan - Korea": try each part, longest first
+        parts = sorted({_norm(x) for x in s.replace(",", "|").replace(" - ", "|").replace(";", "|").split("|") if x.strip()},
+                       key=len, reverse=True)
+        for part in parts:
+            if part in table:
+                return table[part]
+            if part.replace(" ", "").upper() in table:
+                return table[part.replace(" ", "").upper()]
+        # Last resort: a port whose name starts with what was typed ("New York" -> "New York-New Jersey")
+        for part in parts:
+            if len(part) >= 4:
+                hits = [p for k, p in table.items() if k == _norm(p["name"]) and k.startswith(part)]
+                if hits:
+                    return max(hits, key=lambda p: p.get("vessels") or 0)
+    raise KeyError(f"unknown port: {query}")
 
 
 def port_code(p):
