@@ -38,7 +38,9 @@ input { font:inherit; color:inherit; }
 /* header: logo, live count, search, markets, theme, wallet */
 header { position:absolute; left:0; right:0; top:0; display:flex; align-items:center; gap:14px; padding:16px 24px; z-index:5; pointer-events:none; }
 header > * { pointer-events:auto; }
-.brand canvas { width:176px; height:32px; }
+/* the logo: plain text in the site's light monospace, top left */
+.brand { text-decoration:none; color:var(--fg); margin-right:10px; }
+.brand .word { font:300 24px/1 var(--mono); letter-spacing:.42em; color:var(--fg); }
 .live b { color:var(--fg); font-weight:500; }
 .live::before { content:''; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--bulk); margin-right:8px; vertical-align:0; animation:pulse 2s infinite; }
 .live.off::before { background:var(--faint); animation:none; }
@@ -121,7 +123,7 @@ body.nomarkets .rail { transform:translateX(-360px); opacity:0; pointer-events:n
 
 .legend { position:absolute; right:128px; bottom:24px; z-index:4; display:flex; gap:16px; color:var(--dim); font-size:10.5px; letter-spacing:.12em; }
 .legend i { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:0; }
-.legend i.ln { width:16px; height:2px; border-radius:1px; background:var(--accent); vertical-align:3px; }
+.legend i.ln { width:16px; height:2px; border-radius:1px; background:var(--fg); opacity:.6; vertical-align:3px; }
 .legend i.ring { width:9px; height:9px; background:none; border:1.5px solid var(--fg); border-left-color:transparent; border-right-color:transparent; }
 
 /* intro */
@@ -168,7 +170,7 @@ body.nomarkets .rail { transform:translateX(-360px); opacity:0; pointer-events:n
   .overview .cell { min-width:0; flex:1; padding:10px; }
   .overview .cell:nth-child(n+3) { display:none; }
   .search input { width:110px; }
-  .brand canvas { width:120px; height:22px; }
+  .brand .word { font-size:17px; letter-spacing:.34em; }
   .hud .ident, .hud .wx { left:16px; right:16px; width:auto; }
   .hud .wx { bottom:auto; top:70px; }
 }

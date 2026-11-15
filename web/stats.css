@@ -1,0 +1,116 @@
+/* The forecasts screen that slides up under the globe (web/js/stats.js).
+   Uses the page's theme variables, so it follows light/dark mode. */
+
+#app { transition:transform .9s cubic-bezier(.7,0,.2,1), opacity .9s ease, filter .9s ease; transform-origin:50% 0; }
+#app.away { transform:scale(.93) translateY(-3%); opacity:.18; filter:blur(3px); pointer-events:none; }
+
+.statsBtn { position:fixed; left:50%; bottom:54px; transform:translateX(-50%); z-index:6; display:flex; align-items:center; gap:10px;
+  font:400 10.5px/1 var(--mono); letter-spacing:.22em; color:var(--dim); padding:10px 16px; border:1px solid var(--line2, #2a2a2c); border-radius:999px;
+  background:color-mix(in srgb, var(--bg) 70%, transparent); backdrop-filter:blur(8px); cursor:pointer; transition:color .2s, border-color .2s, opacity .4s; }
+.statsBtn:hover { color:var(--fg); border-color:var(--fg); }
+.statsBtn .chev { display:inline-block; animation:bob 1.8s ease-in-out infinite; }
+@keyframes bob { 50% { transform:translateY(3px); } }
+body.statsOpen .statsBtn { opacity:0; pointer-events:none; }
+
+#stats { position:fixed; inset:0; z-index:30; overflow-y:auto; overflow-x:hidden; background:var(--bg); color:var(--fg);
+  transform:translateY(102%); transition:transform .9s cubic-bezier(.7,0,.2,1); scrollbar-width:thin; scrollbar-color:#444 transparent; }
+body.statsOpen #stats { transform:none; }
+#stats .wrap { max-width:1220px; margin:0 auto; padding:0 32px; }
+#stats .tag { font:300 10.5px/1.3 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--dim); }
+#stats .back { position:sticky; top:0; z-index:3; display:flex; justify-content:space-between; align-items:center; padding:16px 32px;
+  background:linear-gradient(var(--bg) 60%, transparent); }
+#stats .back button { font:400 10.5px/1 var(--mono); letter-spacing:.22em; color:var(--dim); padding:9px 14px; border:1px solid var(--line2, #2a2a2c); border-radius:999px; background:none; cursor:pointer; }
+#stats .back button:hover { color:var(--fg); border-color:var(--fg); }
+#stats .back .word { font:300 17px/1 var(--mono); letter-spacing:.42em; }
+
+#stats section { padding:56px 0 40px; border-top:1px solid var(--line2, #2a2a2c); }
+#stats section:first-of-type { border-top:0; padding-top:24px; }
+#stats h2 { font:300 clamp(30px, 4vw, 52px)/1.05 var(--sans); letter-spacing:-.02em; margin:14px 0 14px; max-width:880px; }
+#stats h2 em { font-style:normal; color:var(--dim); }
+#stats h3 { font:400 20px/1.2 var(--sans); letter-spacing:-.01em; margin:10px 0 6px; }
+#stats p.lede { font:400 15px/1.6 var(--sans); color:color-mix(in srgb, var(--fg) 72%, transparent); max-width:720px; margin:0 0 28px; }
+#stats .note { font:400 12px/1.55 var(--sans); color:var(--dim); max-width:760px; }
+
+/* reveal on scroll */
+#stats .rv { opacity:0; transform:translateY(18px); transition:opacity .9s ease, transform .9s cubic-bezier(.2,.8,.2,1); }
+#stats .rv.in { opacity:1; transform:none; }
+
+/* big numbers */
+.kpis { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:0; border-top:1px solid var(--line2, #2a2a2c); }
+.kpis > div { padding:18px 18px 4px 0; }
+.kpis b { display:block; font:300 44px/1 var(--sans); letter-spacing:-.02em; margin:10px 0 8px; font-variant-numeric:tabular-nums; }
+.kpis span.s { font:400 12.5px/1.45 var(--sans); color:var(--dim); }
+
+/* featured forecast */
+.feature { display:grid; grid-template-columns:minmax(0, 1fr) 300px; gap:28px; align-items:start; }
+.feature .chart { position:relative; }
+.feature svg { width:100%; height:auto; display:block; overflow:visible; }
+.feature .side .big { font:300 52px/1 var(--sans); letter-spacing:-.02em; margin:10px 0 4px; font-variant-numeric:tabular-nums; }
+.feature .side .row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line2, #2a2a2c); font:400 13px var(--sans); }
+.feature .side .row span:first-child { color:var(--dim); }
+.gauge { margin:18px 0 8px; }
+.gauge .bar { height:6px; border-radius:3px; background:color-mix(in srgb, var(--fg) 12%, transparent); position:relative; overflow:hidden; }
+.gauge .bar i { position:absolute; left:0; top:0; bottom:0; background:var(--fg); border-radius:3px; transition:width 1s cubic-bezier(.2,.8,.2,1); }
+.readout { position:absolute; pointer-events:none; font:400 11px/1.4 var(--mono); letter-spacing:.06em; background:color-mix(in srgb, var(--bg) 88%, transparent);
+  border:1px solid var(--line2, #2a2a2c); border-radius:8px; padding:8px 10px; white-space:nowrap; opacity:0; transition:opacity .15s; }
+.readout b { font-weight:500; color:var(--fg); }
+
+/* small multiples */
+.multiples { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:14px; margin-top:26px; }
+.mini { border:1px solid var(--line2, #2a2a2c); border-radius:12px; padding:12px 12px 6px; cursor:pointer; transition:border-color .2s, background .2s; }
+.mini:hover { border-color:color-mix(in srgb, var(--fg) 40%, transparent); }
+.mini.on { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 7%, transparent); }
+.mini .hd { display:flex; justify-content:space-between; align-items:baseline; }
+.mini .hd b { font:400 15px var(--sans); }
+.mini svg { width:100%; height:auto; display:block; margin-top:6px; }
+
+/* market signals */
+.signals { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px; }
+.sig { border:1px solid var(--line2, #2a2a2c); border-radius:12px; padding:14px 14px 12px; display:grid; grid-template-columns:1fr auto; gap:6px 12px; align-items:center; }
+.sig .q { grid-column:1 / -1; font:400 13.5px/1.4 var(--sans); }
+.sig .p { font:300 34px/1 var(--sans); letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+.sig .lean { font:400 10.5px/1 var(--mono); letter-spacing:.18em; padding:6px 9px; border-radius:999px; border:1px solid var(--line2, #2a2a2c); }
+.sig .lean.yes { color:var(--bg); background:var(--fg); border-color:var(--fg); }
+.sig .lean.no { color:var(--dim); }
+.sig .pb { grid-column:1 / -1; height:4px; border-radius:2px; background:color-mix(in srgb, var(--fg) 12%, transparent); position:relative; }
+.sig .pb i { position:absolute; left:0; top:0; bottom:0; border-radius:2px; background:var(--fg); }
+.sig .pb u { position:absolute; left:50%; top:-3px; bottom:-3px; width:1px; background:var(--dim); }
+.sig svg { grid-column:1 / -1; width:100%; height:34px; }
+
+/* ridgeline */
+.ridgeWrap { position:relative; }
+#ridge { width:100%; height:min(78vh, 720px); display:block; cursor:grab; }
+#ridge:active { cursor:grabbing; }
+
+/* importance + backtest */
+.two { display:grid; grid-template-columns:1fr 1fr; gap:40px; }
+.dots .r { display:grid; grid-template-columns:190px 1fr 92px; align-items:center; gap:12px; padding:7px 0; border-bottom:1px solid var(--line2, #2a2a2c); font:400 13px var(--sans); }
+.dots .r span:first-child { color:color-mix(in srgb, var(--fg) 80%, transparent); }
+.dots .r .tr { position:relative; height:10px; }
+.dots .r .tr::before { content:''; position:absolute; left:0; right:0; top:50%; height:1px; background:var(--line2, #2a2a2c); }
+.dots .r .tr i { position:absolute; left:0; top:50%; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%; background:var(--fg); transition:left 1.2s cubic-bezier(.2,.8,.2,1) .25s; }
+.rv.in .dots .r .tr i { left:var(--l); }
+.dots .r .tr i.n { background:none; border:1.5px solid var(--dim); }
+.dots .r .tr s { position:absolute; top:50%; height:1px; background:var(--dim); }
+.dots .r .v { text-align:right; font-variant-numeric:tabular-nums; color:var(--dim); font-size:12px; }
+
+.foot { padding:40px 0 80px; }
+
+@media (max-width: 1000px) {
+  .feature { grid-template-columns:1fr; }
+  .multiples { grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .signals { grid-template-columns:1fr 1fr; }
+  .two { grid-template-columns:1fr; }
+  .kpis { grid-template-columns:1fr 1fr; }
+}
+@media (max-width: 640px) {
+  #stats .wrap { padding:0 16px; }
+  #stats .back { padding:12px 16px; }
+  .signals { grid-template-columns:1fr; }
+  .dots .r { grid-template-columns:130px 1fr 48px; }
+}
+
+/* history lines draw themselves in on the featured chart */
+#stats .draw { stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1); }
+#stats .draw.go, #stats .mini .draw { stroke-dashoffset:0; }
+#stats .mini .draw { stroke-dasharray:none; }
