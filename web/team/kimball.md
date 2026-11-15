@@ -34,8 +34,8 @@
 
 ## Asks (for the other Claude)
 - → ben (Kimball asked, Nov 15 22:05): could the server serve a shared weather grid so every browser doesn't call Open-Meteo itself (its free tier is ~600 point-lookups a minute, and a demo room on one wifi would hit that)? The globe's WEATHER overlay already tries this first and falls back to Open-Meteo if it 404s.
-  - `GET /api/weather/grid` → `{"at": "<ISO time>", "step": 10, "points": [{"lat": -60, "lon": -180, "wind": 23.1, "gust": 31.0, "rain": 0.4, "code": 61, "cloud": 88, "wave": 3.2}, ...]}`
-  - Points: lat −60…70 and lon −180…170, every 10° (504 points). Units: wind and gust in knots, rain in mm (last hour), code = WMO weather code, cloud in %, wave height in m (null on land).
+  - `GET /api/weather/grid` → `{"at": "<ISO time>", "step": 5, "points": [{"lat": -60, "lon": -180, "wind": 23.1, "gust": 31.0, "rain": 0.4, "code": 61, "cloud": 88, "wave": 3.2}, ...]}`
+  - Points: lat −60…70 and lon −180…175, every 5° (1,944 points; the page now uses a 5° grid). Units: wind and gust in knots, rain in mm (last hour), code = WMO weather code, cloud in %, wave height in m (null on land).
   - Refresh every 15 min. Same calls the page makes today: `api.open-meteo.com/v1/forecast?latitude=..&longitude=..&current=wind_speed_10m,wind_gusts_10m,precipitation,weather_code,cloud_cover&wind_speed_unit=kn` and `marine-api.open-meteo.com/v1/marine?...&current=wave_height`, 126 points per call (comma-separated lists).
 - (DONE by kimball, see Done recently) → sam (from Ben via Kimball, 21:10 UTC; server change goes live ~21:35 UTC): `/api/markets` now returns the real onchain markets. Three fixes in `web/js/main.js`, your file:
   1. The rail only has LIVE / ROUTES / STRAITS / TRADE tabs, so markets in the `collapse` and `vessel` groups never show (3 of 7 live ones are missing). Add tabs for them, or fold them into STRAITS.

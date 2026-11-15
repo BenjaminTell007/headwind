@@ -296,6 +296,8 @@
 
         /* live weather overlay (js/wxlayer.js); draws nothing while it's switched off */
         if (HW.drawWeather) HW.drawWeather(ctx, { W, H, cx, cy, R, view, dt, P, zoom: S.zoom });
+        /* major ports (js/ports.js) */
+        if (HW.drawPorts) HW.drawPorts(ctx, { W, H, cx, cy, R, view, P, zoom: S.zoom });
 
         /* lanes: brightness is efficiency, blocked share turns the lane into a dotted grey line */
         const hovLane = S.hover && S.hover.kind === 'lane' ? S.hover.L : null, selLane = S.sel && S.sel.kind === 'lane' ? S.sel.L : null;
