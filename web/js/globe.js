@@ -27,6 +27,10 @@
     const ld = D.land.dots, nL = ld.length / 2;
     const LX = new Float32Array(nL), LY = new Float32Array(nL), LZ = new Float32Array(nL), LB = new Float32Array(nL);
     for (let i = 0; i < nL; i++) { const v = vec(ld[2 * i] / 100, ld[2 * i + 1] / 100); LX[i] = v[0]; LY[i] = v[1]; LZ[i] = v[2]; LB[i] = rnd(); }
+    // country of each land dot and each border ring (-1 = none), from web/tools/build_land.py
+    const LC = new Int16Array(nL).fill(-1);
+    (D.land.dot_country || []).forEach((c, i) => { if (i < nL) LC[i] = c; });
+    const COUNTRIES = D.land.countries || [];
     const nO = 5200, OX = new Float32Array(nO), OY = new Float32Array(nO), OZ = new Float32Array(nO);
     for (let i = 0; i < nO; i++) { const y = 1 - 2 * (i + 0.5) / nO, r = Math.sqrt(1 - y * y), a = i * 2.399963; OX[i] = r * Math.cos(a); OY[i] = y; OZ[i] = r * Math.sin(a); }
     // country rings, densified to every 2 degrees so the part clipped to the rim follows its curve
@@ -40,6 +44,7 @@
       }
       return new Float32Array(out);
     });
+    const RC = Int16Array.from(D.land.ring_country || D.land.borders.map(() => -1));
 
     // corridors: densified 3D polylines with cumulative length, for drawing and particles
     const weeks = D.status.weeks, nW = weeks.length;
@@ -69,7 +74,7 @@
     /* ---------- state ---------- */
     const S = {
       ti: nW - 1, zoom: 1, zoomT: 1, idle: 9, wAxis: [0, 1, 0], wSpeed: 0, dragAng: 0, fly: null,
-      hover: null, sel: null, quiet: 1, autoSpin: false, anim: null, ships: [], shipsAt: 0, shipsFade: 0, showShips: true, dive: null,
+      hover: null, country: -1, countryFade: 0, sel: null, quiet: 1, autoSpin: false, anim: null, ships: [], shipsAt: 0, shipsFade: 0, showShips: true, dive: null,
     };
     const rotM = (axis, ang) => {
       const [x, y, z] = axis, c = Math.cos(ang), s = Math.sin(ang), t = 1 - c;
@@ -173,6 +178,9 @@
            colour at low opacity, so it works in light and dark mode. */
         const ds = HW.clamp(1.25 * Math.sqrt(S.zoom), 1.2, 2.6), hs = ds / 2, px = P.inside ? P.x : -1e4, py = P.y;
         const BUCKET_ALPHA = [0.24, 0.36, 0.58];
+        // the country under the cursor (like the 423 globe): its dots light up and its outline shows
+        const hc = S.country;
+        let nearDot = -1, nearD = 50;
         ctx.fillStyle = C.fg;
         for (let b = 0; b < 3; b++) {
           ctx.globalAlpha = BUCKET_ALPHA[b]; ctx.beginPath();
@@ -180,7 +188,9 @@
             const Z = m6 * LX[i] + m7 * LY[i] + m8 * LZ[i]; if (Z < 0) continue;
             const sx = cx + (m0 * LX[i] + m1 * LY[i] + m2 * LZ[i]) * R, sy = cy - (m3 * LX[i] + m4 * LY[i] + m5 * LZ[i]) * R;
             if (sx < -4 || sx > W + 4 || sy < -4 || sy > H + 4) continue;
-            const dx = sx - px, dy = sy - py, near = dx * dx + dy * dy < 7000 ? Math.exp(-(dx * dx + dy * dy) / 2400) : 0;
+            const dx = sx - px, dy = sy - py, d2 = dx * dx + dy * dy, near = d2 < 7000 ? Math.exp(-d2 / 2400) : 0;
+            if (b === 0 && d2 < nearD) { nearD = d2; nearDot = i; }
+            if (hc >= 0 && LC[i] === hc) continue;   // drawn bright below
             const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2;
             const bucket = lum > 1.05 ? 2 : lum > 0.72 ? 1 : 0;
             if (bucket !== b) continue;
@@ -188,8 +198,37 @@
           }
           ctx.fill();
         }
+        if (hc >= 0) {
+          ctx.globalAlpha = 0.95 * S.countryFade; ctx.beginPath();
+          const hd = ds * 1.25, hh = hd / 2;
+          for (let i = 0; i < nL; i++) {
+            if (LC[i] !== hc) continue;
+            const Z = m6 * LX[i] + m7 * LY[i] + m8 * LZ[i]; if (Z < 0) continue;
+            const sx = cx + (m0 * LX[i] + m1 * LY[i] + m2 * LZ[i]) * R, sy = cy - (m3 * LX[i] + m4 * LY[i] + m5 * LZ[i]) * R;
+            ctx.rect(sx - hh, sy - hh, hd, hd);
+          }
+          ctx.fill();
+        }
+        // which country the cursor is over: the nearest land dot within ~7 px
+        const overCountry = P.inside && !P.down && nearDot >= 0 ? LC[nearDot] : -1;
+        if (overCountry !== S.country) { S.country = overCountry; S.countryFade = 0; }
+        S.countryFade += (1 - S.countryFade) * (1 - Math.exp(-10 * dt));
 
-        /* country outlines, faint */
+        /* country outlines, faint; the hovered country's outline brighter */
+        if (hc >= 0) {
+          ctx.globalAlpha = 0.6 * S.countryFade; ctx.strokeStyle = C.fg; ctx.lineWidth = 1; ctx.beginPath();
+          rings.forEach((f, k) => {
+            if (RC[k] !== hc) return;
+            let pen = false;
+            for (let i = 0; i < f.length; i += 3) {
+              const x0 = f[i], y0 = f[i + 1], z0 = f[i + 2], Z = m6 * x0 + m7 * y0 + m8 * z0;
+              if (Z < 0.02) { pen = false; continue; }
+              const x = cx + (m0 * x0 + m1 * y0 + m2 * z0) * R, y = cy - (m3 * x0 + m4 * y0 + m5 * z0) * R;
+              if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; }
+            }
+          });
+          ctx.stroke();
+        }
         ctx.globalAlpha = 0.08; ctx.strokeStyle = C.fg; ctx.lineWidth = 0.6; ctx.beginPath();
         for (const f of rings) {
           let pen = false;
@@ -291,6 +330,13 @@
           S.hover = straitPick ? { kind: 'strait', s: straitPick } : shipPick ? { kind: 'ship', ship: shipPick } : lanePick ? { kind: 'lane', L: lanePick } : null;
           const now = S.hover && (S.hover.s || S.hover.L || S.hover.ship);
           if (now !== was) canvas.style.cursor = S.hover ? 'pointer' : 'grab';
+        }
+
+        /* the hovered country's name, when nothing else is under the cursor */
+        if (!S.hover && S.country >= 0 && !P.down && COUNTRIES[S.country]) {
+          ctx.globalAlpha = S.countryFade;
+          HW.label(ctx, COUNTRIES[S.country].name.toUpperCase(), P.x + 14, P.y - 10, C.fg, 'left', 11, 500);
+          ctx.globalAlpha = 1;
         }
 
         /* callout */
