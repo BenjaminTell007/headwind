@@ -7,8 +7,10 @@ Backend (`server/`). I only touch `web/` when Ben asks, and say so here.
 
 ## Files I'm editing (don't touch without asking)
 - `web/js/keystats.js` (new, mine)
+- `web/js/demo-round.js` (new, mine)
 
 ## Done recently
+- Nov 15 ~23:55 UTC (Ben asked): the demo round is on the markets page. New `web/js/demo-round.js` adds a strip above `#grid`: START A DEMO ROUND, then the phase, a countdown, the four steps, and BET ON THIS ROUND (clicks the round's card, `article[data-id^="demo_"]`, to open its drawer). `web/markets.html` (Sam's): one line loading it after `markets-page.js`. `markets-page.js` untouched.
 - Nov 15 ~23:40 UTC: server demo round (`/demo`, `POST /api/demo/start`, `GET /api/demo`), and the ship logger now writes to disk every 5 s instead of every 60, so gate counts and ship positions are a few seconds old, not a minute. No web/ files touched.
 - Nov 15 ~22:15 UTC (Ben asked): the three big stat cards on the globe page are moved to the forecasts page.
   - `web/index.html` (Sam's): one line, `#overview` gets `style="display:none"`. `main.js` still fills it, so nothing else changes; delete the section and `renderOverview` whenever you like.
