@@ -12,13 +12,15 @@ const esc = HW.esc;
 
 /* ---------- state ---------- */
 let list = [];                 // markets from the server
-let tab = 'open', query = '', sort = 'close';
+let tab = 'all', query = '', sort = 'close';   // tab: all | live | strait | route | trade | soon | settled | mine
 let chain = null;              // { mk, wl, cfg, m, wallet } once web/chain has loaded
 let onchain = [];              // every onchain market (for positions on past live windows)
 const pos = {};                // chain id -> { yes, no } share balances (bigint wei)
 let openId = null;             // market shown in the drawer
 let side = true, amount = '0.02';
 let series = null;             // the data files behind the charts, loaded once
+let placed = null;             // the bet just placed, while its confirmation is on screen
+let hedged = null;             // same for a hedge
 let busy = false;              // one of our own trades is landing (the dashboard waits before reconciling)
 
 /* ---------- small helpers ---------- */
@@ -43,17 +45,37 @@ const sourceTag = m => m.group === 'live' ? 'LIVE · AIS GATE' : m.group === 'tr
 const outcomeText = o => o == null ? '' : typeof o === 'number' ? ['', 'YES', 'NO', 'INVALID'][o] || String(o) : String(o).toUpperCase();
 
 /* ---------- "my trades": the dashboard (js/portfolio.js) ---------- */
+/* What has to happen for a side to win, in plain words: "at least 297 ships", "under 35.0 days". */
+const condition = (m, yes) => {
+  const base = String(m.threshold_display || '').replace(/^under\s+/i, '');
+  if (!base) return yes ? 'the answer to be yes' : 'the answer to be no';
+  return (yes === (m.is_above !== false) ? 'at least ' : 'under ') + base;
+};
+const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+const utc = iso => new Date(iso).toISOString().slice(11, 16);   // the questions name their windows in UTC, so the page does too
+/* The same for an onchain market, which may be an older one the server no longer lists. */
+const need = (c, sideName, live) => {
+  const yes = sideName === 'yes';
+  const m = list.find(x => x.chainId != null && Number(x.chainId) === Number(c.id)) || list.find(x => x.question === c.question);
+  if (m && m.threshold_display) return cap(condition(m, yes));
+  const a = c.about || {}, n = Number(c.threshold), word = yes === c.isAbove ? 'At least ' : 'Under ';
+  if (a.kind === 'live') return word + (live && live.threshold ? live.threshold : n) + ' ships';
+  if (a.kind === 'arrival') return yes ? 'The ship to arrive late' : 'The ship to arrive on time';
+  if (a.kind === 'strait') return word + n.toLocaleString('en-US') + (a.measure === 'weekly_tanker' ? ' tankers' : a.measure === 'weekly_container' ? ' container ships' : ' ships');
+  if (a.kind === 'route' && a.measure === 'expected_days') return word + (n / 1000).toFixed(1) + ' days';
+  return yes ? 'The answer to be yes' : 'The answer to be no';
+};
 const pf = makePortfolio({
-  HW, left, sample: SAMPLE, pos,
+  HW, left, sample: SAMPLE, pos, need,
   list: () => list, chain: () => chain, onchain: () => onchain, busy: () => busy,
   changed: () => { pill(); if (tab === 'mine') render(); },
 });
-const pill = () => {
-  const T = pf.totals(), el = $('pfPill'); if (!el) return;
-  if (!T || !(T.staked > 0)) { el.textContent = 'MY TRADES'; el.className = 'pill pfpill' + (tab === 'mine' ? ' on' : ''); return; }
-  const d = T.pnl > 0.00005 ? 'up' : T.pnl < -0.00005 ? 'down' : 'flat';
-  el.innerHTML = `MY TRADES <b>${d === 'up' ? '▲ +' : d === 'down' ? '▼ −' : ''}${Math.abs(T.pnl).toFixed(4)}</b>`;
-  el.className = `pill pfpill ${d}` + (tab === 'mine' ? ' on' : '');
+const pill = () => {   // the small up/down figure on the "My trades" tab
+  const T = pf.totals(), el = $('pfBadge'); if (!el) return;
+  if (!T || !T.count) { el.textContent = ''; el.className = ''; return; }
+  const d = T.openPnl > 0.00005 ? 'up' : T.openPnl < -0.00005 ? 'down' : 'flat';
+  el.textContent = `${T.count} open · ${d === 'up' ? '▲ +' : d === 'down' ? '▼ −' : ''}${Math.abs(T.openPnl).toFixed(4)}`;
+  el.className = d;
 };
 
 /* ---------- the data behind a market, for the sparkline and the chart ---------- */
@@ -106,28 +128,27 @@ const chart = m => {
     <text x="${L}" y="${H - 6}">2 YEARS AGO</text><text x="${W - 8}" y="${H - 6}" text-anchor="end">LATEST WEEK · ${f(v[v.length - 1])} ${esc(d.unit.toUpperCase())}</text></svg>`;
 };
 
-/* ---------- summary strip ---------- */
+/* ---------- the one-line summary ---------- */
 const renderSum = () => {
-  const open = list.filter(isOpen), day = Date.now() + 864e5;
-  const cells = [
-    ['OPEN MARKETS', open.length, `${list.length - open.length} more coming up or settled`],
-    ['TOTAL POOLED', fMon(open.reduce((a, m) => a + pool(m), 0)), 'In open markets, on Monad testnet'],
-    ['CLOSING IN 24 HOURS', open.filter(m => closeMs(m) < day).length, 'Last chance to take a side'],
-  ];
-  $('sum').innerHTML = cells.map(([k, v, s]) => `<div class="cell"><div class="tag">${k}</div><div class="num">${v}</div><div class="sub">${s}</div></div>`).join('');
+  const open = list.filter(isOpen), day = Date.now() + 864e5, soon = open.filter(m => closeMs(m) < day).length;
+  $('sum').textContent = list.length ? `${open.length} open ${open.length === 1 ? 'market' : 'markets'} · ${fMon(open.reduce((a, m) => a + pool(m), 0))} pooled · ${soon ? soon + (soon === 1 ? ' closes' : ' close') + ' in the next 24 hours' : 'none closing today'}` : '';
 };
 
 /* ---------- cards ---------- */
+const GROUP_OF = m => m.group === 'live' ? 'live' : STRAIT_GROUPS.includes(m.group) ? 'strait' : m.group === 'route' ? 'route' : 'trade';
 const inTab = m => {
-  if (tab === 'open') return isOpen(m);
-  if (tab === 'live') return m.group === 'live';
-  if (tab === 'strait') return STRAIT_GROUPS.includes(m.group);
-  if (tab === 'route') return m.group === 'route';
-  if (tab === 'trade') return m.group === 'trade';
+  if (tab === 'all') return isOpen(m);
   if (tab === 'soon') return m.chainId == null;
   if (tab === 'settled') return isSettled(m);
-  return true;
+  return GROUP_OF(m) === tab && !isSettled(m);
 };
+/* The home view: open markets in four plain groups, instead of one long list. */
+const SECTIONS = [
+  ['live', 'Live', 'Ships crossing a gate in the next hour. Settles the same day.'],
+  ['strait', 'Straits', 'How many ships pass a strait this week, counted by IMF PortWatch.'],
+  ['route', 'Routes', 'How long a shipping route takes this week.'],
+  ['trade', 'Trade', 'Monthly US trade with one partner, from the official release.'],
+];
 const card = m => {
   const p = prob(m), open = isOpen(m), settled = isSettled(m), live = m.group === 'live';
   const cn = m.live && m.live.counting;
@@ -140,23 +161,48 @@ const card = m => {
     <div class="q">${esc(m.question)}</div>
     <div class="mid"><div class="pct">${Math.round(p * 100)}%<small>YES</small></div>${spark(m, 120, 36)}</div>
     <div class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></div>
-    <div class="foot">${foot}<span class="tag">${cn && cn.count_so_far != null ? `NOW COUNTING ${cn.count_so_far} / ${cn.threshold}` : mine && (mine.yes || mine.no) ? 'YOU HOLD A POSITION' : ''}</span></div>
+    <div class="foot">${foot}<span class="tag">${cn && cn.count_so_far != null ? `WINDOW BEFORE: ${cn.count_so_far} OF ${cn.threshold}` : mine && (mine.yes || mine.no) ? 'YOU HOLD A POSITION' : ''}</span></div>
     ${action}</article>`;
 };
 const render = () => {
   renderSum();
-  const grid = $('grid');
-  grid.className = tab === 'mine' ? 'mk-grid pf' : 'mk-grid';
-  if (tab === 'mine') { grid.innerHTML = pf.html(); pf.afterRender(); }
-  else {
-    const q = query.trim().toLowerCase();
-    const rows = list.filter(inTab).filter(m => !q || m.question.toLowerCase().includes(q));
-    const by = { close: (a, b) => (isOpen(b) - isOpen(a)) || ((closeMs(a) || 9e15) - (closeMs(b) || 9e15)), pool: (a, b) => pool(b) - pool(a), yes: (a, b) => prob(b) - prob(a), no: (a, b) => prob(a) - prob(b) }[sort];
-    grid.innerHTML = rows.sort(by).map(card).join('') || '<div class="mk-empty">No markets here right now.</div>';
+  const grid = $('grid'), q = query.trim().toLowerCase();
+  const by = { close: (a, b) => (isOpen(b) - isOpen(a)) || ((closeMs(a) || 9e15) - (closeMs(b) || 9e15)), pool: (a, b) => pool(b) - pool(a), yes: (a, b) => prob(b) - prob(a), no: (a, b) => prob(a) - prob(b) }[sort];
+  if (tab === 'mine') { grid.className = 'mk-grid pf'; grid.innerHTML = pf.html(); pf.afterRender(); }
+  else if (q) {   // searching looks everywhere, open markets first
+    const rows = list.filter(m => m.question.toLowerCase().includes(q)).sort(by);
+    grid.className = 'mk-grid';
+    grid.innerHTML = rows.map(card).join('') || `<div class="mk-empty">No market mentions “${esc(query.trim())}”.</div>`;
+  } else if (tab === 'all') {
+    const open = list.filter(isOpen).sort(by), later = list.filter(m => m.chainId == null).length;
+    grid.className = 'mk-grid secs';
+    grid.innerHTML = (SECTIONS.map(([key, title, blurb]) => {
+      const rows = open.filter(m => GROUP_OF(m) === key); if (!rows.length) return '';
+      return `<div class="sec"><div class="sec-h"><h2>${title}</h2><p>${blurb}</p>${rows.length > 6 ? `<button data-t="${key}">SEE ALL ${rows.length} →</button>` : ''}</div><div class="cards">${rows.slice(0, 6).map(card).join('')}</div></div>`;
+    }).join('') || (list.length ? '<div class="mk-empty">No markets are open right now.</div>' : '<div class="mk-empty">Loading markets…</div>'))
+      + (later ? `<p class="mk-later">${later} more markets open later. <button data-t="soon">SEE WHAT IS COMING UP →</button></p>` : '');
+  } else {
+    const rows = list.filter(inTab).sort(by);
+    grid.className = 'mk-grid';
+    grid.innerHTML = rows.map(card).join('') || '<div class="mk-empty">No markets here right now.</div>';
   }
   $('note').textContent = 'Markets settle onchain on Monad testnet against public data. Stakes are testnet MON, which has no real value. Each share pays 1 MON if you are right.';
   if (openId != null && !hedgeOpen) renderDrawer();
 };
+
+/* ---------- the confirmation after a bet lands: a tick that draws itself, then what you stand to win or lose ---------- */
+const donePanel = d => `<div class="tb done">
+    <div class="tickwrap"><span class="ring"></span><svg class="tick" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="23"/><path d="M15.5 27l7.5 7.5 14-16"/></svg></div>
+    <h3>${d.title}</h3>
+    <p class="donesum">${d.line}</p>
+    <div class="outcomes">
+      <div class="oc win"><span>IF YOU'RE RIGHT</span><b>+${(d.shares - d.amt).toFixed(4)} MON</b><small>you get ${d.shares.toFixed(4)} back</small></div>
+      <div class="oc lose"><span>IF YOU'RE WRONG</span><b>−${d.amt.toFixed(4)} MON</b><small>you lose your stake</small></div>
+    </div>
+    <button class="go" data-watch="1">WATCH IT IN MY TRADES</button>
+    <button class="pill wide" data-again="1">${d.again}</button>
+    <div class="msg">${d.sample ? 'Sample view: nothing was sent.' : d.tx && chain && chain.cfg ? `<a href="${chain.cfg.txUrl(d.tx)}" target="_blank" rel="noopener">View the transaction</a>` : ''}</div>
+  </div>`;
 
 /* ---------- drawer ---------- */
 const current = () => list.find(m => m.id === openId);
@@ -168,6 +214,8 @@ const renderDrawer = () => {
   const cfg = chain && chain.cfg;
   const mine = pos[m.chainId];
   // keep what the person typed while the drawer re-renders on a live odds update
+  const box = $('dbody'), justPlaced = placed && placed.id === m.id;
+  if (justPlaced && box.dataset.placed === String(placed.t)) return;   // leave the confirmation as it is: redrawing would replay its animation
   const amtEl = $('amt'); if (amtEl) amount = amtEl.value;
   const focused = document.activeElement && document.activeElement.id === 'amt';
   $('dbody').innerHTML = `
@@ -175,8 +223,8 @@ const renderDrawer = () => {
     <h1>${esc(m.question)}</h1>
     <div class="dcols">
       <div>
-        ${cn ? `<div class="dsec"><h3>CROSSING THE GATE RIGHT NOW</h3><div class="count"><b>${cn.count_so_far} / ${cn.threshold}</b><span class="tag">SHIPS COUNTED · WINDOW ENDS <span data-end="${Date.parse(cn.window_end)}">${left(Date.parse(cn.window_end))}</span></span></div>
-          <p style="margin-top:8px">${esc(cn.question || '')}</p>${tr ? `<p>The window you can trade now runs ${new Date(tr.window_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to ${new Date(tr.window_end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Trading closes when it starts.</p>` : ''}</div>` : ''}
+        ${cn ? `<div class="dsec"><h3>THE WINDOW BEFORE THIS ONE · BEING COUNTED NOW</h3><div class="count"><b>${cn.count_so_far} / ${cn.threshold}</b><span class="tag">SHIPS SO FAR · <span data-end="${Date.parse(cn.window_end)}">${left(Date.parse(cn.window_end))}</span></span></div>
+          <p style="margin-top:8px">This is the ${utc(cn.window_start)} to ${utc(cn.window_end)} UTC window, shown so you can see the pace at this gate.${tr ? ` Your bet is on the next one, ${utc(tr.window_start)} to ${utc(tr.window_end)} UTC. Betting closes when it starts.` : ''}</p></div>` : ''}
         ${ch ? `<div class="dsec"><h3>THE DATA BEHIND IT</h3>${ch}</div>` : ''}
         <div class="dsec"><h3>WHY THIS THRESHOLD</h3><p>${esc(m.why || '—')}</p></div>
         <div class="dsec"><h3>RULES</h3><dl class="rules">
@@ -189,28 +237,36 @@ const renderDrawer = () => {
           <dt>ONCHAIN</dt><dd>${m.chainId != null ? `Market #${m.chainId}` + (cfg && chain.m ? ` · <a href="${cfg.addressUrl(chain.m.address)}" target="_blank" rel="noopener">contract</a>` : '') : 'Not opened onchain yet'}</dd>
         </dl></div>
       </div>
+      ${justPlaced ? donePanel({ title: 'Bet placed', line: `You bet <b>${placed.amt.toFixed(4)} MON</b> on <b>${placed.yes ? 'YES' : 'NO'}</b>: ${esc(condition(m, placed.yes))}.`, shares: placed.shares, amt: placed.amt, tx: placed.tx, sample: placed.sample, again: 'PLACE ANOTHER BET' }) : `
       <div class="tb">
         <div class="odds2"><span class="tag">CHANCE OF YES</span><b>${Math.round(p * 100)}%</b></div>
         <div class="kc" style="padding:0;border:0;box-shadow:none;background:none;cursor:default;transform:none"><div class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></div></div>
         ${settled ? `<p class="msg">This market settled ${outcomeText(c.outcome)}.</p>` : `
+        <label>PICK A SIDE</label>
         <div class="side"><button data-s="yes" class="${side ? 'on' : ''}">YES ${Math.round(p * 100)}¢</button><button data-s="no" class="${side ? '' : 'on'}">NO ${Math.round((1 - p) * 100)}¢</button></div>
-        <label for="amt">AMOUNT</label>
+        <p class="sidewhy"><b>${side ? 'YES' : 'NO'}</b> wins with ${esc(condition(m, side))}.</p>
+        <label for="amt">HOW MUCH</label>
         <div class="amt"><input id="amt" inputmode="decimal" value="${esc(amount)}" autocomplete="off"><span>MON</span></div>
         <div class="quick">${['0.01', '0.02', '0.05', '0.1'].map(a => `<button data-q="${a}">${a}</button>`).join('')}</div>
-        <div class="est"><div><span>Shares you get</span><b id="eShares">—</b></div><div><span>Average price</span><b id="ePrice">—</b></div><div><span>Paid out if you are right</span><b id="ePay">—</b></div></div>
-        <button class="go" id="go" ${open ? '' : 'disabled'}>${open ? 'PLACE ' + (side ? 'YES' : 'NO') : m.chainId == null ? 'NOT OPEN YET' : 'TRADING CLOSED'}</button>`}
+        <div class="outcomes">
+          <div class="oc win"><span>IF YOU'RE RIGHT</span><b id="eWin">—</b><small id="eBack">&nbsp;</small></div>
+          <div class="oc lose"><span>IF YOU'RE WRONG</span><b id="eLose">—</b><small>you lose your stake</small></div>
+        </div>
+        <p class="fine" id="eFine">&nbsp;</p>
+        <button class="go" id="go" ${open ? '' : 'disabled'}>${open ? 'PLACE BET · ' + (side ? 'YES' : 'NO') : m.chainId == null ? 'NOT OPEN YET' : 'TRADING CLOSED'}</button>`}
         <div class="msg" id="tmsg"></div>
-        ${mine && (mine.yes > 0n || mine.no > 0n) ? `<div class="mine"><span class="tag">YOUR POSITION</span>
-          ${mine.yes > 0n ? `<div><span>${chain.mk.formatMon(mine.yes, 3)} YES shares</span>${settled ? '' : '<button data-sell="yes">SELL</button>'}</div>` : ''}
-          ${mine.no > 0n ? `<div><span>${chain.mk.formatMon(mine.no, 3)} NO shares</span>${settled ? '' : '<button data-sell="no">SELL</button>'}</div>` : ''}
-          ${settled ? '<div><span>Collect your payout</span><button data-claim="1">CLAIM</button></div>' : ''}</div>` : ''}
-      </div>
+        ${mine && (mine.yes > 0n || mine.no > 0n) ? `<div class="mine"><span class="tag">YOU ALREADY HOLD</span>
+          ${mine.yes > 0n ? `<div><span>${chain.mk.formatMon(mine.yes, 3)} YES shares</span></div>` : ''}
+          ${mine.no > 0n ? `<div><span>${chain.mk.formatMon(mine.no, 3)} NO shares</span></div>` : ''}
+          <div><span>Cash out or collect under My trades</span><button data-watch="1">MY TRADES</button></div></div>` : ''}
+      </div>`}
     </div>`;
+  box.dataset.placed = justPlaced ? String(placed.t) : '';
   if (focused && $('amt')) { const a = $('amt'); a.focus(); a.setSelectionRange(a.value.length, a.value.length); }
   quote();
 };
-const openDrawer = (id, s) => { hedgeOpen = false; openId = id; if (s != null) side = s; document.body.classList.add('drawer-open'); $('drawer').setAttribute('aria-hidden', 'false'); renderDrawer(); ensureChain(); };
-const closeDrawer = () => { hedgeOpen = false; openId = null; document.body.classList.remove('drawer-open'); $('drawer').setAttribute('aria-hidden', 'true'); };
+const openDrawer = (id, s) => { hedgeOpen = false; placed = null; openId = id; if (s != null) side = s; document.body.classList.add('drawer-open'); $('drawer').setAttribute('aria-hidden', 'false'); renderDrawer(); ensureChain(); };
+const closeDrawer = () => { hedgeOpen = false; placed = null; hedged = null; openId = null; document.body.classList.remove('drawer-open'); $('drawer').setAttribute('aria-hidden', 'true'); };
 
 /* ---------- hedge a ship: price a late arrival, then open the market and buy cover in one transaction ---------- */
 let hedgeOpen = false, hq = null;   // hq: the signed quote on screen
@@ -218,7 +274,7 @@ const hv = { ship: '', port: '', deadline: '', cargo: '500000' };
 const USD_PER_MON = 100000;         // demo rate, so the cover fits in a burner wallet (0.25 MON from the faucet)
 const localInput = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 const openHedge = (ship, port) => {
-  openId = null; hedgeOpen = true; hq = null;
+  openId = null; hedgeOpen = true; hq = null; hedged = null; $('dbody').dataset.placed = '';
   if (ship != null) hv.ship = ship; if (port != null) hv.port = port;
   if (!hv.deadline) hv.deadline = localInput(new Date(Date.now() + 19 * 3600e3));
   document.body.classList.add('drawer-open'); $('drawer').setAttribute('aria-hidden', 'false');
@@ -255,6 +311,7 @@ const renderHedge = () => {
           </div>
           <p class="hfine">${esc(inp.eta || '')}${inp.delay_cost_source ? ' · Delay cost from ' + esc(inp.delay_cost_source) : ''}</p></div>` : ''}
       </div>
+      ${hedged ? donePanel({ title: 'Cover bought', line: `Market #${hedged.id} is open. You paid <b>${hedged.amt.toFixed(4)} MON</b> for cover that pays if the ship is late.`, shares: hedged.shares, amt: hedged.amt, tx: hedged.tx, again: 'HEDGE ANOTHER SHIP' }) : `
       <div class="tb">
         ${q ? `<div class="odds2"><span class="tag">CHANCE IT IS LATE</span><b>${Math.round(md.p_yes * 100)}%</b></div>
           <div class="kc" style="padding:0;border:0;box-shadow:none;background:none;cursor:default;transform:none"><div class="bar"><i style="width:${(md.p_yes * 100).toFixed(1)}%"></i></div></div>
@@ -270,7 +327,7 @@ const renderHedge = () => {
           <button class="go" id="hQuote">GET A PRICE</button>`}
         <div class="msg" id="tmsg"></div>
         <p class="hfine">Demo rate: $${HW.fInt(USD_PER_MON)} of cargo risk per MON, so the cover fits a test wallet.</p>
-      </div>
+      </div>`}
     </div>`;
 };
 const readHedge = () => { for (const [k, id] of [['ship', 'hShip'], ['port', 'hPort'], ['deadline', 'hDead'], ['cargo', 'hCargo']]) if ($(id)) hv[k] = $(id).value.trim(); };
@@ -295,17 +352,19 @@ const getQuote = async () => {
 const openHedgeMarket = async () => {
   if (!hq) return;
   if (SAMPLE) return say(SAMPLE_NOTE);
-  $('hGo').disabled = true; say('Getting your wallet ready…');
-  const w = await connect(); if (!w) { $('hGo').disabled = false; return say('Could not set up a wallet.'); }
+  $('hGo').disabled = true; $('hGo').classList.add('loading'); $('hGo').textContent = 'OPENING THE MARKET';
+  say('Getting your wallet ready…');
+  const w = await connect(); if (!w) { renderHedge(); return say('Could not set up a wallet.'); }
   say('Opening the market and buying your cover…');
   try {
     const stakeMon = +Math.min(0.05, (hq.hedge.fair_premium_mon || 0.01) * 1.2).toFixed(4), stake = chain.mk.parseMon(String(stakeMon));
     busy = true;
     const r = await chain.m.create(w, hq, { buyYes: true, stake });
     const got = r.trade ? num(r.trade.shares) : 0;
-    await afterTrade(r, `Done. Market #${r.id} is open and you hold ${got.toFixed(3)} MON of cover. Watch it under My trades.`,
-      { kind: 'buy', id: Number(r.id), side: 'yes', q: hq.quote.question, mon: stakeMon, shares: got });
-  } catch (e) { busy = false; say(esc(chain.mk.explain(e))); if ($('hGo')) $('hGo').disabled = false; }
+    hedged = { id: Number(r.id), shares: got, amt: stakeMon, tx: r.receipt.hash || r.receipt.transactionHash };
+    renderHedge(); celebrate();
+    await afterTrade(r, '', { kind: 'buy', id: Number(r.id), side: 'yes', q: hq.quote.question, mon: stakeMon, shares: got });
+  } catch (e) { busy = false; renderHedge(); say(esc(chain.mk.explain(e))); }
 };
 
 /* ---------- chain: Xavi's helpers, loaded when first needed ---------- */
@@ -389,25 +448,31 @@ const resumeWallet = async () => {
 let quoteN = 0;
 const quote = async () => {
   const m = current(), n = ++quoteN;
-  const set = (a, b, c) => { if ($('eShares')) { $('eShares').textContent = a; $('ePrice').textContent = b; $('ePay').textContent = c; } };
+  const set = (win, back, lose, fine) => { if ($('eWin')) { $('eWin').textContent = win; $('eBack').innerHTML = back; $('eLose').textContent = lose; $('eFine').innerHTML = fine; } };
+  const blank = () => set('—', '&nbsp;', '—', '&nbsp;');
   if (!m || !$('amt')) return;
   const amt = parseFloat($('amt').value);
-  if (!(amt > 0) || m.chainId == null || !isOpen(m)) return set('—', '—', '—');
+  if (!(amt > 0) || m.chainId == null || !isOpen(m)) return blank();
+  set('…', '&nbsp;', '−' + amt.toFixed(4) + ' MON', '&nbsp;');
   await ensureChain(); if (!chain || n !== quoteN) return;
   try {
     const shares = await chain.m.quoteBuy(m.chainId, side, chain.mk.parseMon(String(amt)));
     if (n !== quoteN) return;
     const sh = Number(chain.mk.formatMon(shares, 6));
-    set(sh.toFixed(3), sh > 0 ? Math.round(amt / sh * 100) + '¢ a share' : '—', sh.toFixed(3) + ' MON');
-  } catch (e) { if (n === quoteN) set('—', '—', '—'); }
+    if (!(sh > 0)) return blank();
+    set('+' + (sh - amt).toFixed(4) + ' MON', `you get ${sh.toFixed(4)} back · ${(sh / amt).toFixed(2)}× your money`, '−' + amt.toFixed(4) + ' MON',
+      `${Math.round(amt / sh * 100)}¢ a share, fee included. Each share pays 1 MON if you are right.`);
+  } catch (e) { if (n === quoteN) blank(); }
 };
+/* the "My trades" tab gives a short pulse when a bet lands */
+const celebrate = () => { const b = document.querySelector('#views [data-t="mine"]'); if (!b) return; b.classList.remove('pulse'); void b.offsetWidth; b.classList.add('pulse'); };
 const say = html => { if ($('tmsg')) $('tmsg').innerHTML = html; if (tab === 'mine' && openId == null && !hedgeOpen) pf.setMsg(html); };
 const num = wei => Number(chain.mk.formatMon(wei, 6));
 const txLink = r => `<a href="${chain.cfg.txUrl(r.receipt.hash || r.receipt.transactionHash)}" target="_blank" rel="noopener">View transaction</a>`;
 const SAMPLE_NOTE = 'This is the sample view, so nothing was sent. Remove “?sample” from the address to trade.';
 /* After every trade: write it to the cost record, re-read the chain, then let the dashboard catch up. */
 const afterTrade = async (r, text, entry) => {
-  const html = `${text} ${txLink(r)}`;
+  const html = text ? `${text} ${txLink(r)}` : '';
   say(html);
   try {
     if (entry) pf.record({ ...entry, tx: r.receipt.hash || r.receipt.transactionHash });
@@ -420,19 +485,33 @@ const afterTrade = async (r, text, entry) => {
 };
 const place = async () => {
   const m = current(); if (!m) return;
-  const amt = parseFloat($('amt').value);
+  const amt = parseFloat($('amt').value), yes = side;
   if (!(amt > 0)) return say('Enter an amount first.');
-  if (SAMPLE) return say(SAMPLE_NOTE);
-  $('go').disabled = true; say('Getting your wallet ready…');
-  const w = await connect(); if (!w) { $('go').disabled = false; return say('Could not set up a wallet.'); }
-  say('Sending your trade…');
+  const btn = $('go'); btn.disabled = true; btn.classList.add('loading'); btn.textContent = 'PLACING YOUR BET';
+  const fail = text => { placed = null; $('dbody').dataset.placed = ''; renderDrawer(); say(text); };
+  if (SAMPLE) {   // the sample view walks through the same steps without sending anything
+    try {
+      await ensureChain();
+      const got = num(await chain.m.quoteBuy(m.chainId, yes, chain.mk.parseMon(String(amt)))), k = yes ? 'yes' : 'no', cur = pos[m.chainId] || { yes: 0n, no: 0n };
+      pf.record({ kind: 'buy', id: m.chainId, side: k, q: m.question, mon: amt, shares: got, tx: null });
+      pos[m.chainId] = { ...cur, [k]: cur[k] + chain.mk.parseMon(got.toFixed(6)) };
+      placed = { id: m.id, yes, shares: got, amt, tx: null, sample: true, t: Date.now() };
+      renderDrawer(); celebrate(); pf.compute();
+    } catch (e) { fail('Could not price that right now.'); }
+    return;
+  }
+  say('Getting your wallet ready…');
+  const w = await connect(); if (!w) return fail('Could not set up a wallet.');
+  say('Sending your bet…');
   busy = true;
   try {
-    const yes = side, r = await chain.m.buy(w, m.chainId, yes, chain.mk.parseMon(String(amt)));
+    const r = await chain.m.buy(w, m.chainId, yes, chain.mk.parseMon(String(amt)));
     const got = r.trade ? num(r.trade.shares) : 0;
-    await afterTrade(r, `Done. You bought ${got.toFixed(3)} ${yes ? 'YES' : 'NO'} shares. Watch it under My trades.`,
-      { kind: 'buy', id: m.chainId, side: yes ? 'yes' : 'no', q: m.question, mon: amt, shares: got });
-  } catch (e) { busy = false; say(esc(chain.mk.explain(e))); if ($('go')) $('go').disabled = false; }
+    // show the confirmation the moment the receipt is back; the bookkeeping follows
+    placed = { id: m.id, yes, shares: got, amt, tx: r.receipt.hash || r.receipt.transactionHash, t: Date.now() };
+    renderDrawer(); celebrate();
+    await afterTrade(r, '', { kind: 'buy', id: m.chainId, side: yes ? 'yes' : 'no', q: m.question, mon: amt, shares: got });
+  } catch (e) { busy = false; fail(esc(chain.mk.explain(e))); }
 };
 const sell = async (id, yes) => {
   if (SAMPLE) return say(SAMPLE_NOTE);
@@ -477,13 +556,20 @@ const refresh = async force => {
 };
 
 /* ---------- events ---------- */
-const setTab = t => { tab = t; document.body.classList.toggle('tab-mine', t === 'mine'); document.querySelectorAll('#tabs button').forEach(o => o.classList.toggle('on', o.dataset.t === t)); pf.setMsg(''); pill(); render(); if (t === 'mine') { window.scrollTo({ top: 0 }); pf.schedule(0); } };
+const setTab = t => {
+  tab = t; document.body.classList.toggle('tab-mine', t === 'mine');
+  document.querySelectorAll('#tabs button').forEach(o => o.classList.toggle('on', o.dataset.t === t));
+  document.querySelectorAll('#views button[data-t]').forEach(o => o.classList.toggle('on', (o.dataset.t === 'mine') === (t === 'mine')));
+  pf.setMsg(''); pill(); render(); window.scrollTo({ top: 0 });
+  if (t === 'mine') pf.schedule(0);
+};
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) setTab(b.dataset.t); });
-$('pfPill').addEventListener('click', () => setTab('mine'));
+$('views').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) setTab(b.dataset.t); });
 $('find').addEventListener('input', e => { query = e.target.value; render(); });
 $('sort').addEventListener('change', e => { sort = e.target.value; render(); });
 $('grid').addEventListener('click', e => {
   const go = e.target.closest('button[data-go]'); if (go) return openDrawer(go.dataset.go);
+  const more = e.target.closest('button[data-t]'); if (more) return setTab(more.dataset.t);
   const act = e.target.closest('button[data-act]'), pc = e.target.closest('[data-chain]');
   if (act && act.dataset.act === 'connect') return connect();
   if (pc) {   // a row on "my trades"
@@ -502,12 +588,15 @@ $('grid').addEventListener('click', e => {
 });
 $('grid').addEventListener('keydown', e => { if (e.key === 'Enter') { const c = e.target.closest('.kc[data-id]'); if (c) openDrawer(c.dataset.id); } });
 $('dbody').addEventListener('click', e => {
+  if (e.target.closest('[data-watch]')) { closeDrawer(); return setTab('mine'); }
   if (hedgeOpen) {
+    if (e.target.closest('[data-again]')) { hedged = null; hq = null; return renderHedge(); }
     if (e.target.closest('#hQuote') || e.target.closest('#hAgain')) return getQuote();
     if (e.target.closest('#hGo')) return openHedgeMarket();
     return;
   }
   const m = current(); if (!m) return;
+  if (e.target.closest('[data-again]')) { placed = null; return renderDrawer(); }
   const s = e.target.closest('button[data-s]'), q = e.target.closest('button[data-q]');
   if (s) { side = s.dataset.s === 'yes'; return renderDrawer(); }
   if (q) { amount = q.dataset.q; $('amt').value = amount; return quote(); }
@@ -534,6 +623,7 @@ await refresh();
 { // arriving from the globe's ship panel: markets.html?hedge=SHIP&port=PORT
   const qs = new URLSearchParams(location.search);
   if (qs.has('hedge')) openHedge(qs.get('hedge') || '', qs.get('port') || '');
+  if (qs.get('q')) { query = qs.get('q'); $('find').value = query; render(); }   // from a strait or route panel on the globe
 }
 loadSeries();
 if (location.hash === '#trades') setTab('mine');

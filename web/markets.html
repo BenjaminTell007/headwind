@@ -33,27 +33,30 @@
   <a class="brand" href="../" title="Headway"><span class="word">HEADWAY</span></a>
   <nav class="nav" aria-label="Pages"><a href="./"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><ellipse cx="8" cy="8" rx="2.7" ry="6.3"/><path d="M1.7 8h12.6"/></svg>GLOBE</a><a class="on" aria-current="page" href="markets.html"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.8 12.2l3.6-4 2.8 2.4 5.6-6.4"/><path d="M10.2 4.2h3.6v3.6"/></svg>MARKETS</a><a href="forecasts.html"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.6 11.2l3-2.6 2.6 1.4"/><path d="M7.2 10l2.8-3.6 4.4-2" stroke-dasharray="1.6 2.2"/><path d="M1.6 14h12.8"/></svg>FORECASTS</a></nav>
   <span class="spacer"></span>
-  <button class="pill pfpill" id="pfPill" title="Your trades and how they are doing">MY TRADES</button>
   <button class="pill icon" id="theme" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
   <button class="pill" id="wallet">CONNECT WALLET</button>
 </header>
 
 <main class="mk-main">
-  <section class="mk-sum" id="sum"></section>
+  <div class="mk-views" id="views">
+    <button data-t="all" class="on">Markets</button>
+    <button data-t="mine">My trades<b id="pfBadge"></b></button>
+    <span class="spacer"></span>
+    <button class="pill hedge" id="hedgeBtn">HEDGE A SHIP</button>
+  </div>
 
-  <div class="mk-bar">
-    <div class="tabs" id="tabs">
-      <button data-t="open" class="on">OPEN</button>
+  <div class="mk-bar" id="bar">
+    <div class="chips" id="tabs">
+      <button data-t="all" class="on">ALL OPEN</button>
       <button data-t="live">LIVE</button>
       <button data-t="strait">STRAITS</button>
       <button data-t="route">ROUTES</button>
       <button data-t="trade">TRADE</button>
-      <button data-t="soon">COMING UP</button>
-      <button data-t="settled">SETTLED</button>
-      <button data-t="mine">MY TRADES</button>
+      <i></i>
+      <button data-t="soon" class="quiet">COMING UP</button>
+      <button data-t="settled" class="quiet">SETTLED</button>
     </div>
     <span class="spacer"></span>
-    <button class="pill hedge" id="hedgeBtn">HEDGE A SHIP</button>
     <input id="find" class="mk-find" placeholder="Search markets" aria-label="Search markets">
     <select id="sort" class="mk-sort" aria-label="Sort">
       <option value="close">Closing soonest</option>
@@ -62,6 +65,7 @@
       <option value="no">Lowest YES</option>
     </select>
   </div>
+  <p class="mk-line" id="sum"></p>
 
   <section class="mk-grid" id="grid"></section>
   <p class="mk-note" id="note"></p>
