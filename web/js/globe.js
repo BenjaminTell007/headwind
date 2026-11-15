@@ -28,6 +28,23 @@
     const LX = new Float32Array(nL), LY = new Float32Array(nL), LZ = new Float32Array(nL), LB = new Float32Array(nL);
     for (let i = 0; i < nL; i++) { const v = vec(ld[2 * i] / 100, ld[2 * i + 1] / 100); LX[i] = v[0]; LY[i] = v[1]; LZ[i] = v[2]; LB[i] = rnd(); }
     const LA = new Float32Array(nL); for (let i = 0; i < nL; i++) LA[i] = Math.atan2(LX[i], LZ[i]);   // longitude, for the light sweep
+    // Mountains (Kimball, Nov 15): each land dot's height above sea level, from web/tools/build_elev.py.
+    // Once it loads, the dots rise off the sphere over a couple of seconds, much exaggerated
+    // (Everest is about 9% of the globe's radius), and high ground is brighter.
+    const BX = Float32Array.from(LX), BY = Float32Array.from(LY), BZ = Float32Array.from(LZ), LE = new Float32Array(nL);
+    let elevAt = 0, elevG = 0;
+    fetch('data/land_elev.json').then(r => r.ok ? r.json() : null).then(j => {
+      if (!j || !j.elev) return;
+      const k = (j.unit_m || 50) / 8800;
+      for (let i = 0; i < nL && i < j.elev.length; i++) LE[i] = Math.min(1, Math.sqrt(Math.max(0, j.elev[i] * k)));   // square root so hills show too
+      elevAt = performance.now();
+    }).catch(() => {});
+    const RELIEF = 0.09;
+    const raiseLand = () => {
+      if (!elevAt || elevG >= 1) return;
+      const t = Math.min(1, (performance.now() - elevAt) / 2400); elevG = t * t * (3 - 2 * t);
+      for (let i = 0; i < nL; i++) { const f = 1 + LE[i] * LE[i] * RELIEF * elevG; LX[i] = BX[i] * f; LY[i] = BY[i] * f; LZ[i] = BZ[i] * f; }
+    };
     // country of each land dot and each border ring (-1 = none), from web/tools/build_land.py
     const LC = new Int16Array(nL).fill(-1);
     (D.land.dot_country || []).forEach((c, i) => { if (i < nL) LC[i] = c; });
@@ -190,6 +207,7 @@
            colour at low opacity, so it works in light and dark mode. */
         const ds = HW.clamp(1.25 * Math.sqrt(S.zoom), 1.2, 2.6), hs = ds / 2, px = P.inside ? P.x : -1e4, py = P.y;
         const BUCKET_ALPHA = [0.24, 0.36, 0.58];
+        raiseLand();
         // a slow band of light that travels round the land, west to east, once every 14 s (Kimball: make the globe feel alive)
         const TAU = Math.PI * 2, sweepAt = (performance.now() / 1000 * TAU / 14) % TAU, SWEEP_W = 0.42;
         const FX_TICK = Math.floor(performance.now() / 220), FX_COLS = ['#46b36f', '#f08a3c', '#8f82f2', '#ea86b5', '#e9c84b', C.fg];
@@ -226,7 +244,7 @@
             if (b === 0 && d2 < nearD) { nearD = d2; nearDot = i; }
             if (hc >= 0 && LC[i] === hc) continue;   // drawn bright below
             let sw = sweepAt - LA[i]; if (sw < 0) sw += TAU;   // how far behind the front this dot is
-            const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2 + (sw < SWEEP_W ? (1 - sw / SWEEP_W) ** 2 * 0.55 * S.quiet : 0);
+            const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2 + (sw < SWEEP_W ? (1 - sw / SWEEP_W) ** 2 * 0.55 * S.quiet : 0) + LE[i] * 0.55 * elevG;
             const bucket = lum > 1.05 ? 2 : lum > 0.72 ? 1 : 0;
             if (bucket !== b) continue;
             const gb = bumpOf(sx, sy);
@@ -238,16 +256,32 @@
         if (hc >= 0) {
           ctx.fillStyle = C.accent;   // the hovered country lights up in the accent blue
           ctx.globalAlpha = 0.95 * S.countryFade; ctx.beginPath();
-          const hd = ds * 1.25, hh = hd / 2;
+          const hd = ds * 1.25, hh = hd / 2, shapes = [];
           for (let i = 0; i < nL; i++) {
             if (LC[i] !== hc) continue;
             const Z = m6 * LX[i] + m7 * LY[i] + m8 * LZ[i]; if (Z < 0) continue;
             const sx = cx + (m0 * LX[i] + m1 * LY[i] + m2 * LZ[i]) * R, sy = cy - (m3 * LX[i] + m4 * LY[i] + m5 * LZ[i]) * R;
             const gb = bumpOf(sx, sy);
             if (gb > 0.03) { raised.push([i, sx, sy, gb, 0.95 * S.countryFade, true]); continue; }
+            const h = (Math.imul(i, 2654435761) ^ Math.imul((FX_TICK / 6 + (i & 7)) | 0, 40503)) >>> 0;
+            if (h % 4 === 0) { shapes.push(sx, sy, h); continue; }   // this dot becomes a shape, below
             ctx.rect(sx - hh, sy - hh, hd, hd);
           }
           ctx.fill();
+          // about one dot in four of the hovered country is a small shape in a vessel colour
+          // (plus, cross, ring, diamond, bar), and they slowly trade places: the landing page's pattern
+          const g = Math.max(2.2, ds * 1.7); ctx.lineWidth = Math.max(1, ds * 0.55); ctx.lineCap = 'butt';
+          for (let k = 0; k < shapes.length; k += 3) {
+            const sx = shapes[k], sy = shapes[k + 1], h = shapes[k + 2], col = FX_COLS[(h >>> 4) % FX_COLS.length];
+            ctx.strokeStyle = col; ctx.fillStyle = col; ctx.beginPath();
+            switch ((h >>> 9) % 5) {
+              case 0: ctx.moveTo(sx - g, sy); ctx.lineTo(sx + g, sy); ctx.moveTo(sx, sy - g); ctx.lineTo(sx, sy + g); ctx.stroke(); break;
+              case 1: ctx.moveTo(sx - g * 0.8, sy - g * 0.8); ctx.lineTo(sx + g * 0.8, sy + g * 0.8); ctx.moveTo(sx + g * 0.8, sy - g * 0.8); ctx.lineTo(sx - g * 0.8, sy + g * 0.8); ctx.stroke(); break;
+              case 2: ctx.arc(sx, sy, g * 0.8, 0, 6.2832); ctx.stroke(); break;
+              case 3: ctx.moveTo(sx, sy - g); ctx.lineTo(sx + g, sy); ctx.lineTo(sx, sy + g); ctx.lineTo(sx - g, sy); ctx.closePath(); ctx.fill(); break;
+              default: ctx.rect(sx - g, sy - g * 0.35, g * 2, g * 0.7); ctx.fill();
+            }
+          }
         }
         if (raised.length) {
           // shadows first (where the dots sat), then the lifted dots, back to front
@@ -342,7 +376,7 @@
         if (S.shipsFade > 0.02 && S.ships.length) {
           // cargo ships and tankers only (every one is underway, 3 kn or more), drawn as an arrow
           // pointing along its course. Zoomed in, each gets a pin whose tip sits on its position.
-          const pins = S.zoom >= 2.2, len = pins ? 6 : 3.6 + 0.8 * Math.sqrt(S.zoom);
+          const pins = S.zoom >= 2.2, len = pins ? 5.5 : 2.6 + 0.7 * Math.sqrt(S.zoom);
           for (const s of S.ships) {
             const Z = proj(s.v, tmp); if (Z < 0.03) continue;
             const x = tmp[0], y = tmp[1]; if (x < -14 || x > W + 14 || y < -24 || y > H + 8) continue;
@@ -360,17 +394,20 @@
               ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
               ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 6.2832); ctx.fill();
             }
-            // arrow: tip ahead along course, two back corners
-            const px2 = -vy, py2 = vx, w = len * 0.55;
-            ctx.fillStyle = col; ctx.strokeStyle = C.bg; ctx.lineWidth = pins ? 0 : 0.8;
+            // a tiny ship seen from above: pointed bow ahead along its course, straight sides, square stern,
+            // and a pale wheelhouse near the stern
+            const px2 = -vy, py2 = vx, w = len * 0.34;
+            ctx.fillStyle = col; ctx.strokeStyle = C.bg; ctx.lineWidth = pins ? 0 : 0.7;
             ctx.beginPath();
             ctx.moveTo(hx + vx * len, hy + vy * len);
-            ctx.lineTo(hx - vx * len * 0.7 + px2 * w, hy - vy * len * 0.7 + py2 * w);
-            ctx.lineTo(hx - vx * len * 0.35, hy - vy * len * 0.35);
-            ctx.lineTo(hx - vx * len * 0.7 - px2 * w, hy - vy * len * 0.7 - py2 * w);
+            ctx.lineTo(hx + vx * len * 0.42 + px2 * w, hy + vy * len * 0.42 + py2 * w);
+            ctx.lineTo(hx - vx * len + px2 * w, hy - vy * len + py2 * w);
+            ctx.lineTo(hx - vx * len - px2 * w, hy - vy * len - py2 * w);
+            ctx.lineTo(hx + vx * len * 0.42 - px2 * w, hy + vy * len * 0.42 - py2 * w);
             ctx.closePath();
             if (!pins) ctx.stroke();
             ctx.fill();
+            if (len > 3.4) { ctx.fillStyle = C.fg; const bx = hx - vx * len * 0.62, by = hy - vy * len * 0.62, bs = Math.max(0.9, w * 0.75); ctx.fillRect(bx - bs / 2, by - bs / 2, bs, bs); }
             if (P.inside && !P.down) { const d2 = (hx - px) ** 2 + (hy - py) ** 2; if (d2 < shipD) { shipD = d2; shipPick = s; } }
           }
         }
@@ -399,7 +436,7 @@
         }
 
         /* moving pulses on the routes and sonar rings on disrupted straits (js/globefx.js) */
-        if (HW.drawFx) HW.drawFx(ctx, { lanes, straits, straitRatio, laneBlocked, dt, zoom: S.zoom, quiet: S.quiet });
+        if (HW.drawFx) HW.drawFx(ctx, { lanes, straits, straitRatio, laneBlocked, dt, zoom: S.zoom, quiet: S.quiet, view, cx, cy, R });
         /* hover: strait first, then ship, then lane */
         if (!P.down) {
           const was = S.hover && (S.hover.s || S.hover.L || S.hover.ship);
