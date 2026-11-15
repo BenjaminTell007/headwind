@@ -233,7 +233,10 @@ class Chain:
         m = self.markets.functions.getMarket(market_id).call()
         names = [o["name"] for o in self._abi_fn("getMarket")["outputs"][0]["components"]]
         out = dict(zip(names, m))
-        out["priceYes"] = self.markets.functions.priceYes(market_id).call()
+        # Same integer math as Markets._priceYes, so no second RPC call per market (the public
+        # RPC rate-limits, and the server reads every market every few seconds).
+        total = out["yesReserve"] + out["noReserve"]
+        out["priceYes"] = 0 if total == 0 else out["noReserve"] * 10**18 // total
         return out
 
     def new_quote_id(self):

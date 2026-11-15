@@ -263,3 +263,22 @@ body.drawer-open .mk-drawer { transform:none; }
   .topbar { padding:10px 14px; gap:8px; }
   .mk-main { padding:16px 16px 60px; }
 }
+
+/* the block strip along the bottom: one cell per Monad block (drawBlocks in markets-page.js).
+   Above the drawer so a bet's block shows while its confirmation is open; clicks pass through. */
+.mk-blocks { position:fixed; left:0; right:0; bottom:0; z-index:10; display:flex; align-items:center; gap:14px; height:30px; padding:0 24px; background:rgba(var(--bg-rgb),.92); backdrop-filter:blur(10px); border-top:1px solid var(--line); pointer-events:none; }
+.mk-blocks .tag { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10.5px; }
+.bl-row { flex:1 1 120px; min-width:0; display:flex; justify-content:flex-end; align-items:flex-end; gap:2px; height:16px; overflow:hidden; }
+.bl-row i { flex:none; width:5px; height:9px; border-radius:1px; background:var(--fg); opacity:.22; transition:opacity .25s, height .25s; }
+.bl-row i[data-s="v"] { opacity:.5; }
+.bl-row i[data-s="f"] { opacity:.85; }
+.bl-row i.trade { height:16px; }
+.bl-row i.mine { height:16px; background:var(--accent); opacity:1; box-shadow:0 0 8px color-mix(in srgb, var(--accent) 70%, transparent); }
+body.mk .mk-drawer { padding-bottom:64px; }
+.tb.done .donemeta { margin:8px 0 0; font:500 10.5px/1.4 var(--mono); letter-spacing:.14em; color:var(--dim); animation:rise .5s .4s both; }
+.addr { font-family:var(--mono); word-break:break-all; }
+@media (max-width: 860px) { .mk-blocks { padding:0 16px; gap:10px; } .mk-blocks .tag { font-size:9.5px; letter-spacing:.1em; } }
+@media (prefers-reduced-motion: reduce) { .bl-row i { transition:none; } }
+/* Phones keep the layout they had: the header and the Markets / My trades row were already full.
+   The wallet switch and the vault are for laptops (the demo machine). */
+@media (max-width: 560px) { #walletKind, #vaultBtn { display:none !important; } }

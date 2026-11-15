@@ -8,10 +8,12 @@ What it does now:
   - /api/ship/{query}  look up one ship by MMSI, IMO or name ("find your ship")
   - /api/gates/{id}/count   live crossings of a gate in the last N minutes,
                             which is what resolves a live market
-
-What's still to build (see PLAN.md):
-  - /api/faucet        relayer sends test MON to new burner wallets
-  - market resolver    calls resolve() on the contract when a market closes
+  - /api/faucet        relayer sends test MON to new burner wallets (Faucet.drip)
+  - /api/quote         prices and signs a ship-arrival hedge (server/quotes.py)
+  - /api/markets       every market, matched to what's onchain (server/markets.py)
+  - /api/chain, /api/keeper   chain status; what the keeper opened and settled
+  - the keeper (server/keeper.py, only where HEADWAY_KEEPER=1) opens the demo
+    markets, settles live gate and arrival markets, and runs settleVault
 
 The ship logger (scripts/ais_logger.py) runs separately and writes the CSVs this
 server reads. The server never talks to aisstream itself, so the API key stays

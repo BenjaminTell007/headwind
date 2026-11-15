@@ -165,6 +165,40 @@ class Keeper:
                     continue  # already closed or about to
                 self._open(m["id"], m, now)
 
+    # ---------- retiring markets the page no longer lists ----------
+
+    def retire_orphans(self, now):
+        """Markets the keeper opened from an example that is no longer in examples.json (the
+        Nov 16 strait and route markets, re-issued with _c17 ids so they close after the demo).
+        The page doesn't list them, so their vault seed would sit idle until resolveBy, two weeks
+        out. If nobody traded in one (its collateral and LP are still exactly the vault's seed),
+        call it invalid and settleVault: the vault gets its seed back in full and no trader is
+        affected. A market someone traded in is kept and settles the normal way."""
+        ids = {m["id"] for m in json.loads(EXAMPLES.read_text())["markets"]}
+        for key, e in list(self.state["opened"].items()):
+            if e["group"] == "live" or e["settled"] or e.get("kept"):
+                continue
+            if e.get("example", key) in ids:
+                continue
+            mid = e["market_id"]
+            try:
+                m = chain.get_market(mid)
+                if m["vaultSettled"]:           # done already (by anyone): just record it
+                    e["resolved"] = e["settled"] = True
+                    self.save()
+                    continue
+                if m["outcome"] != 0:           # resolved already: only settleVault is left
+                    e["resolved"] = True
+                elif m["collateral"] != m["vaultSeed"] or m["lpSupply"] != m["vaultSeed"]:
+                    e["kept"] = True
+                    self.save()
+                    self.note(f"#{mid} {key} is no longer listed but has trades: left to settle normally")
+                    continue
+                self._finish(key, e, "invalid")
+                self.note(f"retired #{mid} {key}: no trades, seed back in the vault")
+            except Exception as err:
+                self.note(f"retire #{mid} {key} failed: {err}")
+
     # ---------- settling ----------
 
     def _finish(self, key, entry, how, value=None):
@@ -317,6 +351,7 @@ class Keeper:
     def cycle(self):
         now = now_utc()
         with self.lock:
+            self.retire_orphans(now)   # first, so the freed seed is there for new markets
             self.open_markets(now)
             self.settle_live(now)
             self.settle_arrivals(now)

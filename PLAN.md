@@ -20,7 +20,7 @@ Each person owns one folder, so we're never editing the same files.
 - `Markets.sol` and `Faucet.sol` from the spec in `contracts/README.md`
 - Deploy both to Monad testnet, put the addresses and ABI in `contracts/deployments.json`
 - Burner wallets in the browser (generate a key, keep it in localStorage)
-- `web/chain/` helpers the page calls: `takePosition`, `claim`, `getMarket`, and a subscription to new blocks and `PositionTaken` events
+- `web/chain/` helpers the page calls (built as `buy`, `sell`, `redeem`, `getMarket` and a subscription to new blocks and `Trade` events; the plan said `takePosition`, `claim`, `PositionTaken`)
 - The positions-landing animation and the block strip get their data from here
 
 **Person 3: the server (`server/`) and the demo**
@@ -32,12 +32,14 @@ Each person owns one folder, so we're never editing the same files.
 
 ## Interfaces (agree on these in the first 30 minutes, then don't change them)
 
-Contract (full spec in `contracts/README.md`):
-- `createMarket(string question, bytes32 series, int256 threshold, bool isAbove, uint64 closeTime) returns (uint256 id)`
-- `takePosition(uint256 id, bool yes)` payable
-- `resolve(uint256 id, int256 value)` oracle only
-- `claim(uint256 id)`
-- events `MarketCreated`, `PositionTaken`, `MarketResolved`, `Claimed`
+Contract (full spec in `contracts/README.md`). **Changed during the day:** the simple YES/NO pools became a market maker with an underwriter vault, so the deployed contract is:
+- `createMarket(Quote q, bytes sig, bool buyYes, uint256 minShares)` payable: opens a market from a quote the server signs
+- `buy(uint256 id, bool yes, uint256 minShares)` payable, `sell(uint256 id, bool yes, uint256 shares, uint256 minOut)`
+- `resolve(uint256 id, int256 value)` and `resolveInvalid(uint256 id)` oracle only (anyone can call it invalid after `resolveBy`)
+- `redeem(uint256 id)` after settlement; `deposit()`, `withdraw(shares)` and `settleVault(id)` for the vault
+- events `MarketCreated`, `Trade`, `MarketResolved`, `Redeemed`, `VaultSettled`
+
+The original plan was `createMarket(question, series, threshold, isAbove, closeTime)`, `takePosition`, `claim` and a `PositionTaken` event.
 
 Server (already running, see `server/app.py`):
 - `GET /api/health`

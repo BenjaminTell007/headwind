@@ -145,11 +145,19 @@ export async function markets(address) {
   const addr = address ?? (await loadDeployments()).markets.address;
   const read = (functionName, args = []) => publicClient.readContract({ address: addr, abi, functionName, args });
 
-  async function write(wallet, functionName, args, value = 0n) {
+  async function write(wallet, functionName, args, value = 0n, { gasMarginBps } = {}) {
     // Simulate first so a revert comes back as a named error before any gas is spent.
     await publicClient.simulateContract({ address: addr, abi, functionName, args, value, account: wallet.address });
     const data = encodeFunctionData({ abi, functionName, args });
-    const receipt = await wallet.send({ to: addr, data, value });
+    // Most calls use the wallet's +12%. createMarket needs more: the server saw one run out of gas
+    // at +12% on testnet and uses +30% (server/chain.py CREATE_GAS_MARGIN), and Monad charges the
+    // whole limit even when a transaction reverts.
+    let gas;
+    if (gasMarginBps) {
+      const est = await publicClient.estimateGas({ account: wallet.address, to: addr, data, value });
+      gas = (est * BigInt(10_000 + gasMarginBps)) / 10_000n;
+    }
+    const receipt = await wallet.send({ to: addr, data, value, gas });
     if (receipt.status !== 'success') throw new Error(`${functionName} reverted (${receipt.hash})`);
     const events = parseEventLogs({ abi, logs: receipt.logs });
     return { receipt, events, trade: events.find((e) => e.eventName === 'Trade')?.args };
@@ -204,7 +212,8 @@ export async function markets(address) {
      */
     async create(wallet, signed, { buyYes = true, stake = 0n, minShares = 0n } = {}) {
       const q = quoteArgs(signed.quote);
-      const r = await write(wallet, 'createMarket', [q, signed.signature, buyYes, minShares], q.creationFee + stake);
+      const r = await write(wallet, 'createMarket', [q, signed.signature, buyYes, minShares], q.creationFee + stake,
+        { gasMarginBps: 3_000 });
       r.id = r.events.find((e) => e.eventName === 'MarketCreated').args.id;
       return r;
     },

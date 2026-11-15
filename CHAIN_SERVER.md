@@ -152,7 +152,7 @@ if plan:
 
 ## Checklist to a working demo
 
-- [x] Xavi: deploy (`forge script ... --broadcast`), run `write_deployments.mjs`, commit `contracts/deployments.json` and `web/chain/deployments.js` to `main`. Markets `0x91655EF876726BC2730DC2FbF3a296688E552db5`, Faucet `0xf7D1255AEBDa35454121C3189850e48a5C82cDB9`; oracle, pricer and relayer all `0x32F0A79FF9e4918D5771BF716ACba54219F1F78c`; vault 20 MON, subject cap 3 MON
+- [x] Xavi: deploy (`forge script ... --broadcast`), run `write_deployments.mjs`, commit `contracts/deployments.json` and `web/chain/deployments.js` to `main`. Markets `0x91655EF876726BC2730DC2FbF3a296688E552db5`, Faucet `0xf7D1255AEBDa35454121C3189850e48a5C82cDB9`; oracle, pricer and relayer all `0x32F0A79FF9e4918D5771BF716ACba54219F1F78c`; vault 20 MON, subject cap 5 MON (read from the contract Nov 15; the deploy note said 3)
 - [x] Xavi: send the server key about 2 MON for gas; the faucet gets 10 MON at deploy (both done; tx `0x93e00135…778b`)
 - [x] Ben: `SERVER_PRIVATE_KEY` in Railway variables, and add `web3` and `eth-account` to `requirements.txt` (`web3==8.0.0`, which brings `eth-account`; `HEADWAY_KEEPER=1` set too)
 - [x] Ben: merge `chain.py` and `/api/faucet` to `main`, and check `/api/chain` shows `"on": true` (live since 20:36 UTC; the keeper opened the 7 featured markets)
@@ -168,3 +168,13 @@ Add yours here.
 
 - Is Railway's `/live` drive picking up history across restarts now? Check that Singapore's 30-minute gate count stays near its usual 11 after a redeploy.
 - Demo exchange rate for hedge sizing: `usdPerMon` defaults to 1000 (so $4,000 of cover is 4 MON). Change it in one place if we want different numbers on stage.
+
+## Changes Sam made in your files (Nov 15, ~23:00 UTC, on `sam's-branch`)
+
+Sam asked for the easy demo fixes on everyone's plate. Each one is small; revert any you don't want.
+
+- **`railway.json`** (Ben): `build.watchPatterns`, so Railway redeploys only when `server/`, `contracts/`, `scripts/`, `data/`, `requirements.txt`, `.python-version` or `railway.json` change. Web-only merges to `main` (stamps, page work) no longer restart the server, the keeper and the ship logger. Checked against Railway's schema.
+- **`server/chain.py`** (Ben): `get_market` works out `priceYes` from the reserves (the same integer math as `Markets._priceYes`) instead of a second RPC call. Halves the server's reads; matched the contract's `priceYes` on all 18 markets.
+- **`server/keeper.py`** (Ben): `retire_orphans`, first thing each cycle. A market the keeper opened from an example id that's no longer in `examples.json`, with no trades (collateral and LP still exactly the seed), gets `resolveInvalid` + `settleVault`: the vault gets the seed back in full. On today's state that's #0, #1, #2, #3 and #6, the Nov 16 versions replaced by the `_c17` ids: 5 MON back to the vault. A market with trades is marked `kept` and settles normally. Dry-run against the live keeper state with sends blocked: exactly those five, and a second pass does nothing.
+- **`web/chain/markets.js`** (Xavi): `create()` sends createMarket with gas estimate +30% (like `CREATE_GAS_MARGIN` on the server) instead of the wallet's +12%; other calls unchanged. Checked with a real quote: limit ×1.300.
+- Xavi's `xavi's-branch` (smoothed re-pricing, RPC multicall and fallbacks) is merged into `sam's-branch` too, so it ships with the rest.
