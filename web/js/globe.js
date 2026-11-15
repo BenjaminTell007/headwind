@@ -213,9 +213,11 @@
             if (L.sv[j] && P.inside && !P.down && j % 2 === 0) { const d2 = (tmp[0] - px) ** 2 + (tmp[1] - py) ** 2; if (d2 < laneD) { laneD = d2; lanePick = L; } }
           }
           const eff = laneEff(L), blk = laneBlocked(L), hi = L === hovLane || L === selLane;
-          ctx.strokeStyle = hi ? C.laneHi : blk > 0.3 ? C.dim : C.accent;
+          // the original look: thin off-white lines, brighter the more efficient the route this
+          // week; the accent blue only marks the hovered or selected lane
+          ctx.strokeStyle = hi ? C.accent : blk > 0.3 ? C.dim : C.fg;
           ctx.lineWidth = hi ? 1.6 : 0.6 + 0.6 * eff;
-          ctx.globalAlpha = hi ? 1 : (0.35 + 0.45 * Math.pow(eff, 3)) * S.quiet;
+          ctx.globalAlpha = hi ? 1 : (0.05 + 0.2 * Math.pow(eff, 3)) * S.quiet;
           ctx.setLineDash(blk > 0.3 ? [2, 4] : []);
           ctx.beginPath(); let pen = false;
           for (let j = 0; j < n; j++) { if (!L.sv[j]) { pen = false; continue; } if (pen) ctx.lineTo(L.sx[j], L.sy[j]); else { ctx.moveTo(L.sx[j], L.sy[j]); pen = true; } }
