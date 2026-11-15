@@ -122,8 +122,8 @@ One is in `server/chain.py` (Python) and one in `contracts/script/env.mjs` (Node
 
 - [x] Xavi: deploy (`forge script ... --broadcast`), run `write_deployments.mjs`, commit `contracts/deployments.json` and `web/chain/deployments.js` to `main`. Markets `0x91655EF876726BC2730DC2FbF3a296688E552db5`, Faucet `0xf7D1255AEBDa35454121C3189850e48a5C82cDB9`; oracle, pricer and relayer all `0x32F0A79FF9e4918D5771BF716ACba54219F1F78c`; vault 20 MON, subject cap 3 MON
 - [x] Xavi: send the server key about 2 MON for gas; the faucet gets 10 MON at deploy (both done; tx `0x93e00135…778b`)
-- [ ] Ben: `SERVER_PRIVATE_KEY` in Railway variables, and add `web3` and `eth-account` to `requirements.txt` (`web3==8.0.0` added, which brings `eth-account`; Railway variable still to do)
-- [ ] Ben: merge `chain.py` and `/api/faucet` to `main`, and check `/api/chain` shows `"on": true`
+- [x] Ben: `SERVER_PRIVATE_KEY` in Railway variables, and add `web3` and `eth-account` to `requirements.txt` (`web3==8.0.0`, which brings `eth-account`; `HEADWAY_KEEPER=1` set too)
+- [x] Ben: merge `chain.py` and `/api/faucet` to `main`, and check `/api/chain` shows `"on": true` (live since 20:36 UTC; the keeper opened the 7 featured markets)
 - [x] Ben: `POST /api/quote` with body `{ship, port, deadline, cargoUsd}`. It calls `contracts.pricing.quote.arrival_quote()`, signs with `chain.sign_quote()`, and returns `{quote, signature, model, hedge}`. Numbers go out as strings; `web/chain/markets.js` `requestQuote()` already expects this shape.
 - [x] Ben: the keeper opens the demo markets (decision 2) and settles them (5). Runs only where `HEADWAY_KEEPER=1`; `KEEPER_GROUPS` picks the examples (default `featured`). Xavi: don't run `seed_markets.mjs --send` against the demo deployment
 - [ ] Both: one full run on testnet: quote, create and hedge, trade, settle, redeem, `settleVault`
