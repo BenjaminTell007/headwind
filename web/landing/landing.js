@@ -29,7 +29,7 @@
   let sample = null, sctx = null;
   let rnd = new Float32Array(0);
   const mouse = { x: -9999, y: -9999, s: 0 };
-  let t0 = performance.now(), leaving = 0, uiShown = false;
+  let t0 = performance.now(), leaving = 0, uiShown = false, target = 'web/';
 
   /* ---------- one glyph, drawn into the sprite atlas ---------- */
   const drawGlyph = (c, k, x, y, s, col) => {
@@ -106,7 +106,9 @@
   // Crop the 16:9 clip to cover any screen shape, like CSS object-fit: cover.
   const coverRect = (vw, vh, w, h) => {
     const s = Math.max(w / vw, h / vh);
-    return [(w - vw * s) / 2, (h - vh * s) / 2, vw * s, vh * s];
+    // lift the frame a little so the ship sits above the headline
+    const sh = Math.min(h * 0.07, (vh * s - h) / 2 + h * 0.07);
+    return [(w - vw * s) / 2, (h - vh * s) / 2 - sh, vw * s, vh * s];
   };
 
   /* ---------- helpers ---------- */
@@ -138,6 +140,8 @@
     if (leaving) open *= 1 - ease((now - leaving) / 850);
     const R = open * halfDiag;
     const band = 0.3 * halfDiag;
+    // the scan edge is bright while it moves, then calms down once the reveal settles
+    const frontK = 0.12 + 0.88 * (1 - smooth(REVEAL_AT + REVEAL_FOR * 0.7, REVEAL_AT + REVEAL_FOR + 1.2, t));
 
     let lum = null;
     if (ready) {
@@ -154,7 +158,7 @@
     }
 
     const px = Math.ceil(cell * DPR);
-    const cx = W / 2, cy = H / 2;
+    const cx = W / 2, cy = H * 0.43;
     const lensR = 120, lensEdge = 46;
 
     for (let j = 0; j < rows; j++) {
@@ -171,7 +175,7 @@
         // 2. the footage opens out from the ship
         const d = Math.hypot((x - cx) * 0.62, y - cy);
         let m = d >= R ? 1 : d > R - band ? (d - (R - band)) / band : 0;
-        const front = R > 1 ? Math.max(0, 1 - Math.abs(d - R) / (band * 0.35)) : 0;   // bright scan edge
+        const front = R > 1 ? frontK * Math.max(0, 1 - Math.abs(d - R) / (band * 0.35)) : 0;   // bright scan edge
 
         // 3. the lens around the cursor turns footage back into glyphs
         if (mouse.s > 0.01) {
@@ -220,7 +224,7 @@
     ctx.globalAlpha = 1;
 
     if (leaving && now - leaving > 950) {
-      window.location.href = 'web/';
+      window.location.href = target;
       return;
     }
     requestAnimationFrame(frame);
@@ -231,7 +235,10 @@
   cv.addEventListener('pointerleave', () => { mouse.x = -9999; mouse.y = -9999; });
 
   const enter = e => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      target = e.currentTarget.getAttribute('href') || 'web/';
+    }
     if (leaving) return;
     leaving = performance.now();
     body.classList.add('leaving');
