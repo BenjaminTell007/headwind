@@ -13,9 +13,17 @@
 - `index.html` at the repo root (the landing page) and `web/landing/`
 - `web/js/stats.js`, `web/stats.css` (the forecasts screen that slides up under the globe)
 - `web/tools/forecast.py`, `web/data/forecast.json` (the forecast model and its output)
-- `web/js/logo.js`, `web/js/ship.js`, `design/`
+- `web/js/logo.js`, `web/js/brand.js`, `web/js/shipvideo.js`, `web/js/story.js`, `web/js/wxlayer.js`, `web/js/ports.js`, `web/js/sky.js`, `design/`
 
 ## Done recently
+- Nov 15 23:20 UTC (Kimball asked): new file `web/js/story.js` (mine), loaded after `main.js` on the globe page.
+  - Story card top left on the globe: the most disrupted strait that still has ships (Hormuz now), the globe turns to it after the intro; click opens the strait panel. Hidden while a panel or the ship view is open.
+  - Hedge card in the ship view (top right): the server's real quote for the ship's AIS destination (`requestQuote`, deadline = the crew's ETA, moved out if the market would open at 90%+), then BUY COVER does `m.create(wallet, q, { buyYes: true, stake })` with your stake maths copied from `markets-page.js` (`coverCost`, `hedgeStake`). It uses the wallet kind in `headway.wallet.kind` and writes the trade with `ledger.js` `recordTrade`, so it shows under My trades. Any failure links to `markets.html?hedge=...`.
+  - Demo mode `web/?demo`: finds a ship the server can price (CMA CGM VELA to Antwerp, else NYK DIANA to Hamburg), gets the test wallet and faucet MON ready, and adds DIVE TO THE SHIP to the story card.
+  - Touches to your files: `web/index.html` one script tag for `js/story.js`; `js/main.js` one line in `dive()` firing `headway:dive`. The strip's HEDGE THIS SHIP link is hidden by CSS while the card is there.
+  - Each inline hedge takes a 1 MON seed from the vault like yours does, so it counts against the 15 MON in DEMO.md.
+- Nov 15 23:12: wordmark is the simple one again (Unbounded, off-white, slow blue sweep, no colour pixels). Your `sam's-branch` demo fixes are merged to `frontend` and `main`.
+- Nov 15 23:05: the rendered ship scenes are gone (`ship3d.js`, `ship.js` deleted); the ship view is `js/shipvideo.js` only. Forecasts page opens on a trading-style hero, a forecast wheel and a disruption tape (`stats.js`).
 - Nov 15 22:50 (Kimball asked, "redesign it"): new globe page layout as one block at the end of `web/app.css` (scoped to `#app`): logo left, page switch centred, search + WEATHER right; one slim control dock on the right (rotate/flip and tilt arrows hidden, keys still work); legend as a bottom status bar with the live ship count at its right end; side panel sits between top bar and status bar, left of the dock. No markup changes in your files.
 - Nov 15 22:45: ship view is now real drone footage (`js/shipvideo.js`, clips in `web/ship/`) with a satellite zoom-in and live-weather layers; `?3d` keeps the three.js scene. Landing cleaned up to one big HEADWAY, a tagline and two buttons.
 - Nov 15 22:00 (Kimball asked), touches to your files, kept small:

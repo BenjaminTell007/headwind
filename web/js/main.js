@@ -168,6 +168,7 @@ const dive = async ship => {
   await new Promise(r => setTimeout(r, 650));   // the satellite zoom fades in over the globe while it's still flying
   $('dive').classList.add('on');
   scene.open(ship, null);
+  window.dispatchEvent(new CustomEvent('headway:dive', { detail: ship }));   // js/story.js prices a hedge for it
   renderHUD(ship, null);
   const w = await wxP;
   if (w) { scene.setWeather(w); renderHUD(ship, w); }
