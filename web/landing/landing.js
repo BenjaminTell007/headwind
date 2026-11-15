@@ -298,7 +298,7 @@
         // near the cursor: patches of every vessel colour, shifting in place (Gaussian falloff)
         if (mouse.h > 0.02) {
           const dx = x - mouse.x, dy = y - mouse.y, d2 = dx * dx + dy * dy;
-          if (d2 < 32000 && Math.exp(-d2 / 9000) * mouse.h > 0.25 + 0.5 * r) {
+          if (d2 < 9000 && Math.exp(-d2 / 2600) * mouse.h > 0.25 + 0.5 * r) {   // a small patch
             const cw = wave(i - 200, j + 50, t, 0.13, 0.5);
             ci = GREYS.length + BRIGHT.length + BLUE.length + clamp(Math.floor(((cw + 4) / 8) * VIVID.length), 0, VIVID.length - 1);
             k = Math.max(k, 3);
