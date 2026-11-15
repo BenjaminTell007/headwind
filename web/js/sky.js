@@ -65,7 +65,7 @@
   HW.drawSky = (ctx, { W, H, cx, cy, view, dt, light }) => {
     if (light) return;
     t += dt;
-    const Rs = Math.hypot(W, H) * 0.62;   // how far out the sky's rim sits on screen
+    const Rs = Math.hypot(W, H) * 0.36;   // how far out the sky's rim sits on screen
 
     // a direction behind the globe -> screen; null if it's in front of us
     const place = v => {
@@ -82,8 +82,8 @@
       const x = cx + p[0] * Rs, y = cy - p[1] * Rs;
       if (x < -2 || x > W + 2 || y < -2 || y > H + 2) continue;
       const tw = 0.75 + 0.25 * Math.sin(t * (1.3 + SM[i] * 2) + SP[i]);
-      ctx.globalAlpha = (0.12 + 0.75 * SM[i]) * tw * Math.min(1, -p[2] * 4 + 0.2);
-      const s = SM[i] > 0.6 ? 1.8 : SM[i] > 0.25 ? 1.3 : 0.9;
+      ctx.globalAlpha = (0.28 + 0.72 * SM[i]) * tw * Math.min(1, -p[2] * 4 + 0.25);
+      const s = SM[i] > 0.6 ? 2 : SM[i] > 0.25 ? 1.5 : 1.1;
       ctx.fillRect(x - s / 2, y - s / 2, s, s);
     }
 
