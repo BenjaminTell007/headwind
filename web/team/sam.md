@@ -1,7 +1,7 @@
 # sam
 
 ## Working on now
-- Waiting on Sam's next edits.
+- The markets page (`markets.html`, `markets.css`, `js/markets-page.js`). New files, all Sam's.
 
 ## Files I'm editing (don't touch without asking)
 - `js/main.js` (overview, panels, markets drawer, globe controls, theme toggle)
@@ -10,6 +10,9 @@
 - `js/globe.js` (Sam asked for these globe changes; please tell us before editing it)
 
 ## Done recently
+- Nov 15: "hedge a ship" panel on the markets page (HEDGE A SHIP button, or `markets.html?hedge=SHIP&port=PORT`, linked from the globe's ship panel): `requestQuote` with `usdPerMon: 100000`, shows the model inputs, then `create(wallet, q, { buyYes: true, stake })`. Server error text is shown as is.
+- Nov 15: markets page at `web/markets.html`: cards from `/api/markets`, tabs, search, sort, a detail drawer (chart with threshold, rules, live gate counter) and a trade box using `web/chain` (burner wallet, `quoteBuy`, `buy`, `sell`, `redeem`), a positions tab, live odds via `watchOdds`. The drawer has class `.drawer`.
+- Nov 15: globe page: header has a GLOBE / MARKETS nav; the old MARKETS button is now SIDE LIST. Live countdown reads `live.trading.trading_closes` (fixes NaN:NaN). `syncChainOdds()` uses `findMarket`; `watchOdds` wired in.
 - Nov 15: light mode. `HW.THEMES` + `HW.setTheme()` in `js/util.js` swap `HW.C` (bg, land, fg, dim, accent, sphere, rim, border, halo); CSS has the same under `:root[data-theme="light"]`. Choice saved in localStorage. Dark is default. Canvas code should read colours from `HW.C` at draw time, not cache them.
 - Nov 15: globe controls (right edge): zoom, tilt/turn pad, north up, rotate picture, flip, auto-spin, reset, go-to-strait list. Keys: arrows, + −, [ ], N, F, R, space. API on the globe: `turn`, `tilt`, `roll`, `northUp`, `flip`, `home`, `setAutoSpin`.
 - Nov 15: static globe. Flow particles and the orbiting dots in strait rings removed. Only cargo ships and tankers underway (sog >= 3) drawn, as arrows along their course; pins with an arrow head when zoomed in. Strait labels only when more than ±20% vs 2023.
@@ -20,7 +23,6 @@
 - (none)
 
 ## Replies
-- ← kimball: thanks for the rules and tokens update. `js/globe.js` stays with Sam for now.
-- ← kimball: Sam tried a different single ship view (an SVG ship in a new `js/dive.js`) and scrapped it (reverted in git). The page loads your `js/ship.js` again, unchanged. It's still your file.
-- ← kimball: removing the `#intro` overlay from `web/index.html`: waiting on Sam's OK.
-- ← kimball: theme toggle now calls `HW.drawLogo($('brandcv'))` after `HW.setTheme()`.
+- ← kimball: NaN:NaN LEFT is fixed (a840139). The new drawer on the markets page uses `.drawer`.
+- ← xavi: all four items from the backend handoff are in: `findMarket`, `watchOdds` (both pages), the hedge panel, and redeem (CLAIM on the markets page). `web/chain/` is used as is, not edited.
+- ← kimball: `js/ship.js` is loaded again and untouched (Sam scrapped the SVG ship view).
