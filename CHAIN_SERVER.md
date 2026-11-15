@@ -72,7 +72,7 @@ Ben, mark each one **agreed** or write what you'd rather do.
 
 **Proposal:** Xavi's code builds the quote and Ben's code signs it. `quote.py` returns unsigned quotes (terms, odds, caps, the model's working), and the server signs them with `chain.sign_quote()`. Xavi removes `sign()` from the server path; the Node seed script keeps its own signer for tests only.
 
-- [ ] Ben: agreed?
+- [x] Ben: agreed
 - [ ] Xavi: make `quote.arrival_quote()` return an unsigned quote by default
 
 ### 2. Two tools open markets, from two different lists
@@ -88,7 +88,7 @@ We still need to decide which list the keeper reads:
 
 Xavi's preference is (a).
 
-- [ ] Decide (a) or (b)
+- [x] Decide (a) or (b): **(a) `examples.json`**, agreed by Ben
 - [ ] Xavi: make `seed_markets.mjs` refuse to run against the demo deployment without `--force`
 
 ### 3. Numbers would get scaled twice (this breaks things)
@@ -96,13 +96,13 @@ In `examples.json`, `threshold` is already the onchain integer, for example rout
 
 **Proposal:** `to_onchain()` is the only place values are scaled for anything the oracle posts, because it's Ben's code that calls `resolve`. Market thresholds come from the quote unchanged.
 
-- [ ] Ben: if the keeper reads `examples.json`, use `threshold` as is
-- [ ] Ben: `unit_and_scale()` treats any `portwatch:*:weekly_*` series as a ship count
+- [ ] Ben: if the keeper reads `examples.json`, use `threshold` as is (agreed, building)
+- [ ] Ben: `unit_and_scale()` treats any `portwatch:*:weekly_*` series as a ship count (agreed, building)
 
 ### 4. Live windows
 The keeper lines windows up with the clock (:00 and :30) and Xavi's script used "now + N minutes". The keeper wins: the page countdown and the server already agree on clock-aligned windows. The quote for a live market should set `closeTime` to the window's **start**, or partway through it. Otherwise people can trade while they watch the count go up, and the vault pays for it.
 
-- [ ] Agree: trading on a live market closes at minute 20 of 30 (or at the window start)
+- [x] Agree: trading on a live market closes **at the window start**, agreed by Ben. The keeper opens each window's market during the previous window, so people take positions first and then watch the ships cross
 
 ### 5. Settling arrival markets
 Nobody has built this yet, so there's no overlap. Xavi wrote the rule; Ben runs it.
@@ -112,7 +112,7 @@ Nobody has built this yet, so there's no overlap. Xavi wrote the rule; Ben runs 
 
 After resolving, call `settleVault(id)` so the vault gets its money back.
 
-- [ ] Ben: keeper loop for open `arrival:` markets, every minute or so
+- [ ] Ben: keeper loop for open `arrival:` markets, every minute or so (agreed)
 - [ ] Ben: positions per ship for the market's window (the ship's MMSI from `/api/ship/{IMO}`)
 
 ### 6. Two `setting()` helpers that read `PRIVATE.md`
@@ -122,7 +122,7 @@ One is in `server/chain.py` (Python) and one in `contracts/script/env.mjs` (Node
 
 - [ ] Xavi: deploy (`forge script ... --broadcast`), run `write_deployments.mjs`, commit `contracts/deployments.json` and `web/chain/deployments.js` to `main`
 - [ ] Xavi: send the server key about 2 MON for gas; the faucet gets 10 MON at deploy
-- [ ] Ben: `SERVER_PRIVATE_KEY` in Railway variables, and add `web3` and `eth-account` to `requirements.txt`
+- [ ] Ben: `SERVER_PRIVATE_KEY` in Railway variables, and add `web3` and `eth-account` to `requirements.txt` (`web3==8.0.0` added, which brings `eth-account`; Railway variable still to do)
 - [ ] Ben: merge `chain.py` and `/api/faucet` to `main`, and check `/api/chain` shows `"on": true`
 - [ ] Ben: `POST /api/quote` with body `{ship, port, deadline, cargoUsd}`. It calls `contracts.pricing.quote.arrival_quote()`, signs with `chain.sign_quote()`, and returns `{quote, signature, model, hedge}`. Numbers go out as strings; `web/chain/markets.js` `requestQuote()` already expects this shape.
 - [ ] Ben: the keeper opens the demo markets (decision 2) and settles them (5)
