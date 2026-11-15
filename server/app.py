@@ -351,6 +351,9 @@ app.include_router(markets.router)
 
 
 from server.chain import ChainOff, TxFailed, chain  # noqa: E402
+from server import quotes  # noqa: E402
+quotes.ship_lookup = find_ship
+app.include_router(quotes.router)
 
 # The contract already allows one drip per address. This caps how fast new
 # addresses can drain the faucet. It's global, not per IP, because the whole

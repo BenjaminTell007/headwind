@@ -41,6 +41,7 @@ The logger reads the aisstream key from `PRIVATE.md` in the repo root (the line 
 | `GET /api/markets/{id}` | one market, same shape |
 | `POST /api/faucet` | body `{"address": "0x..."}`: calls `Faucet.drip` with the server key, 0.25 MON once per address. 409 if already dripped, 429 past 30 drips a minute, 503 if the chain isn't set up |
 | `GET /api/chain` | whether the server is connected to the contracts, the server key's address and balance, the faucet's balance, market count |
+| `POST /api/quote` | body `{ship, port, deadline, cargoUsd}`: prices a ship-arrival hedge with `contracts/pricing` (Xavi's model), signs it with the server key and returns `{quote, signature, model, hedge}`, numbers as strings. The page passes it to `createMarket`. Code in `server/quotes.py` |
 
 ## Chain settings
 

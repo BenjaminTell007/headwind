@@ -29,7 +29,7 @@ Rule: don't edit the other person's files. If you need a change there, write it 
 | Setting | Where | What |
 |---|---|---|
 | `SERVER_PRIVATE_KEY`, or `PRICER_PRIVATE_KEY` | Railway variables, `PRIVATE.md` | The server key. `chain.py` accepts either name |
-| `ORACLE_ADDRESS`, `PRICER_ADDRESS` | Xavi's shell at deploy | Both set to the server key's address |
+| `ORACLE_ADDRESS`, `PRICER_ADDRESS` | Xavi's shell at deploy | Both set to the server key's address: **`0x32F0A79FF9e4918D5771BF716ACba54219F1F78c`** (Ben made it; the private key is in Ben's `PRIVATE.md`) |
 | `DEPLOYER_PRIVATE_KEY` | Xavi's `PRIVATE.md` only | The 50 MON wallet. Never on Railway |
 
 **The quote struct.** It's defined in four places, and all four must match field for field, in this order:
@@ -124,13 +124,15 @@ One is in `server/chain.py` (Python) and one in `contracts/script/env.mjs` (Node
 - [ ] Xavi: send the server key about 2 MON for gas; the faucet gets 10 MON at deploy
 - [ ] Ben: `SERVER_PRIVATE_KEY` in Railway variables, and add `web3` and `eth-account` to `requirements.txt` (`web3==8.0.0` added, which brings `eth-account`; Railway variable still to do)
 - [ ] Ben: merge `chain.py` and `/api/faucet` to `main`, and check `/api/chain` shows `"on": true`
-- [ ] Ben: `POST /api/quote` with body `{ship, port, deadline, cargoUsd}`. It calls `contracts.pricing.quote.arrival_quote()`, signs with `chain.sign_quote()`, and returns `{quote, signature, model, hedge}`. Numbers go out as strings; `web/chain/markets.js` `requestQuote()` already expects this shape.
+- [x] Ben: `POST /api/quote` with body `{ship, port, deadline, cargoUsd}`. It calls `contracts.pricing.quote.arrival_quote()`, signs with `chain.sign_quote()`, and returns `{quote, signature, model, hedge}`. Numbers go out as strings; `web/chain/markets.js` `requestQuote()` already expects this shape.
 - [ ] Ben: the keeper opens the demo markets (decision 2) and settles them (5)
 - [ ] Both: one full run on testnet: quote, create and hedge, trade, settle, redeem, `settleVault`
 
 ## Open questions
 
 Add yours here.
+
+- (Ben) Thin arrival pools: on a local test, a 0.1 MON hedge on a 1 MON arrival seed moved the price from 3% to 33%. Is the arrival `seed_mon` big enough for the demo?
 
 - Is Railway's `/live` drive picking up history across restarts now? Check that Singapore's 30-minute gate count stays near its usual 11 after a redeploy.
 - Demo exchange rate for hedge sizing: `usdPerMon` defaults to 1000 (so $4,000 of cover is 4 MON). Change it in one place if we want different numbers on stage.

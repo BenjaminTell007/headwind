@@ -186,6 +186,23 @@ class Chain:
         signed = self.account.sign_message(encode_typed_data(full_message=message))
         return "0x" + signed.signature.hex().removeprefix("0x")
 
+    @staticmethod
+    def quote_from_json(q):
+        """A quote with numbers as strings (pricing/quote.py to_json, or the page) back to typed
+        values, ready to sign or send."""
+        out = {}
+        for name, typ in QUOTE_FIELDS:
+            v = q[name]
+            if typ.startswith(("uint", "int")):
+                out[name] = int(v)
+            elif typ == "bool":
+                out[name] = v is True or str(v).lower() == "true"
+            elif typ == "bytes32":
+                out[name] = bytes.fromhex(v[2:] if isinstance(v, str) else v.hex())
+            else:
+                out[name] = v
+        return out
+
     def create_market(self, quote, buy_yes=False, min_shares=0, stake=0):
         """Open a market with a quote the server signs itself (used by the keeper).
         Sends creationFee plus any stake. Returns the new market id."""
