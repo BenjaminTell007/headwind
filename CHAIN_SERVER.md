@@ -97,7 +97,7 @@ In `examples.json`, `threshold` is already the onchain integer, for example rout
 **Proposal:** `to_onchain()` is the only place values are scaled for anything the oracle posts, because it's Ben's code that calls `resolve`. Market thresholds come from the quote unchanged.
 
 - [x] Ben: if the keeper reads `examples.json`, use `threshold` as is (the keeper passes Xavi's quote through unchanged)
-- [ ] Ben: `unit_and_scale()` treats any `portwatch:*:weekly_*` series as a ship count (agreed, building)
+- [x] Ben: `unit_and_scale()` is gone: `/api/markets` now reads `examples.json` and shows thresholds as they are, with `threshold_display` for people
 
 ### 4. Live windows
 The keeper lines windows up with the clock (:00 and :30) and Xavi's script used "now + N minutes". The keeper wins: the page countdown and the server already agree on clock-aligned windows. The quote for a live market should set `closeTime` to the window's **start**, or partway through it. Otherwise people can trade while they watch the count go up, and the vault pays for it.
