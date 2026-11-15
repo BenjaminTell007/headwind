@@ -120,7 +120,7 @@ Someone who controls a ship could slow it down and win "late" bets. Three limits
 - **Native MON everywhere.** No token approvals. A burner wallet with gas money can trade.
 - **Parallel execution.** A trade writes only its market's struct and the trader's account, never vault totals or global counters. Trades on different markets don't conflict. Vault totals change only on create and settle. Each market's struct sits in consecutive storage, so a trade pays few cold-storage reads under Monad's per-page pricing.
 - **Gas is charged on the gas limit, not gas used.** All senders estimate the gas and add 12%.
-- **Testnet base fee is about 100 gwei** (measured Nov 15). A trade costs about 0.012 MON. The faucet drips 0.25 MON per burner.
+- **Testnet base fee is about 100 gwei** (measured Nov 15). Measured gas: `buy` ~66k (0.007 MON), `sell` ~68k, `redeem` ~43k, `createMarket` ~475k (0.05 MON), `settleVault` ~165k, `deposit` ~92k. The faucet drips 0.25 MON per burner, which is about 30 trades.
 - **Blocks every ~300 ms.** Events arrive once per commit state (Proposed, Voted, Finalized), and public RPCs keep about 30 seconds of log history. The page reads state with the helpers in `web/chain/` and follows live changes over the websocket.
 - Testnet: chain ID `10143`, RPC `https://testnet-rpc.monad.xyz`, explorer `https://testnet.monadvision.com`.
 
@@ -181,8 +181,8 @@ Budget for the 50 MON wallet:
 | Vault seed at deploy (`VAULT_SEED`) | 20 |
 | Faucet, 40 burners at 0.25 (`FAUCET_FUND`) | 10 |
 | Deploy gas | ~0.5 |
-| Opening example markets: creation fees + gas | ~2 |
-| Your own test trades and spare | ~17 |
+| Opening all 65 example markets: gas (~0.05 each) + creation fees | ~4 |
+| Your own test trades and spare | ~15 |
 
 The vault's 20 MON covers seeds of about 1 MON per ship market and 0.2 to 1 MON per example market.
 

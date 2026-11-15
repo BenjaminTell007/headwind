@@ -84,7 +84,7 @@ for (const m of picked) {
 const seedTotal = plan.reduce((s, m) => s + parseEther(String(m.seed_mon)), 0n);
 const feeTotal = plan.reduce((s, m) => s + quoteFor(m).creationFee, 0n);
 const gasPrice = await publicClient.getGasPrice();
-const gasEach = 400_000n; // createMarket with two strings and a signature check, upper estimate
+const gasEach = 550_000n; // createMarket measured at ~475k gas (forge --gas-report), with margin
 console.log(`\n${plan.length} markets to open on chain ${chain.id}`);
 for (const m of plan) {
   console.log(`  ${m.group.padEnd(8)} ${String(m.seed_mon).padStart(4)} MON  ${(m.prior_yes_bps / 100).toFixed(0).padStart(3)}%  ${m.question}`);

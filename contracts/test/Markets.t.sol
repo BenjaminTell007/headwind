@@ -21,7 +21,7 @@ contract MarketsTest is Test {
     function setUp() public {
         pricer = vm.addr(pricerKey);
         mk = new Markets(oracle, pricer, 5 ether);
-        deadline = uint64(block.timestamp + 2 days);
+        deadline = uint64(vm.getBlockTimestamp() + 2 days);
         vm.deal(underwriter, 100 ether);
         vm.deal(hedger, 100 ether);
         vm.deal(alice, 100 ether);
@@ -44,7 +44,7 @@ contract MarketsTest is Test {
             seed: seed,
             maxCollateral: 20 ether,
             creationFee: 0.01 ether,
-            expiry: uint64(block.timestamp + 5 minutes),
+            expiry: uint64(vm.getBlockTimestamp() + 5 minutes),
             quoteId: keccak256(abi.encode(nonce++))
         });
     }
@@ -188,9 +188,9 @@ contract MarketsTest is Test {
 
     function test_earlyArrivalSettlesBeforeClose() public {
         uint256 id = _create(3_000);
-        vm.warp(block.timestamp + 1 days); // still before closeTime
+        vm.warp(vm.getBlockTimestamp() + 1 days); // still before closeTime
         vm.prank(oracle);
-        mk.resolve(id, int256(block.timestamp)); // docked, before the deadline: NO
+        mk.resolve(id, int256(vm.getBlockTimestamp())); // docked, before the deadline: NO
         assertEq(mk.getMarket(id).outcome, mk.NO());
         vm.prank(alice);
         vm.expectRevert(Markets.MarketClosed.selector);
@@ -237,9 +237,9 @@ contract MarketsTest is Test {
         uint256 id = _create(3_000);
         vm.prank(alice);
         mk.buy{value: 2 ether}(id, true, 0); // pays for "late" cover
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(vm.getBlockTimestamp() + 1 days);
         vm.prank(oracle);
-        mk.resolve(id, int256(block.timestamp)); // on time: NO
+        mk.resolve(id, int256(vm.getBlockTimestamp())); // on time: NO
         mk.settleVault(id);
         assertGt(mk.vaultValue(), 50 ether); // premium + fees + creation fee
     }

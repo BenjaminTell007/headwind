@@ -19,7 +19,7 @@ export const monadTestnet = defineChain({
 // Gas: Monad charges the full gas limit, not gas used. We estimate each call and add this margin.
 export const GAS_MARGIN_BPS = 1_200; // +12%
 // A burner below this asks the faucet for more gas. Testnet base fee was ~100 gwei on Nov 15,
-// so one trade costs ~0.012 MON in gas; this is about two trades' worth.
+// so one trade (~66k gas) costs ~0.007 MON; this keeps room for a few trades.
 export const MIN_GAS_BALANCE = 3n * 10n ** 16n; // 0.03 MON
 
 /** Contract addresses, from deployments.js (written by contracts/script/write_deployments.mjs). */

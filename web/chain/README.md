@@ -42,7 +42,7 @@ Errors: wrap writes in `try` and show `explain(err)`, which turns contract rever
 ## Things that are different on Monad
 
 - **Gas is charged on the gas limit, not gas used.** `wallet.send()` estimates each transaction and adds 12%. Don't pass a big fixed `gas`.
-- **Base fee is about 100 gwei on testnet** (measured Nov 15), so a trade costs about 0.012 MON in gas. The faucet drips 0.25 MON per burner, enough for about 10 trades plus small stakes. Keep stakes around 0.01 to 0.05 MON.
+- **Base fee is about 100 gwei on testnet** (measured Nov 15), so a trade (~66k gas) costs about 0.007 MON. The faucet drips 0.25 MON per burner, enough for about 30 trades plus small stakes. Opening a market (~475k gas) costs about 0.05 MON. Keep stakes around 0.01 to 0.05 MON.
 - **Blocks every ~300 ms.** `eth_sendRawTransactionSync` returns the receipt in one call; the wallet falls back to send-and-poll if a node doesn't take it.
 - **Every event arrives several times,** once per commit state (Proposed, Voted, Finalized, Verified). Animate on Proposed and firm up on Finalized, or filter to one state.
 - **There's only ~30 seconds of log history** on public RPCs, so read current state with `markets.js` on load and use `watch()` for changes after that.
