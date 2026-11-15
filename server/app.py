@@ -344,6 +344,11 @@ def gate_count(gate_id: str, minutes: int = Query(30, ge=1, le=120), since: str 
             "ships": sorted(crossed.values(), key=lambda c: c["time"])}
 
 
+from server import markets  # noqa: E402
+markets.gate_counter = gate_count
+app.include_router(markets.router)
+
+
 @app.post("/api/faucet")
 def faucet():
     raise HTTPException(501, "Not built yet: the relayer should call Faucet.drip(address). See PLAN.md.")

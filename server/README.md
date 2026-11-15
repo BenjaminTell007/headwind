@@ -37,6 +37,8 @@ The logger reads the aisstream key from `PRIVATE.md` in the repo root (the line 
 | `GET /api/ship/{query}` | one ship by MMSI, IMO or name, with type, destination, ETA, draught, length |
 | `GET /api/gates/{gate_id}/count` | cargo ships and tankers that crossed the gate since `since` (ISO time) or in the last `minutes`. This is what resolves a live market |
 | `GET /data/{file}` | any file in `data/processed/`, plus `/data/gates.json` |
+| `GET /api/markets` | every market from `market_seeds.json` with close time, status, history and an onchain block (`chain`, nulls until the keeper runs). Filters: `group=live,weekly,route,trade,replay`, `status=open,closed,resolved,replay`. Live markets are clock-aligned windows (:00/:30 or on the hour) with `count_so_far`. Replay answers are never sent before resolution. Code in `server/markets.py` |
+| `GET /api/markets/{id}` | one market, same shape |
 | `POST /api/faucet` | not built yet |
 
 ## To build
