@@ -421,7 +421,7 @@
       if (hormuz) set('vHormuz', pct(hormuz.pct_vs_2023_precrisis));
       set('vCape', Math.round(o.cape_share.this_week_pct) + '%');
       const d = new Date(o.as_of + 'T00:00:00Z');
-      document.getElementById('asof').textContent =
+      const asofEl = document.getElementById('asof'); if (asofEl) asofEl.textContent =
         'PORTWATCH DATA TO ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).toUpperCase();
     };
     whenOn(later, 500);
