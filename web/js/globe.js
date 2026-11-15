@@ -168,25 +168,39 @@
         }
         ctx.fill();
 
-        /* countries, filled. Points past the horizon are pushed out to the rim so a country
-           that straddles the edge is clipped to the disc instead of folding back over it. */
-        const land = new Path2D();
+        /* land as dots (Kimball wants these back over filled countries), in three brightness
+           buckets so the texture breathes, brighter near the cursor. Drawn in the theme's text
+           colour at low opacity, so it works in light and dark mode. */
+        const ds = HW.clamp(1.25 * Math.sqrt(S.zoom), 1.2, 2.6), hs = ds / 2, px = P.inside ? P.x : -1e4, py = P.y;
+        const BUCKET_ALPHA = [0.24, 0.36, 0.58];
+        ctx.fillStyle = C.fg;
+        for (let b = 0; b < 3; b++) {
+          ctx.globalAlpha = BUCKET_ALPHA[b]; ctx.beginPath();
+          for (let i = 0; i < nL; i++) {
+            const Z = m6 * LX[i] + m7 * LY[i] + m8 * LZ[i]; if (Z < 0) continue;
+            const sx = cx + (m0 * LX[i] + m1 * LY[i] + m2 * LZ[i]) * R, sy = cy - (m3 * LX[i] + m4 * LY[i] + m5 * LZ[i]) * R;
+            if (sx < -4 || sx > W + 4 || sy < -4 || sy > H + 4) continue;
+            const dx = sx - px, dy = sy - py, near = dx * dx + dy * dy < 7000 ? Math.exp(-(dx * dx + dy * dy) / 2400) : 0;
+            const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2;
+            const bucket = lum > 1.05 ? 2 : lum > 0.72 ? 1 : 0;
+            if (bucket !== b) continue;
+            ctx.rect(sx - hs, sy - hs, ds, ds);
+          }
+          ctx.fill();
+        }
+
+        /* country outlines, faint */
+        ctx.globalAlpha = 0.08; ctx.strokeStyle = C.fg; ctx.lineWidth = 0.6; ctx.beginPath();
         for (const f of rings) {
-          let any = false, first = true;
-          for (let i = 0; i < f.length; i += 3) { if (m6 * f[i] + m7 * f[i + 1] + m8 * f[i + 2] > 0) { any = true; break; } }
-          if (!any) continue;
+          let pen = false;
           for (let i = 0; i < f.length; i += 3) {
             const x0 = f[i], y0 = f[i + 1], z0 = f[i + 2], Z = m6 * x0 + m7 * y0 + m8 * z0;
-            let vx = m0 * x0 + m1 * y0 + m2 * z0, vy = m3 * x0 + m4 * y0 + m5 * z0;
-            if (Z < 0) { const l = Math.hypot(vx, vy) || 1; vx /= l; vy /= l; }
-            const x = cx + vx * R, y = cy - vy * R;
-            if (first) { land.moveTo(x, y); first = false; } else land.lineTo(x, y);
+            if (Z < 0.02) { pen = false; continue; }
+            const x = cx + (m0 * x0 + m1 * y0 + m2 * z0) * R, y = cy - (m3 * x0 + m4 * y0 + m5 * z0) * R;
+            if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; }
           }
-          land.closePath();
         }
-        ctx.globalAlpha = 1; ctx.fillStyle = C.land; ctx.fill(land);
-        ctx.strokeStyle = C.border; ctx.lineWidth = 0.7; ctx.stroke(land);
-        const px = P.inside ? P.x : -1e4, py = P.y;
+        ctx.stroke();
 
         /* lanes: brightness is efficiency, blocked share turns the lane into a dotted grey line */
         const hovLane = S.hover && S.hover.kind === 'lane' ? S.hover.L : null, selLane = S.sel && S.sel.kind === 'lane' ? S.sel.L : null;
