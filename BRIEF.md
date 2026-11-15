@@ -111,9 +111,9 @@ Vessel types (the only things that get a hue)
 
 | Vessel type | Colour | PortWatch field |
 |---|---|---|
-| Container | `#f08a3c` orange | `n_container` |
-| Tanker | `#8f82f2` purple | `n_tanker` |
-| Dry bulk | `#46b36f` green | `n_dry_bulk` |
+| Container | `#46b36f` green | `n_container` |
+| Tanker | `#f08a3c` orange | `n_tanker` |
+| Dry bulk | `#8f82f2` purple | `n_dry_bulk` |
 | General cargo | `#ea86b5` pink | `n_general_cargo` |
 | Ro-ro (car carriers) | `#e9c84b` yellow | `n_roro` |
 | Other or unknown | `#f2f2f2` off-white | |
@@ -121,10 +121,10 @@ Vessel types (the only things that get a hue)
 Rules
 
 - Hue only ever means vessel type. Everything else (route efficiency, chokepoint shortfall, market odds) is shown with brightness, opacity, thickness or length, never a new colour. A route running normally is bright; a route losing efficiency dims; a blocked passage goes to dotted grey.
-- Particle mix follows the data: at each chokepoint the share of orange, purple, green, pink and yellow particles matches that week's PortWatch counts by vessel type. Hormuz is mostly purple, and when it closes the purple drains out.
+- Particle mix follows the data: at each chokepoint the share of green, orange, purple, pink and yellow particles matches that week's PortWatch counts by vessel type. Hormuz is mostly orange (tankers), and when it closes the orange drains out.
 - Dots mean waiting, streaks mean moving. Ships at anchor, in port or queued at a closed passage are dots. Ships underway are streaks.
 - The globe's land and port markers can borrow the logo's glyph grid: land as dim dots, ports as small glyphs whose shape and colour show their main vessel type.
-- Markets: YES pool `#f2f2f2`, NO pool `#6b6b6b`, so they never clash with a vessel type. A position landing takes the colour of the vessel type the market is about (a Hormuz market lands purple, a Suez container market orange).
+- Markets: YES pool `#f2f2f2`, NO pool `#6b6b6b`, so they never clash with a vessel type. A position landing takes the colour of the vessel type the market is about (a Hormuz market lands orange, a Suez container market green).
 - Live gates are thin off-white lines; a crossing ship flashes its vessel colour as it passes.
 
 Type

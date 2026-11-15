@@ -2,7 +2,7 @@
    off-white, one accent blue, tanker purple only on the tanker. */
 :root {
   --bg:#0a0a0a; --fg:#f2f2f0; --dim:#8a8a8a; --faint:#4a4a4a; --line:#2a2a2c;
-  --accent:#4c8dff; --tanker:#8f82f2;
+  --accent:#4c8dff; --tanker:#f08a3c;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", Arial, sans-serif;
 }
