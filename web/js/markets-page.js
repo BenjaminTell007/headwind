@@ -196,8 +196,8 @@ const donePanel = d => `<div class="tb done">
     <h3>${d.title}</h3>
     <p class="donesum">${d.line}</p>
     <div class="outcomes">
-      <div class="oc win"><span>IF YOU'RE RIGHT</span><b>+${(d.shares - d.amt).toFixed(4)} MON</b><small>you get ${d.shares.toFixed(4)} back</small></div>
-      <div class="oc lose"><span>IF YOU'RE WRONG</span><b>−${d.amt.toFixed(4)} MON</b><small>you lose your stake</small></div>
+      <div class="oc win"><span>IF YOU WIN</span><b>+${(d.shares - d.amt).toFixed(4)} MON</b><small>you get ${d.shares.toFixed(4)} back</small></div>
+      <div class="oc lose"><span>IF YOU LOSE</span><b>−${d.amt.toFixed(4)} MON</b><small>you lose your stake</small></div>
     </div>
     <button class="go" data-watch="1">WATCH IT IN MY TRADES</button>
     <button class="pill wide" data-again="1">${d.again}</button>
@@ -249,8 +249,8 @@ const renderDrawer = () => {
         <div class="amt"><input id="amt" inputmode="decimal" value="${esc(amount)}" autocomplete="off"><span>MON</span></div>
         <div class="quick">${['0.01', '0.02', '0.05', '0.1'].map(a => `<button data-q="${a}">${a}</button>`).join('')}</div>
         <div class="outcomes">
-          <div class="oc win"><span>IF YOU'RE RIGHT</span><b id="eWin">—</b><small id="eBack">&nbsp;</small></div>
-          <div class="oc lose"><span>IF YOU'RE WRONG</span><b id="eLose">—</b><small>you lose your stake</small></div>
+          <div class="oc win"><span>IF YOU WIN</span><b id="eWin">—</b><small id="eBack">&nbsp;</small></div>
+          <div class="oc lose"><span>IF YOU LOSE</span><b id="eLose">—</b><small>you lose your stake</small></div>
         </div>
         <p class="fine" id="eFine">&nbsp;</p>
         <button class="go" id="go" ${open ? '' : 'disabled'}>${open ? 'PLACE BET · ' + (side ? 'YES' : 'NO') : m.chainId == null ? 'NOT OPEN YET' : 'TRADING CLOSED'}</button>`}

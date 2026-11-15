@@ -206,9 +206,9 @@ body.drawer-open .mk-drawer { transform:none; }
 .tb .sidewhy b { color:var(--fg); }
 /* what you stand to win and lose, side by side, before you place anything */
 .outcomes { display:grid; gap:8px; margin:14px 0 8px; text-align:left; }
-.oc { display:grid; grid-template-columns:1fr auto; align-items:center; gap:4px 12px; padding:12px 14px; border-radius:12px; border:1px solid var(--line2); }
+.oc { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:4px 12px; padding:12px 14px; border-radius:12px; border:1px solid var(--line2); }
 .oc span { font:10.5px var(--mono); letter-spacing:.12em; color:var(--text2); white-space:nowrap; }
-.oc b { font:600 21px/1.1 var(--sans); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.oc b { font:600 20px/1.1 var(--sans); font-variant-numeric:tabular-nums; white-space:nowrap; }
 .oc small { grid-column:1/-1; color:var(--dim); font:12px/1.35 var(--sans); }
 .oc.win { border-color:color-mix(in srgb, var(--up) 55%, transparent); background:color-mix(in srgb, var(--up) 9%, transparent); }
 .oc.win b { color:var(--up); }
