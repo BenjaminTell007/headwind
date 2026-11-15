@@ -33,6 +33,26 @@
   root.innerHTML = `
     <div class="back"><span class="word">HEADWAY</span><button id="statsBack">↑ BACK TO THE GLOBE</button></div>
     <div class="wrap">
+      <section class="rh">
+        <div class="rh-main">
+          <div class="rh-head">
+            <div class="tag" id="rhTag">STRAIT · SHIPS PER WEEK</div>
+            <h1 id="rhName">—</h1>
+            <div class="rh-num" id="rhNum">—</div>
+            <div class="rh-chg" id="rhChg">—</div>
+          </div>
+          <div class="rh-chart" id="rhChart"></div>
+          <div class="rh-ranges" id="rhRanges">${['1M', '3M', '6M', '1Y', '2Y'].map(r => `<button data-r="${r}"${r === '6M' ? ' class="on"' : ''}>${r}</button>`).join('')}<span class="tag">+ 8-WEEK FORECAST</span></div>
+          <div class="rh-facts" id="rhFacts"></div>
+        </div>
+        <aside class="rh-side">
+          <div class="tag">TOP MOVERS · NEXT WEEK'S FORECAST</div>
+          <div class="rh-movers" id="rhMovers"></div>
+          <div class="tag" style="margin-top:22px">ALL STRAITS</div>
+          <div class="rh-list" id="rhList"></div>
+        </aside>
+      </section>
+
       <section>
         <div class="tag rv" id="sTag">FORECASTS</div>
         <h2 class="rv">The next eight weeks, <em>strait by strait.</em></h2>
@@ -40,7 +60,7 @@
         <div class="kpis rv" id="kpis"></div>
       </section>
 
-      <section>
+      <section style="display:none">
         <div class="tag rv">FORECAST · PICK A STRAIT BELOW</div>
         <div class="feature rv">
           <div class="chart" id="featChart"></div>
@@ -467,9 +487,104 @@
     $('#method', root).textContent = `Method. ${F.model}. The target is the log change in weekly ships from the latest week, 1 to 8 weeks ahead, with 5/25/50/75/95% quantiles. The 90% ranges are widened with a conformal correction set on the backtest so they hold about 90% of the time. ${F.backtest_note} Market odds read the forecast range as a probability of reaching each market's threshold; they are a model's view, not advice. Made ${F.made} by web/tools/forecast.py.`;
   };
 
+  /* ---------- the hero: one strait, big, scrubbable (the trading-app view) ---------- */
+  const RANGES = { '1M': 5, '3M': 13, '6M': 26, '1Y': 52, '2Y': 104 };
+  let rhRange = '6M', rhTween = 0;
+  const tweenNum = (el, to) => {
+    const from = parseFloat((el.dataset.v || '0')) || 0, t0 = performance.now(), id = ++rhTween;
+    const step = () => {
+      if (id !== rhTween) return;
+      const p = ease((performance.now() - t0) / 450), v = from + (to - from) * p;
+      el.textContent = fInt(v); el.dataset.v = v;
+      if (p < 1) requestAnimationFrame(step);
+    };
+    step();
+  };
+  const sparkPath = (vals, w, h) => {
+    const lo = Math.min(...vals), hi = Math.max(...vals), sp = hi - lo || 1;
+    return vals.map((v, i) => `${i ? 'L' : 'M'}${(i / (vals.length - 1) * w).toFixed(1)},${(h - 2 - (v - lo) / sp * (h - 4)).toFixed(1)}`).join('');
+  };
+  const renderHero = () => {
+    const s = F.straits[sel]; if (!s) return;
+    const n = Math.min(RANGES[rhRange], s.total.length), hist = s.total.slice(-n), weeks = s.weeks.slice(-n), fc = s.forecast;
+    const now = hist[hist.length - 1], start = hist[0], up = now >= start;
+    const colr = up ? 'var(--up)' : 'var(--down)';
+    const W = 900, H = 320, PADT = 16, PADB = 18, total = hist.length + fc.length;
+    let lo = Infinity, hi = -Infinity;
+    hist.forEach(v => { lo = Math.min(lo, v); hi = Math.max(hi, v); });
+    fc.forEach(f => { lo = Math.min(lo, f.q[1]); hi = Math.max(hi, f.q[3]); });
+    const pad = (hi - lo) * 0.1 || 1; lo -= pad; hi += pad;
+    const X = i => i / (total - 1) * W, Y = v => PADT + (1 - (v - lo) / (hi - lo)) * (H - PADT - PADB);
+    const last = hist.length - 1;
+    const line = hist.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join('');
+    const area = line + `L${X(last).toFixed(1)},${H}L0,${H}Z`;
+    const med = `M${X(last).toFixed(1)},${Y(now).toFixed(1)}` + fc.map((f, k) => `L${X(last + 1 + k).toFixed(1)},${Y(f.q[2]).toFixed(1)}`).join('');
+    const band = `M${X(last).toFixed(1)},${Y(now).toFixed(1)}` + fc.map((f, k) => `L${X(last + 1 + k).toFixed(1)},${Y(f.q[3]).toFixed(1)}`).join('') +
+      fc.slice().reverse().map((f, k) => `L${X(last + fc.length - k).toFixed(1)},${Y(f.q[1]).toFixed(1)}`).join('') + 'Z';
+    const box = $('#rhChart', root);
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <defs><linearGradient id="rhFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${up ? '#35c97b' : '#ff5d5d'}" stop-opacity=".22"/><stop offset="1" stop-color="${up ? '#35c97b' : '#ff5d5d'}" stop-opacity="0"/></linearGradient></defs>
+      <line x1="0" x2="${W}" y1="${Y(start)}" y2="${Y(start)}" stroke="var(--fg)" stroke-opacity=".18" stroke-dasharray="1.5 5"/>
+      <path d="${area}" fill="url(#rhFill)"/>
+      <path d="${band}" fill="${colr}" fill-opacity=".1"/>
+      <path class="draw go" d="${line}" fill="none" stroke="${colr}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      <path d="${med}" fill="none" stroke="${colr}" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      <line class="sx" x1="0" x2="0" y1="0" y2="${H}" stroke="var(--fg)" stroke-opacity="0" vector-effect="non-scaling-stroke"/>
+    </svg><i class="rh-dot" style="background:${colr}"></i><i class="rh-pulse" style="left:${(X(last) / W * 100).toFixed(2)}%;top:${(Y(now) / H * 100).toFixed(2)}%;background:${colr}"></i><span class="rh-date tag"></span>`;
+    const numEl = $('#rhNum', root), chgEl = $('#rhChg', root);
+    const show = (v, ref, label, isFc) => {
+      numEl.textContent = fInt(v); numEl.dataset.v = v;
+      const d = v - ref, pc = ref ? d / ref * 100 : 0;
+      chgEl.innerHTML = `<b style="color:${d >= 0 ? 'var(--up)' : 'var(--down)'}">${d >= 0 ? '▲' : '▼'} ${fInt(Math.abs(d))} (${Math.abs(pc).toFixed(1)}%)</b> <span>${label}</span>${isFc ? ' <em>FORECAST</em>' : ''}`;
+    };
+    const rest = () => { tweenNum(numEl, now); const d = now - start, pc = start ? d / start * 100 : 0; chgEl.innerHTML = `<b style="color:${colr}">${d >= 0 ? '▲' : '▼'} ${fInt(Math.abs(d))} (${Math.abs(pc).toFixed(1)}%)</b> <span>past ${({ '1M': 'month', '3M': '3 months', '6M': '6 months', '1Y': 'year', '2Y': '2 years' })[rhRange]}</span>`; };
+    $('#rhName', root).textContent = sel;
+    rest();
+    const svg = box.querySelector('svg'), sx = svg.querySelector('.sx'), dot = box.querySelector('.rh-dot'), dateEl = box.querySelector('.rh-date');
+    box.onmousemove = e => {
+      const r = box.getBoundingClientRect(), i = clamp(Math.round((e.clientX - r.left) / r.width * (total - 1)), 0, total - 1);
+      const isFc = i > last, v = isFc ? fc[i - last - 1].q[2] : hist[i], wk = isFc ? fc[i - last - 1].week : weeks[i];
+      rhTween++; show(v, start, 'vs start of range', isFc);
+      sx.setAttribute('x1', X(i)); sx.setAttribute('x2', X(i)); sx.setAttribute('stroke-opacity', '.35');
+      dot.style.cssText += `;opacity:1;left:${(X(i) / W * 100).toFixed(2)}%;top:${(Y(v) / H * 100).toFixed(2)}%`;
+      dateEl.textContent = 'WEEK ENDING ' + fDay(wk) + ' ' + wk.slice(0, 4); dateEl.style.opacity = 1;
+      dateEl.style.left = clamp(X(i) / W * 100, 8, 92) + '%';
+    };
+    box.onmouseleave = () => { sx.setAttribute('stroke-opacity', '0'); dot.style.opacity = 0; dateEl.style.opacity = 0; rest(); };
+    // facts under the chart
+    const nx = fc[0].q, pUp = s.p_up_next_week;
+    $('#rhFacts', root).innerHTML = [
+      ['NEXT WEEK', fInt(nx[2]), `likely ${fInt(nx[1])}–${fInt(nx[3])}`],
+      ['CHANCE IT RISES', Math.round(pUp * 100) + '%', pUp >= 0.5 ? 'model leans up' : 'model leans down'],
+      ['IN 8 WEEKS', fInt(fc[7].q[2]), `90% range ${fInt(fc[7].q[0])}–${fInt(fc[7].q[4])}`],
+      ['52-WEEK RANGE', `${fInt(Math.min(...s.total.slice(-52)))}–${fInt(Math.max(...s.total.slice(-52)))}`, 'ships per week'],
+    ].map(([k, v, sub]) => `<div><span class="tag">${k}</span><b>${v}</b><em>${sub}</em></div>`).join('');
+    root.querySelectorAll('.rh-row').forEach(r => r.classList.toggle('on', r.dataset.s === sel));
+  };
+  const renderWatch = () => {
+    const rows = Object.entries(F.straits).map(([name, s]) => {
+      const t = s.total, now = t[t.length - 1], ago = t[t.length - 5] || t[0], chg = ago ? (now / ago - 1) * 100 : 0;
+      const nxt = s.forecast[0].q[2], move = now ? (nxt / now - 1) * 100 : 0;
+      return { name, s, now, chg, move };
+    }).filter(r => r.now >= 20).sort((a, b) => b.now - a.now);
+    $('#rhList', root).innerHTML = rows.map(r => `<button class="rh-row" data-s="${r.name}">
+        <span class="nm">${short(r.name)}<small>${fInt(r.now)} / wk</small></span>
+        <svg viewBox="0 0 84 28" preserveAspectRatio="none"><path d="${sparkPath(r.s.total.slice(-26), 84, 28)}" fill="none" stroke="${r.chg >= 0 ? 'var(--up)' : 'var(--down)'}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>
+        <span class="pill ${r.chg >= 0 ? 'u' : 'd'}">${r.chg >= 0 ? '+' : '−'}${Math.abs(r.chg).toFixed(1)}%</span>
+      </button>`).join('');
+    const movers = rows.slice().sort((a, b) => Math.abs(b.move) - Math.abs(a.move)).slice(0, 4);
+    $('#rhMovers', root).innerHTML = movers.map(r => `<button class="rh-mv" data-s="${r.name}"><b>${short(r.name)}</b><span style="color:${r.move >= 0 ? 'var(--up)' : 'var(--down)'}">${r.move >= 0 ? '▲' : '▼'} ${Math.abs(r.move).toFixed(1)}%</span></button>`).join('');
+    root.querySelectorAll('.rh-row, .rh-mv').forEach(b => b.addEventListener('click', () => { sel = b.dataset.s; renderHero(); renderFeature(); }));
+    root.querySelectorAll('#rhRanges button').forEach(b => b.addEventListener('click', () => {
+      rhRange = b.dataset.r; root.querySelectorAll('#rhRanges button').forEach(o => o.classList.toggle('on', o === b)); renderHero();
+    }));
+  };
+
   /* ---------- load ---------- */
   fetch('data/forecast.json').then(r => r.json()).then(data => {
     F = data;
+    renderWatch();
+    renderHero();
     renderKpis();
     renderMultiples();
     renderFeature();
