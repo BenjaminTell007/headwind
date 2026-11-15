@@ -6,6 +6,7 @@
 <title>Headway</title>
 <meta name="description" content="Forecast and hedge trade disruptions: every shipping route and strait, live ships, and markets that settle onchain on Monad.">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="stats.css">
 </head>
 <body>
 
@@ -18,7 +19,7 @@
   <canvas id="globe"></canvas>
 
   <header>
-    <div class="brand"><canvas id="brandcv" width="528" height="96"></canvas></div>
+    <a class="brand" href="../" title="Headway"><span class="word">HEADWAY</span></a>
     <span class="live off tag" id="sysLive"><b id="sysShips">—</b> SHIPS UNDERWAY</span>
     <form class="search" id="search" autocomplete="off">
       <input id="q" placeholder="Find a ship: name, IMO or MMSI" aria-label="Find a ship">
@@ -76,7 +77,7 @@
   <div class="legend">
     <span><i style="background:var(--container)"></i>CARGO / CONTAINER</span>
     <span><i style="background:var(--tanker)"></i>TANKER</span>
-    <span><i class="ln"></i>SHIPPING ROUTE</span>
+    <span><i class="ln"></i>SHIPPING ROUTE (BRIGHTER = MORE EFFICIENT)</span>
     <span><i class="ring"></i>STRAIT · GAP = TRAFFIC VS 2023</span>
   </div>
 </div>
@@ -99,6 +100,7 @@
 <script src="js/logo.js"></script>
 <script src="js/globe.js"></script>
 <script src="js/ship.js"></script>
+<script src="js/stats.js"></script>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

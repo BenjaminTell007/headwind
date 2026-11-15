@@ -6,8 +6,7 @@ const $ = id => document.getElementById(id);
 const VESSELS = [['container', C.container, 'CONTAINER'], ['tanker', C.tanker, 'TANKER'], ['dry_bulk', C.bulk, 'DRY BULK'], ['general_cargo', C.general, 'GENERAL'], ['roro', C.roro, 'RO-RO']];
 
 /* ---------- intro and brand ---------- */
-const intro = HW.glyphLogo($('introcv'), { step: 12, bg: C.bg });
-HW.glyphLogo($('brandcv'), { step: 7, bg: null });
+const intro = HW.glyphIntro($('introcv'), { step: 12, bg: C.bg });
 const introStart = performance.now();
 
 /* ---------- chain (Xavi's web/chain): used when it's merged in and contracts are deployed ---------- */
@@ -103,7 +102,7 @@ $('overview').addEventListener('click', e => { const c = e.target.closest('[data
 /* ---------- light / dark, and the markets drawer ---------- */
 const themeBtn = () => { $('theme').textContent = HW.C.theme === 'light' ? '☾' : '☀'; };
 themeBtn();
-$('theme').addEventListener('click', () => { HW.setTheme(HW.C.theme === 'light' ? 'dark' : 'light'); themeBtn(); if (panelItem) showPanel(panelItem, true); });
+$('theme').addEventListener('click', () => { HW.setTheme(HW.C.theme === 'light' ? 'dark' : 'light'); themeBtn(); if (HW.drawLogo) HW.drawLogo($('brandcv')); if (panelItem) showPanel(panelItem, true); });
 $('mtoggle').addEventListener('click', () => {
   const open = !document.body.classList.toggle('nomarkets');
   $('mtoggle').setAttribute('aria-expanded', open); $('mtoggle').classList.toggle('on', open);

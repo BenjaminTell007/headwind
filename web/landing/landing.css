@@ -40,7 +40,7 @@ nav a.tag:hover { color:var(--fg); }
 .btn .arr { transition:transform .25s; } .btn:hover .arr { transform:translateX(3px); }
 
 .hero { position:absolute; left:32px; bottom:44px; max-width:640px; }
-.hero h1 { font:300 clamp(30px, 4vw, 54px)/1.04 var(--sans); letter-spacing:-.025em; margin:14px 0 18px; }
+.hero h1 { max-height:240px; overflow:hidden; font:300 clamp(30px, 4vw, 54px)/1.04 var(--sans); letter-spacing:-.025em; margin:14px 0 18px; }
 .hero h1 em { font-style:normal; color:var(--dim); }
 .hero p { font:400 15px/1.55 var(--sans); color:#c4c4c2; margin:0 0 26px; max-width:520px; }
 .hero .row { display:flex; gap:12px; flex-wrap:wrap; }
@@ -61,6 +61,15 @@ nav a.tag:hover { color:var(--fg); }
 
 .credit { position:absolute; right:32px; top:58px; font-size:9.5px; color:var(--faint); }
 .hint { position:absolute; left:50%; bottom:18px; transform:translateX(-50%); color:var(--faint); }
+
+/* act 2: the big title over the fleet */
+.title { position:absolute; left:0; right:0; top:34%; text-align:center; pointer-events:none; opacity:0; transform:scale(1.04); transition:opacity 1.6s ease .6s, transform 2.4s cubic-bezier(.2,.8,.2,1) .6s; }
+.title .word { font:300 clamp(46px, 10.5vw, 168px)/1 var(--mono); letter-spacing:.42em; padding-left:.42em; color:#fff; text-shadow:0 0 40px rgba(10,10,10,.85), 0 0 12px rgba(10,10,10,.9); }
+.title .sub { margin-top:18px; color:#d0d0ce; letter-spacing:.32em; }
+.act2 .title { opacity:1; transform:none; }
+.act2 .lock { opacity:0; transition:opacity .5s; }
+.act2 .hero h1 { opacity:0; max-height:0; margin:0; transition:opacity .5s, max-height .9s cubic-bezier(.2,.8,.2,1), margin .9s; }
+.act2 .hero .tag { opacity:0; transition:opacity .6s; }
 
 /* leaving: everything else fades while the matrix closes over the footage */
 .leaving .ui { opacity:0; transition:opacity .5s; }

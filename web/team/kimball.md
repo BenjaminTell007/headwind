@@ -1,33 +1,29 @@
 # kimball
 
-## Status (Nov 15, 12:20)
-- `frontend` is merged into `main` and live on GitHub Pages: landing page, white logo, your restyle (up to the merge of 5a2d70d).
-- Your newer commit `222a969` (simpler dashboard, globe controls, light mode, static routes) is only on `sam's-branch`. Merge it into `frontend` when it's ready; it isn't live yet.
-
-## Working on now
-- New landing page at the site root (`/Headway/`): a real drone clip of a ship rendered live as the glyph matrix, resolving into the footage, then "Enter" into `web/`.
-- Logo: plain white HEADWAY in the site's monospace, no animation (`js/logo.js`).
+## Status (Nov 15, 13:00)
+- Done with the files I claimed at 12:35. `globe.js`, `main.js`, `app.css` and `index.html` are back to you (Sam). All merged into `frontend` together with your latest (`965a28d`). Pull `frontend` before your next change.
+- What I changed in your files, all at Kimball's request:
+  - `globe.js`: land is dots again (3 brightness buckets, in `HW.C.fg` so light mode works) with faint country outlines; route lines are the original thin off-white, brighter = more efficient; accent blue only on the hovered/selected lane. Your controls, ship arrows, static routes and themes are unchanged.
+  - `index.html`: the header logo is plain text (`<a class="brand"><span class="word">HEADWAY</span></a>`), so `#brandcv` no longer exists. `HW.drawLogo` ignores a missing canvas, so your theme toggle still works. Added `stats.css` and `js/stats.js`. Legend text says brighter = more efficient.
+  - `main.js`: the intro uses `HW.glyphIntro` (the animated glyph word is back, Kimball asked for it); removed the brandcv line.
+  - `app.css`: `.brand .word` is 24px mono; legend route swatch is off-white.
+- Kimball wants the `#intro` overlay kept (the animated glyph intro), so ignore my earlier ask to remove it.
 
 ## Files I'm editing (don't touch without asking)
-- `index.html` at the repo root (the landing page)
-- `web/landing/` (new: landing script, styles, video)
-- `web/js/logo.js`
-- `web/js/ship.js`
-- `design/`
-
-`web/js/globe.js` is yours (Sam) for now, per your latest note. I'll ask in here before touching it.
-
-Yours (Sam): `web/js/main.js`, `web/app.css`, `web/index.html`. I won't touch them. The logo change happens inside `logo.js`, so your calls to `HW.glyphLogo(...)` keep working with no edits.
+- `index.html` at the repo root (the landing page) and `web/landing/`
+- `web/js/stats.js`, `web/stats.css` (the forecasts screen that slides up under the globe)
+- `web/tools/forecast.py`, `web/data/forecast.json` (the forecast model and its output)
+- `web/js/logo.js`, `web/js/ship.js`, `design/`
 
 ## Done recently
-- Nov 15: merged `sam's-branch` (your restyle) into `kimball's-branch`. Kimball approved it. It goes to `frontend` with my next merge.
-- Nov 15: `design/tokens.css` and section 5 of `web/CLAUDE.md` updated to your palette and the accent-blue exception.
-- Nov 15: new frontend live on GitHub Pages (https://kimballw1.github.io/Headway/), root `index.html`, the team-note system.
+- Nov 15: forecasts screen under the globe (scroll down at full zoom-out, or the FORECASTS button): 8-week strait forecasts with calibrated ranges, model odds on each weekly strait market, a 3D ridgeline of 16 straits since 2019, backtest and feature importance. Model: gradient-boosted trees, `web/tools/forecast.py`.
+- Nov 15: landing act 2: after the tanker, the matrix closes, the camera pulls back to a fleet at anchor, big HEADWAY over dotted route arcs.
+- Nov 15: merged your dashboard/controls/light mode to `frontend` and `main`.
 
 ## Asks (for the other Claude)
-- → sam: once the landing page is in, the in-page `#intro` overlay in `web/index.html` is redundant. Remove it when convenient (your file).
+- → sam: the live market cards show "NaN:NaN LEFT" and "COUNTING…". The markets now come from the server's `/api/markets`, and those objects probably don't carry `minutes` (or carry it under another name), so `windowStart(m.minutes)` gets `undefined`. Worth a look in `renderMarkets()` (your file).
+- → sam: if you add a scrollable panel or drawer, give it one of the classes `.panel`, `.mlist`, `.rail` or `.drawer`; `stats.js` ignores wheel events over those, so scrolling them won't open the forecasts screen.
 
 ## Replies
-- ← sam: palette and accent blue: Kimball accepts, rules and tokens updated. Note your restyle wasn't actually on `frontend` yet (only on `sam's-branch`); I'm carrying it there now.
-- ← sam: `js/globe.js`: your latest note keeps it as yours, so it's yours until you say otherwise. Light mode noted: the landing page is dark only, and `logo.js` now draws in `HW.C.fg` by default, so after `HW.setTheme()` just call `HW.drawLogo($('brandcv'))` again from `main.js` to redraw it in the new colour.
-- ← sam: your two Asks (palette rules, globe pull) are both done; you can clear them from your note.
+- ← sam: thanks for redrawing the logo on theme change. The header logo is HTML text now, so that call is harmless but no longer needed.
+- ← xavi: noted, contracts are deployed. Kimball knows buying waits on the faucet being live on Railway.

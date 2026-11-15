@@ -14,14 +14,17 @@
 (() => {
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
-  const video = document.getElementById('vid');
+  const video = document.getElementById('vid');     // act 1: the tanker
+  const video2 = document.getElementById('vid2');   // act 2: the fleet at anchor
   const body = document.body;
 
   // Glyph colours. Greys for the sea, white and tanker purple for the ship and wake
   // (the ship in the clip is a tanker, so its hue is the tanker hue).
   const GREYS = ['#1d2024', '#26292e', '#30343a', '#3c4047', '#4b4f56', '#5f6369', '#787b80', '#96989b'];
   const BRIGHT = ['#f2f2f0', '#8f82f2', '#6f62d8', '#f2f2f0', '#d9d6ff'];
-  const COLOURS = GREYS.concat(BRIGHT);
+  // second act, the fleet: a mixed fleet, so every vessel hue (container, tanker, bulk, general, ro-ro)
+  const FLEET = ['#f08a3c', '#8f82f2', '#46b36f', '#ea86b5', '#e9c84b', '#f2f2f0', '#f26b1d', '#1f7a45'];
+  const COLOURS = GREYS.concat(BRIGHT, FLEET);
   const N_SHAPES = 10;
 
   let W = 0, H = 0, DPR = 1, cell = 10, cols = 0, rows = 0;
@@ -104,8 +107,9 @@
   resize();
 
   // Crop the 16:9 clip to cover any screen shape, like CSS object-fit: cover.
-  const coverRect = (vw, vh, w, h) => {
-    const s = Math.max(w / vw, h / vh);
+  // zoom > 1 pushes in, < 1 pulls back (the edges then fall off into black).
+  const coverRect = (vw, vh, w, h, zoom = 1) => {
+    const s = Math.max(w / vw, h / vh) * zoom;
     // lift the frame a little so the ship sits above the headline
     const sh = Math.min(h * 0.07, (vh * s - h) / 2 + h * 0.07);
     return [(w - vw * s) / 2, (h - vh * s) / 2 - sh, vw * s, vh * s];
@@ -119,12 +123,82 @@
     Math.sin(x * f + t * s) + Math.sin(y * f * 1.3 - t * s * 0.8) +
     Math.sin((x + y) * f * 0.7 + t * s * 0.6) + Math.sin((x - y) * f * 0.9 - t * s * 0.5);
 
+  /* ---------- act 2: route arcs ----------
+     Dotted half-circles in the vessel colours rising off a horizon line, each with a
+     bright dot travelling along it like a ship on a route. They draw themselves in. */
+  const ARCS = [
+    { x: 0.30, r: 0.20, col: '#f08a3c', sp: 0.11 },
+    { x: 0.42, r: 0.27, col: '#ea86b5', sp: 0.08 },
+    { x: 0.50, r: 0.17, col: '#f2f2f0', sp: 0.14 },
+    { x: 0.58, r: 0.27, col: '#4c8dff', sp: 0.09 },
+    { x: 0.70, r: 0.20, col: '#8f82f2', sp: 0.12 },
+    { x: 0.50, r: 0.36, col: '#46b36f', sp: 0.06 },
+  ];
+  const drawArcs = ta => {
+    if (ta < 0.6) return;
+    const base = H * 0.66, scale = Math.min(W, H * 1.6);
+    ctx.lineCap = 'round';
+    ARCS.forEach((a, n) => {
+      const grow = ease((ta - 0.6 - n * 0.18) / 1.6);
+      if (grow <= 0) return;
+      const ax = W * a.x, r = scale * a.r;
+      const end = Math.PI + Math.PI * grow;          // from the left foot over the top
+      ctx.globalAlpha = 0.95 * (leaving ? 1 - ease((performance.now() - leaving) / 500) : 1);
+      ctx.strokeStyle = a.col;
+      ctx.lineWidth = 2.4;
+      ctx.setLineDash([2, 6]);
+      ctx.beginPath();
+      ctx.arc(ax, base, r, Math.PI, end);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // the ship on the route
+      const p = Math.PI + Math.PI * ((ta * a.sp + n * 0.17) % 1) * grow;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = a.col;
+      ctx.beginPath();
+      ctx.arc(ax + Math.cos(p) * r, base + Math.sin(p) * r, 3.4, 0, 6.2832);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  };
+
   /* ---------- the frame ---------- */
+  // Act 1: tanker. Glyphs build it, then the footage opens out from the ship.
+  // Act 2: at SWITCH_AT the matrix closes over the tanker while the camera pulls back,
+  //        then reopens on the fleet at anchor with HEADWAY over route arcs.
   const REVEAL_AT = 1.6, REVEAL_FOR = 2.6;
+  const SWITCH_AT = 9.5, CLOSE_FOR = 1.0, OPEN2_FOR = 2.8;
+  let act = 1;
 
   const frame = now => {
     const t = (now - t0) / 1000;
-    const ready = video.readyState >= 2 && video.videoWidth > 0;
+
+    // which act, which clip, how far the footage is open, how zoomed the camera is
+    let src = video, open, zoom = 1, cyK = 0.43, ellX = 0.62, frontK;
+    if (t < SWITCH_AT) {
+      open = ease((t - REVEAL_AT) / REVEAL_FOR) * (0.66 + 0.025 * Math.sin(t * 0.5));
+      frontK = 0.12 + 0.88 * (1 - smooth(REVEAL_AT + REVEAL_FOR * 0.7, REVEAL_AT + REVEAL_FOR + 1.2, t));
+    } else if (t < SWITCH_AT + CLOSE_FOR) {
+      // closing over the tanker while the camera pulls back from it
+      const u = (t - SWITCH_AT) / CLOSE_FOR;
+      open = 0.66 * (1 - ease(u));
+      zoom = 1 - 0.38 * ease(u);
+      frontK = 0.6;
+    } else {
+      // the fleet: start pushed in, keep pulling back as the footage opens
+      src = video2;
+      const u = (t - SWITCH_AT - CLOSE_FOR) / OPEN2_FOR;
+      open = ease(u) * (0.52 + 0.02 * Math.sin(t * 0.45));
+      zoom = 1.55 - 0.5 * ease((t - SWITCH_AT - CLOSE_FOR) / 6);
+      cyK = 0.5; ellX = 0.5;
+      frontK = 0.12 + 0.88 * (1 - smooth(0.7, 1.4, u));
+      if (act === 1) {
+        act = 2;
+        body.classList.add('act2');
+        if (video2.paused) video2.play().catch(() => {});
+      }
+    }
+    const ready = src.readyState >= 2 && src.videoWidth > 0;
 
     // smooth the cursor lens in and out
     mouse.s += ((mouse.x > -999 ? 1 : 0) - mouse.s) * 0.12;
@@ -133,22 +207,20 @@
     ctx.fillStyle = '#0a0a0a';
     ctx.fillRect(0, 0, W, H);
 
-    // How far the footage has opened. Radius is in "ellipse units": wider than tall,
-    // because the ship runs across the frame.
-    const halfDiag = Math.hypot(W * 0.5 * 0.62, H * 0.5);
-    let open = ease((t - REVEAL_AT) / REVEAL_FOR) * (0.66 + 0.025 * Math.sin(t * 0.5));
+    // Radius is in "ellipse units": wider than tall, because the ship runs across the frame.
+    const halfDiag = Math.hypot(W * 0.5 * ellX, H * 0.5);
     if (leaving) open *= 1 - ease((now - leaving) / 850);
     const R = open * halfDiag;
     const band = 0.3 * halfDiag;
-    // the scan edge is bright while it moves, then calms down once the reveal settles
-    const frontK = 0.12 + 0.88 * (1 - smooth(REVEAL_AT + REVEAL_FOR * 0.7, REVEAL_AT + REVEAL_FOR + 1.2, t));
 
     let lum = null;
     if (ready) {
-      const [x, y, w, h] = coverRect(video.videoWidth, video.videoHeight, W, H);
-      if (R > 1) ctx.drawImage(video, x, y, w, h);
-      // one pixel per cell
-      sctx.drawImage(video, x / cell, y / cell, w / cell, h / cell);
+      const [x, y, w, h] = coverRect(src.videoWidth, src.videoHeight, W, H, zoom);
+      if (R > 1) ctx.drawImage(src, x, y, w, h);
+      // one pixel per cell (clear first, so a pulled-back frame has black edges)
+      sctx.fillStyle = '#000';
+      sctx.fillRect(0, 0, cols, rows);
+      sctx.drawImage(src, x / cell, y / cell, w / cell, h / cell);
       lum = sctx.getImageData(0, 0, cols, rows).data;
     }
 
@@ -158,7 +230,7 @@
     }
 
     const px = Math.ceil(cell * DPR);
-    const cx = W / 2, cy = H * 0.43;
+    const cx = W / 2, cy = H * cyK;
     const lensR = 120, lensEdge = 46;
 
     for (let j = 0; j < rows; j++) {
@@ -173,7 +245,7 @@
         if (appear <= 0) continue;
 
         // 2. the footage opens out from the ship
-        const d = Math.hypot((x - cx) * 0.62, y - cy);
+        const d = Math.hypot((x - cx) * ellX, y - cy);
         let m = d >= R ? 1 : d > R - band ? (d - (R - band)) / band : 0;
         const front = R > 1 ? frontK * Math.max(0, 1 - Math.abs(d - R) / (band * 0.35)) : 0;   // bright scan edge
 
@@ -203,9 +275,22 @@
 
         // colour: greys by brightness for the sea, white/purple patches on the bright ship
         let ci;
-        if (L > 0.5) {
+        if (act === 1 && L > 0.5) {
           const cw = wave(i + 300, j - 100, t, 0.05, 0.3);
           ci = GREYS.length + clamp(Math.floor(((cw + 4) / 8) * BRIGHT.length), 0, BRIGHT.length - 1);
+        } else if (act === 2 && L > 0.42) {
+          // the fleet: vertical streams of vessel colour with gaps between them (like
+          // the reference), small clusters of one colour shifting in place, greys elsewhere
+          const stream = Math.sin(i * 0.33 + wave(i, j * 0.2, t, 0.05, 0.2) * 0.9);
+          if (stream > 0.15 && r > 0.12) {
+            const cluster = Math.floor(i / 2) * 7.13 + Math.floor(j / 3) * 3.71;
+            const cw = Math.sin(cluster) * 2 + wave(i, j, t, 0.11, 0.3) * 0.5;
+            ci = GREYS.length + BRIGHT.length + clamp(Math.floor(((cw + 4) / 8) * FLEET.length), 0, FLEET.length - 1);
+          } else if (stream > -0.35) {
+            ci = clamp(Math.floor(L * 0.6 * GREYS.length + g * 0.4), 0, GREYS.length - 1);
+          } else {
+            continue;   // dark gap between streams
+          }
         } else {
           ci = clamp(Math.floor(L * 2 * GREYS.length + g * 0.4), 0, GREYS.length - 1);
         }
@@ -222,6 +307,8 @@
       }
     }
     ctx.globalAlpha = 1;
+
+    if (act === 2) drawArcs(t - SWITCH_AT - CLOSE_FOR);
 
     if (leaving && now - leaving > 950) {
       window.location.href = target;
