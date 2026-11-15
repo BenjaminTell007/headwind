@@ -41,9 +41,12 @@ header > * { pointer-events:auto; }
 /* the logo: plain text in the site's light monospace, top left */
 .brand { text-decoration:none; color:var(--fg); margin-right:10px; }
 .brand .word { font:300 24px/1 var(--mono); letter-spacing:.42em; color:var(--fg); }
-/* the switch between the two pages: the biggest control in the header, filled blue where you are */
+/* the top bar on the markets and forecasts pages (the globe page floats its header over the globe) */
+.topbar { position:sticky; top:0; z-index:6; display:flex; align-items:center; gap:14px; padding:14px 24px; background:rgba(var(--bg-rgb),.88); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+.spacer { flex:1; }
+/* the switch between the three pages: the biggest control in the header, filled blue where you are */
 .nav { display:inline-flex; padding:4px; gap:4px; border:1px solid color-mix(in srgb, var(--accent) 45%, var(--line2)); border-radius:28px; background:rgba(var(--bg-rgb),.85); backdrop-filter:blur(10px); box-shadow:var(--shadow); }
-.nav a { display:inline-flex; align-items:center; gap:9px; padding:10px 22px; border-radius:24px; font:600 13px/1 var(--mono); letter-spacing:.16em; color:var(--fg); text-decoration:none; transition:background .2s, color .2s, box-shadow .2s; }
+.nav a { display:inline-flex; align-items:center; gap:9px; padding:10px 18px; border-radius:24px; font:600 13px/1 var(--mono); letter-spacing:.16em; color:var(--fg); text-decoration:none; transition:background .2s, color .2s, box-shadow .2s; }
 .nav a svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
 .nav a:hover { background:color-mix(in srgb, var(--accent) 20%, transparent); color:var(--accent); }
 .nav a.on, .nav a.on:hover { background:var(--accent); color:var(--on-accent); box-shadow:0 0 22px color-mix(in srgb, var(--accent) 55%, transparent); }
@@ -164,6 +167,10 @@ body.nomarkets .rail { transform:translateX(-360px); opacity:0; pointer-events:n
 
 @media (max-width: 1360px) {
   header .live { display:none; }
+}
+@media (max-width: 1040px) {
+  .nav a { padding:9px 12px; font-size:11.5px; letter-spacing:.1em; }
+  .nav a svg { display:none; }
 }
 @media (max-width: 1180px) {
   .rail { width:290px; }

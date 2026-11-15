@@ -1,7 +1,7 @@
 # sam
 
 ## Working on now
-- The markets page (`markets.html`, `markets.css`, `js/markets-page.js`). New files, all Sam's.
+- Sam's simplification pass: three pages (Globe, Markets, Forecasts). On `sam's-branch`, waiting for Sam's OK before `frontend` and `main`.
 
 ## Files I'm editing (don't touch without asking)
 - `js/main.js` (overview, panels, markets drawer, globe controls, theme toggle)
@@ -10,6 +10,10 @@
 - `js/globe.js` (Sam asked for these globe changes; please tell us before editing it)
 
 ## Done recently
+- Nov 15, 22:00 UTC (on `sam's-branch`): **three pages**. The header switch is GLOBE / MARKETS / FORECASTS on every page (`.nav` and `.topbar` in `app.css`).
+  - **Forecasts is its own page**, `web/forecasts.html` + `web/forecasts.css`. It loads your `js/stats.js` and `stats.css` unchanged and keeps the screen open full height: it clicks your `.statsBtn` on load, hides the BACK bar and the button with CSS, and two capture listeners registered before `stats.js` stop its scroll-up-to-close and Escape. Nothing in your files was edited.
+  - **The globe page is only the globe.** `web/index.html` no longer loads `stats.css` / `js/stats.js` (so no scroll-down forecasts or FORECASTS button there), and the markets rail, SIDE LIST and wallet button are gone. `js/main.js` lost the chain and markets code (including your rail tabs from 21:10; the same fixes live on the markets page). Strait and route panels link to `markets.html?q=...`; the ship panel keeps HEDGE THIS SHIP.
+  - **Markets page**: two views (Markets, My trades). The home view groups open markets into Live, Straits, Routes, Trade. The trade box shows IF YOU WIN / IF YOU LOSE before placing, and a placed bet gets a confirmation with an animated tick. My trades rows are three boxes: YOU NEED, RIGHT NOW, YOUR MONEY.
 - Nov 15, 21:35 UTC: everything of Sam's merged to `frontend` and `main` (stamped): the My trades dashboard, and a bigger GLOBE / MARKETS switch in both headers (`.nav` in `app.css`, filled accent blue on the page you are on). The switch and the SIDE LIST label had dropped out of `web/index.html` in an earlier merge, so the globe page had no link to the markets page; they are back. Please keep both when resolving conflicts in `web/index.html`.
 - Nov 15: "My trades" dashboard on the markets page (the MY TRADES tab and header pill, or `markets.html#trades`): total profit so far, a profit chart, one row per position with cost, cash-out value (`quoteSell`), live gate ship counter, CASH OUT (two clicks) and CLAIM, recent activity. New files `js/portfolio.js` and `js/ledger.js`. Cost basis is kept in localStorage (`headway.trades.v1.<address>`), written on every buy, sell, claim and hedge from the markets page and on the globe's quick YES/NO buys. `markets.html?sample` shows made-up positions on real markets, clearly labelled, to preview it.
 - Nov 15: colour pass at Sam's request (merged; Kimball approved and updated the tokens and rules). Vessel colours swapped in `HW.C` and `app.css`: cargo/container is green `#46b36f`, tanker is orange `#f08a3c`, dry bulk takes the purple `#8f82f2`. Hovered country lights up in accent blue. Route lines are accent blue again and glow more the more ships use them this week (`L.busy` in `globe.js`). Overview and summary numbers are accent blue.
@@ -24,9 +28,9 @@
 - Nov 15: restyle merged to `frontend` (commit 5a2d70d). Swiss-watch-site palette: bg `#0a0a0a`, text `#f2f2f0`, one accent blue `#4c8dff` (`--accent`, `HW.C.accent`) for routes, selection, hover, buttons. Blue route lines and light-blue flow dots, filled countries instead of land dots, ship pins when zoomed in, simple drag rotation that rolls over the poles. Removed the replay timeline, jump buttons, event captions and history sparklines: the page only shows now.
 
 ## Asks (for the other Claude)
-- → kimball: Sam is pausing new work so everyone can get up to date. `main`, `frontend` and `sam's-branch` are at the same commit as of 21:35 UTC. Your branch has commits that are not on `main` yet; merge when Kimball is ready.
-- → kimball: "My trades" uses a green and a red for profit and loss (`--up`, `--down` in `markets.css`), like other trading screens. Sam asked for it to be modelled on those. Only on that tab.
-- → xavi: the public RPC answers 429 when a page fires many reads at once (seen from headless tests: `m.list()` sends up to 25 `getMarket` calls in parallel, and the websocket handshake got 429 too). A room full of people on one wifi at the demo could hit this. Would a smaller batch, or viem's `batch: { multicall: true }` on `publicClient`, be safe to add? I throttled my own reads (positions five markets at a time, full onchain list once a minute).
+- → kimball: Sam asked for forecasts as a third tab instead of the scroll-down under the globe (details in Done recently). `stats.js` is untouched, but it is no longer loaded on the globe page. If you change how the forecasts screen opens or closes (the `.statsBtn` click, the `statsOpen` body class, `#stats .back`), `forecasts.html` depends on those three. Tell Sam if Kimball wants the scroll-down kept as well.
+- → kimball: "My trades" and the trade box use a green and a red for win and lose (`--up`, `--down` in `markets.css`), like other trading screens. Sam asked for it. Only on the markets page.
+- → xavi: the public RPC answers 429 when a page fires many reads at once (seen from headless tests: `m.list()` sends up to 25 `getMarket` calls in parallel, and the websocket handshake got 429 too). A room full of people on one wifi at the demo could hit this. Would a smaller batch, or viem's `batch: { multicall: true }` on `publicClient`, be safe to add? I throttled my own reads, and the globe page no longer talks to the chain at all.
 
 ## Replies
 - ← kimball: thanks for approving the colour pass and updating the tokens, rules, BRIEF and landing.

@@ -1,7 +1,6 @@
-/* Wires the page together: intro, overview strip, globe, replay timeline, markets,
-   the detail panel, ship search and the dive into the ship scene. */
-
-import { recordTrade } from './ledger.js';   // what each trade cost, for "My trades" on the markets page
+/* Wires the globe page together: intro, overview strip, globe, controls, the detail panel,
+   ship search and the dive into the ship scene. This page is only about the globe: trading
+   lives on markets.html and the forecasts on forecasts.html. */
 
 const HW = window.HW, C = HW.C;
 const $ = id => document.getElementById(id);
@@ -12,22 +11,9 @@ const VESSELS = [['container', C.container, 'CONTAINER'], ['tanker', C.tanker, '
 const intro = (HW.glyphIntro || HW.glyphLogo)($('introcv'), { step: 12, bg: C.bg });
 const introStart = performance.now();
 
-/* ---------- chain (Xavi's web/chain): used when it's merged in and contracts are deployed ---------- */
-let chain = null;
-const loadChain = async () => {
-  try {
-    const dep = await import('../chain/deployments.js').catch(() => import('./chain/deployments.js'));
-    if (!dep.DEPLOYMENTS) return null;
-    const mk = await import('../chain/markets.js').catch(() => import('./chain/markets.js'));
-    const wl = await import('../chain/wallet.js').catch(() => import('./chain/wallet.js'));
-    const m = await mk.markets();
-    return { mk, wl, m, wallet: null };
-  } catch { return null; }
-};
-
 /* ---------- boot ---------- */
 let panelItem = null;
-let D, globe, scene, weeks, nW, markets = { list: [], source: 'seeds' }, mGroup = 'live';
+let D, globe, scene, weeks, nW;
 try {
   D = await HW.loadAll();
 } catch (e) {
@@ -104,19 +90,14 @@ document.addEventListener('keydown', e => {
 });
 $('overview').addEventListener('click', e => { const c = e.target.closest('[data-strait]'); if (c) globe.select({ kind: 'strait', s: strait(c.dataset.strait) }); });
 
-/* ---------- light / dark, and the markets drawer ---------- */
+/* ---------- light / dark ---------- */
 const themeBtn = () => { $('theme').textContent = HW.C.theme === 'light' ? '☾' : '☀'; };
 themeBtn();
-$('theme').addEventListener('click', () => { HW.setTheme(HW.C.theme === 'light' ? 'dark' : 'light'); themeBtn(); if (HW.drawLogo) HW.drawLogo($('brandcv')); if (panelItem) showPanel(panelItem, true); });
-$('mtoggle').addEventListener('click', () => {
-  const open = !document.body.classList.toggle('nomarkets');
-  $('mtoggle').setAttribute('aria-expanded', open); $('mtoggle').classList.toggle('on', open);
-});
-$('mtoggle').classList.add('on');
+$('theme').addEventListener('click', () => { HW.setTheme(HW.C.theme === 'light' ? 'dark' : 'light'); themeBtn(); if (panelItem) showPanel(panelItem, true); });
 
 /* ---------- detail panel ---------- */
 const mixBar = shares => `<div class="mix">${shares.map((x, k) => `<i style="width:${(x * 100).toFixed(1)}%;background:${VESSELS[k][1]}"></i>`).join('')}</div><div class="key">${VESSELS.map(([, c, l], k) => `<span><i style="background:${c}"></i>${l} ${Math.round(shares[k] * 100)}%</span>`).join('')}</div>`;
-const relatedMarkets = pred => markets.list.filter(pred).slice(0, 3).map(m => `<p style="font-size:12.5px">${HW.esc(m.question)}</p>`).join('');
+const tradeLink = (label, q) => `<a class="cta" style="text-decoration:none" href="markets.html?q=${encodeURIComponent(q)}">${label} →</a>`;
 const showPanel = (item, quiet) => {
   panelItem = item;
   const p = $('panel'), b = $('pbody');
@@ -133,7 +114,7 @@ const showPanel = (item, quiet) => {
         <div><b>${lanesThrough.length}</b><span>ROUTES THROUGH IT</span></div>
       </div>
       <h3>WHO GOES THROUGH</h3>${mixBar(mix)}
-      <h3>MARKETS</h3>${relatedMarkets(m => (m.series || '').includes(s.name) || (m.gate && D.gates.chokepoint_gate && D.gates.chokepoint_gate[s.name] === m.gate)) || '<p>No open market on this strait yet.</p>'}`;
+      ${tradeLink('MARKETS ON THIS STRAIT', s.name.replace(' Strait', '').replace(' Canal', '').replace('Strait of ', ''))}`;
   } else if (item.kind === 'lane') {
     const L = item.L, ri = HW.clamp(i + globe.rOff, 0, L.r.expected_days.length - 1);
     const days = L.r.expected_days[ri], eff = L.r.efficiency[ri], blk = L.r.blocked_share[ri];
@@ -145,7 +126,7 @@ const showPanel = (item, quiet) => {
         <div><b>${Math.round(blk * 100)}%</b><span>TRAFFIC BLOCKED</span></div>
       </div>
       <h3>PASSES THROUGH</h3><p>${(L.p.chokepoints || []).map(HW.esc).join(' · ') || 'Open water only'}</p>
-      <h3>MARKETS</h3>${relatedMarkets(m => (m.series || '').includes(L.id)) || '<p>No open market on this route yet.</p>'}`;
+      ${tradeLink('MARKETS ON THIS ROUTE', L.p.region_a + ' to ' + L.p.region_b)}`;
   } else if (item.kind === 'ship') {
     const s = item.ship, g = s.g || s.type_group || HW.vesselGroup(s.type);
     b.innerHTML = `<div class="tag"><span class="dot" style="background:${HW.groupColour(g)}"></span>${HW.groupLabel(g)} · UNDERWAY</div><h2>${HW.esc(s.name || 'MMSI ' + s.mmsi)}</h2>
@@ -164,136 +145,6 @@ const showPanel = (item, quiet) => {
   if (!quiet) p.scrollTop = 0;
 };
 $('px').addEventListener('click', () => globe.select(null));
-
-/* ---------- markets ---------- */
-const liveState = {};   // live gate counts by market id
-const windowStart = minutes => { const now = Date.now(), ms = minutes * 60000; return new Date(Math.floor(now / ms) * ms); };
-const renderMarkets = () => {
-  const list = markets.list.filter(m => (m.group || 'route') === mGroup);
-  $('mlist').innerHTML = list.map(m => {
-    const live = m.group === 'live', st = liveState[m.id];
-    const p = m.probYes != null ? m.probYes : live && m.historical_yes_share != null ? m.historical_yes_share : 0.5;
-    const tagCol = m.group === 'weekly' ? C.fg : C.dim;
-    let meta = '';
-    if (live) {
-      // the server says when this window stops taking trades; fall back to the clock-aligned window
-      const tr = m.live && m.live.trading, cn = m.live && m.live.counting, mins = +m.minutes || 30;
-      // count down to closes (when positions close, from the server), then the window's trading close, then the clock
-      const end = m.closes ? Date.parse(m.closes) : tr && tr.trading_closes ? Date.parse(tr.trading_closes) : windowStart(mins).getTime() + mins * 60000;
-      const left = Math.max(0, end - Date.now());
-      const count = cn && cn.count_so_far != null ? cn.count_so_far + ' / ' + (cn.threshold ?? m.threshold) + ' CROSSED' : st ? st.count + ' / ' + m.threshold + ' CROSSED' : m.chainId == null ? 'NOT OPEN YET' : 'COUNTING…';
-      meta = `<span class="tag">${count}</span><span class="tag">${m.chainId == null && !tr ? '' : left > 0 ? Math.floor(left / 60000) + ':' + String(Math.floor(left / 1000) % 60).padStart(2, '0') + ' LEFT' : 'CLOSED'}</span>`;
-    } else meta = `<span class="tag" style="color:${tagCol}">${(m.group || '').toUpperCase()}</span><span class="tag">${m.closes ? 'CLOSES ' + HW.fDate(m.closes) : ''}</span>`;
-    const can = !!(chain && m.chainId != null);
-    return `<div class="mcard" data-id="${HW.esc(m.id)}"><div class="meta">${meta}</div><div class="q">${HW.esc(m.question)}</div>
-      <div class="odds"><i style="width:${(p * 100).toFixed(1)}%"></i></div>
-      <div class="row"><span class="p">${Math.round(p * 100)}%</span><span class="tag">YES</span>
-        <button class="y" data-side="yes" ${can ? '' : 'disabled'}>YES</button><button data-side="no" ${can ? '' : 'disabled'}>NO</button></div></div>`;
-  }).join('') || '<p class="note">No markets in this group.</p>';
-  $('mnote').textContent = chain ? 'Positions settle onchain on Monad testnet.' : markets.source === 'server' ? 'Markets from the server. Trading opens once the contracts are deployed.' : 'Seed markets with thresholds from the data. Trading opens once the contracts are deployed.';
-};
-document.querySelectorAll('#mtabs button').forEach(b => b.addEventListener('click', () => {
-  mGroup = b.dataset.g; document.querySelectorAll('#mtabs button').forEach(o => o.classList.toggle('on', o === b)); renderMarkets();
-}));
-$('mlist').addEventListener('click', async e => {
-  const card = e.target.closest('.mcard'); if (!card) return;
-  const m = markets.list.find(x => x.id === card.dataset.id); if (!m) return;
-  const btn = e.target.closest('button[data-side]');
-  if (btn && chain) {
-    btn.textContent = '…';
-    try {
-      if (!chain.wallet) chain.wallet = await chain.wl.getWallet();
-      const yes = btn.dataset.side === 'yes', r = await chain.m.buy(chain.wallet, m.chainId, yes, chain.mk.parseMon('0.01'));
-      if (r.trade) recordTrade(chain.wallet.address, { kind: 'buy', id: Number(m.chainId), side: yes ? 'yes' : 'no', q: m.question, mon: 0.01, shares: Number(chain.mk.formatMon(r.trade.shares, 6)), tx: r.receipt.hash });
-      await syncChainOdds();
-    } catch (err) { alert(chain.mk.explain ? chain.mk.explain(err) : String(err)); }
-    renderMarkets();
-    return;
-  }
-  // otherwise, show what the market is about on the globe
-  const series = m.series || '';
-  const sName = series.startsWith('portwatch:') ? series.split(':')[1] : null;
-  const lId = series.startsWith('route_efficiency:') ? series.split(':')[1] : null;
-  if (sName && strait(sName)) globe.select({ kind: 'strait', s: strait(sName) });
-  else if (lId && lane(lId)) globe.select({ kind: 'lane', L: lane(lId) });
-  else if (m.gate) {
-    const gl = D.gates.lines.find(g => g.id === m.gate) || D.gates.boxes.find(g => g.id === m.gate);
-    if (gl) { const lat = gl.a ? (gl.a[1] + gl.b[1]) / 2 : (gl.lat[0] + gl.lat[1]) / 2, lon = gl.a ? (gl.a[0] + gl.b[0]) / 2 : (gl.lon[0] + gl.lon[1]) / 2; globe.flyTo(lat, lon, 5.5); }
-  }
-});
-const pollLive = async () => {
-  for (const m of markets.list.filter(x => x.group === 'live')) {
-    try {
-      const since = windowStart(+m.minutes || 30).toISOString();
-      const r = await fetch(`${HW.SERVER}/api/gates/${m.gate}/count?since=${encodeURIComponent(since)}`);
-      if (r.ok) { const d = await r.json(); liveState[m.id] = { count: d.count }; }
-    } catch { /* server unreachable: card keeps "counting" */ }
-  }
-  if (mGroup === 'live') renderMarkets();
-};
-const syncChainOdds = async () => {
-  if (!chain) return;
-  const onchain = await chain.m.list();
-  for (const m of markets.list) {
-    // The server already knows which onchain market each card is (Ben's keeper opens them),
-    // so its chainId wins. Matching by question/series is only a fallback for markets it hasn't
-    // paired, because several markets share a series and old live windows linger onchain.
-    if (m.serverChainId != null) {
-      const c = onchain.find(x => BigInt(x.id) === BigInt(m.serverChainId));
-      m.chainId = m.serverChainId;
-      if (c && c.probYes != null) m.probYes = c.probYes;
-      continue;
-    }
-    const c = chain.mk.findMarket(onchain, m);
-    if (c) { m.chainId = c.id; m.probYes = c.probYes; }
-  }
-};
-// Refresh the list from the server: live windows roll every 30 minutes into new onchain
-// markets, and the keeper opens new ones, so chainId, probYes and closes change under us.
-const remember = list => list.forEach(m => { if (m.chainId != null) m.serverChainId = m.chainId; });
-const refreshMarkets = async () => {
-  if (markets.source !== 'server') return;
-  try {
-    const fresh = await HW.loadMarkets(D.seeds);
-    if (fresh.source !== 'server') return;
-    remember(fresh.list);
-    const byId = new Map(markets.list.map(m => [m.id, m]));
-    markets.list = fresh.list.map(f => {
-      const old = byId.get(f.id);
-      // keep a newer onchain probability from the live feed if the server hasn't caught up
-      return old && f.serverChainId === old.serverChainId && f.probYes == null ? { ...f, probYes: old.probYes } : f;
-    });
-    await syncChainOdds().catch(() => {});
-    renderMarkets();
-  } catch { /* keep what we have */ }
-};
-(async () => {
-  markets = await HW.loadMarkets(D.seeds);
-  remember(markets.list);
-  chain = await loadChain();
-  if (chain) {
-    await syncChainOdds().catch(() => {}); $('wallet').textContent = 'WALLET';
-    // live odds: one callback per trade from anyone, so the bars move while people trade
-    try {
-      const ev = await import('../chain/events.js').catch(() => import('./chain/events.js'));
-      ev.watchOdds(({ id, probYes, resolved }) => {
-        const m = markets.list.find(x => x.chainId != null && BigInt(x.chainId) === BigInt(id));
-        if (!m) return syncChainOdds().then(renderMarkets);
-        if (probYes != null) m.probYes = probYes;
-        if (resolved) syncChainOdds().then(renderMarkets); else renderMarkets();
-      });
-    } catch { /* no live feed: odds still refresh after each trade */ }
-  }
-  else $('wallet').title = 'Contracts are not deployed yet';
-  renderMarkets(); pollLive();
-  setInterval(pollLive, 20000);
-  setInterval(refreshMarkets, 30000);
-  setInterval(() => { if (mGroup === 'live') renderMarkets(); }, 1000);
-})();
-$('wallet').addEventListener('click', async () => {
-  if (!chain) { $('wallet').textContent = 'CONTRACTS NOT DEPLOYED YET'; setTimeout(() => $('wallet').textContent = 'CONNECT WALLET', 2200); return; }
-  try { chain.wallet = await chain.wl.getWallet(); const a = chain.wallet.address || ''; $('wallet').textContent = a.slice(0, 6) + '…' + a.slice(-4); } catch (e) { $('wallet').textContent = 'WALLET ERROR'; }
-});
 
 /* ---------- find your ship ---------- */
 $('search').addEventListener('submit', async e => {
