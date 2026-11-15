@@ -82,23 +82,21 @@
 </div>
 
 <div id="dive">
-  <canvas id="shipcv"></canvas>
-  <div class="hud">
-    <button class="back" id="back">← GLOBE</button>
-    <div class="cams" id="cams"><button data-m="top" class="on">DRONE</button><button data-m="side">PROFILE</button></div>
-    <div class="scale tag" id="hudScale"></div>
-    <svg class="compass" id="compass" viewBox="0 0 62 62"></svg>
-    <svg class="cross" id="cross" viewBox="0 0 54 54"><path d="M0 10V0h10M44 0h10v10M54 44v10H44M10 54H0V44" fill="none" stroke="#ececec" stroke-width="1"/></svg>
-    <div class="card ident" id="ident"></div>
-    <div class="card wx" id="wx"></div>
+  <svg id="divesvg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+  <button class="pill back" id="back">← GLOBE</button>
+  <div class="dhead">
+    <div class="tag" id="dtype"></div>
+    <h1 id="dname"></h1>
+    <div class="tag" id="dsub"></div>
   </div>
+  <aside class="dcard" id="dcard"></aside>
 </div>
 
 <script src="js/util.js"></script>
 <script src="js/data.js"></script>
 <script src="js/logo.js"></script>
 <script src="js/globe.js"></script>
-<script src="js/ship.js"></script>
+<script src="js/dive.js"></script>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>
