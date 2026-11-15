@@ -219,7 +219,7 @@ class Keeper:
                 self.tracks.setdefault(ship["mmsi"], {})[ship["time"]] = ship  # one point per report
                 deadline = datetime.fromtimestamp(m["threshold"], timezone.utc)
                 if not entry["resolved"]:
-                    port = pricing_model.find_port(port_code)
+                    port = find_port_code(port_code)
                     positions = list(self.tracks[ship["mmsi"]].values())
                     how, value = arrival_rule.settle(positions, arrival_rule.port_area(port), deadline, now)
                     if how == "wait":
@@ -269,6 +269,18 @@ class Keeper:
             return {"running": self.running, "last_cycle": self.last_cycle,
                     "opened": self.state["opened"], "arrivals": self.state.get("arrivals", {}),
                     "log": self.log[-20:]}
+
+
+def find_port_code(code):
+    """The port in an arrival series. Ports without a UN LOCODE go in as their id in capitals
+    ("PORT815" for New York-New Jersey), which find_port doesn't read back, so try the id too."""
+    try:
+        return pricing_model.find_port(code)
+    except KeyError:
+        by_id = {p["id"].upper(): p for p in pricing_model.ports().values()}
+        if code.upper() in by_id:
+            return by_id[code.upper()]
+        raise
 
 
 def live_question(m, start, end):
