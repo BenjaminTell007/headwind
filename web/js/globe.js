@@ -164,6 +164,9 @@
         const tmp = [0, 0];
         S.quiet += ((S.sel ? 0.35 : 1) - S.quiet) * (1 - Math.exp(-6 * dt));
 
+        /* the sky behind the globe: stars, shooting stars, the Sun, Moon and Mars (js/sky.js) */
+        if (HW.drawSky) HW.drawSky(ctx, { W, H, cx, cy, view, dt, light: C.theme === 'light' });
+
         /* sphere body and rim */
         const g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.05, cx, cy, R);
         g.addColorStop(0, C.sphere[0]); g.addColorStop(0.7, C.sphere[1]); g.addColorStop(1, C.sphere[2]);
