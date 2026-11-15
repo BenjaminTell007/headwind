@@ -244,6 +244,7 @@ async def lifespan(app):
             print("RUN_LOGGER=1 but AISSTREAM_API_KEY is not set, so no live ships")
     threading.Thread(target=poll_forever, daemon=True).start()
     keeper_module.start()  # only where HEADWAY_KEEPER=1
+    markets.start()  # keeps onchain prices for /api/markets fresh in the background
     yield
 
 
