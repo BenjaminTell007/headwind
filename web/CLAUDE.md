@@ -75,7 +75,8 @@ Plain HTML, CSS and JS, no build step. Run it from the repo root with `python3 -
 | `js/data.js` | loads `data/processed/`, live ships, markets, weather (Open-Meteo) |
 | `js/logo.js` | glyph-matrix HEADWAY logo |
 | `js/globe.js` | the globe: routes, flow particles, strait valves, live ships |
-| `js/ship.js` | the ship dive scene: drone and profile views, weather |
+| `js/shipvideo.js` | the ship view: satellite zoom into drone footage |
+| `js/story.js` | story card, hedge card in the ship view, demo mode |
 | `js/main.js` | wires it all: overview, markets rail, panel, timeline, search, dive |
 | `app.css` | all styles |
 
@@ -92,4 +93,5 @@ Split work by file where you can. Two people editing `main.js` or `app.css` at t
 - Tokens live in `design/tokens.css`. Full rules: the Look and feel section of `BRIEF.md`.
 - Dark mode only (Kimball, Nov 15). `HW.setTheme` always picks dark and the `#theme` toggle is hidden.
 - The weather overlay (`js/wxlayer.js`, WEATHER button or the W key) has its own ramp for how rough the weather is: faint grey, blue, purple, pink, orange. It's the one place those hues mean something other than vessel type, and the legend says so.
-- The ship view is 3D (`js/ship3d.js`, three.js via the import map in `web/index.html`); `js/ship.js` is the 2D fallback when WebGL isn't available. `?hours=6` shifts the Sun six hours to show a daytime scene.
+- The ship view (`js/shipvideo.js`) is a satellite zoom that blends into representative drone footage picked by the weather and where the ship is. The rendered 3D and 2D scenes were removed on Nov 15.
+- `js/story.js` (Kimball's) adds the story card on the globe, the hedge card in the ship view (real quote, one-click buy on Monad) and demo mode (`index.html?demo`).
