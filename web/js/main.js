@@ -171,8 +171,12 @@ const renderMarkets = () => {
     const tagCol = m.group === 'weekly' ? C.fg : C.dim;
     let meta = '';
     if (live) {
-      const ws = windowStart(m.minutes), left = Math.max(0, ws.getTime() + m.minutes * 60000 - Date.now());
-      meta = `<span class="tag">${st ? st.count + ' / ' + m.threshold + ' CROSSED' : 'COUNTING…'}</span><span class="tag">${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')} LEFT</span>`;
+      // the server says when this window stops taking trades; fall back to the clock-aligned window
+      const tr = m.live && m.live.trading, cn = m.live && m.live.counting, mins = +m.minutes || 30;
+      const end = tr && tr.trading_closes ? Date.parse(tr.trading_closes) : m.closes ? Date.parse(m.closes) : windowStart(mins).getTime() + mins * 60000;
+      const left = Math.max(0, end - Date.now());
+      const count = cn && cn.count_so_far != null ? cn.count_so_far + ' / ' + (cn.threshold ?? m.threshold) + ' CROSSED' : st ? st.count + ' / ' + m.threshold + ' CROSSED' : m.chainId == null ? 'NOT OPEN YET' : 'COUNTING…';
+      meta = `<span class="tag">${count}</span><span class="tag">${m.chainId == null && !tr ? '' : left > 0 ? Math.floor(left / 60000) + ':' + String(Math.floor(left / 1000) % 60).padStart(2, '0') + ' LEFT' : 'CLOSED'}</span>`;
     } else meta = `<span class="tag" style="color:${tagCol}">${(m.group || '').toUpperCase()}</span><span class="tag">${m.closes ? 'CLOSES ' + HW.fDate(m.closes) : ''}</span>`;
     const can = !!(chain && m.chainId != null);
     return `<div class="mcard" data-id="${HW.esc(m.id)}"><div class="meta">${meta}</div><div class="q">${HW.esc(m.question)}</div>
@@ -213,7 +217,7 @@ $('mlist').addEventListener('click', async e => {
 const pollLive = async () => {
   for (const m of markets.list.filter(x => x.group === 'live')) {
     try {
-      const since = windowStart(m.minutes).toISOString();
+      const since = windowStart(+m.minutes || 30).toISOString();
       const r = await fetch(`${HW.SERVER}/api/gates/${m.gate}/count?since=${encodeURIComponent(since)}`);
       if (r.ok) { const d = await r.json(); liveState[m.id] = { count: d.count }; }
     } catch { /* server unreachable: card keeps "counting" */ }
@@ -223,12 +227,25 @@ const pollLive = async () => {
 const syncChainOdds = async () => {
   if (!chain) return;
   const onchain = await chain.m.list();
-  for (const m of markets.list) { const c = onchain.find(x => x.series === m.series || x.question === m.question); if (c) { m.chainId = c.id; m.probYes = c.probYes; } }
+  // Xavi's findMarket: exact question first, since several markets share one series
+  for (const m of markets.list) { const c = chain.mk.findMarket(onchain, m); if (c) { m.chainId = c.id; m.probYes = c.probYes; } }
 };
 (async () => {
   markets = await HW.loadMarkets(D.seeds);
   chain = await loadChain();
-  if (chain) { await syncChainOdds().catch(() => {}); $('wallet').textContent = 'WALLET'; }
+  if (chain) {
+    await syncChainOdds().catch(() => {}); $('wallet').textContent = 'WALLET';
+    // live odds: one callback per trade from anyone, so the bars move while people trade
+    try {
+      const ev = await import('../chain/events.js').catch(() => import('./chain/events.js'));
+      ev.watchOdds(({ id, probYes, resolved }) => {
+        const m = markets.list.find(x => x.chainId != null && BigInt(x.chainId) === BigInt(id));
+        if (!m) return syncChainOdds().then(renderMarkets);
+        if (probYes != null) m.probYes = probYes;
+        if (resolved) syncChainOdds().then(renderMarkets); else renderMarkets();
+      });
+    } catch { /* no live feed: odds still refresh after each trade */ }
+  }
   else $('wallet').title = 'Contracts are not deployed yet';
   renderMarkets(); pollLive();
   setInterval(pollLive, 20000);
