@@ -2,6 +2,16 @@
 
 A small FastAPI app that serves the processed data and the live ships, and will hold the faucet relayer and the market keeper.
 
+## Rules for working on the server
+
+The server runs on Railway (URL in `PRIVATE.md`) and Railway builds from `main`. So:
+
+1. **Every push to `main` redeploys the server and wipes its live ship history.** Ships come back within minutes, but any live gate market open at that moment gets miscounted. Work on the `server` branch and merge into `main` on purpose, when a piece is finished, not on every save. About an hour before the demo, stop merging server changes.
+2. **New Python packages go in the root `requirements.txt`.** That's the only file Railway installs from. `scripts/requirements.txt` is for the data pipeline on laptops and Railway never sees it. If you add `web3` or `eth-account`, pin the version, for example `web3==7.x.y`.
+3. **After merging, check the deploy actually happened.** Open `/api/health` on the Railway URL: `commit` is the commit it's running. If it isn't your latest commit after about 5 minutes, open the Railway project, press Cmd + K and run Deploy Latest Commit (auto-deploy didn't fire once already). Deploy Logs in Railway show errors.
+
+Secrets (relayer key, RPC URL) go in Railway's Variables tab and in your own `PRIVATE.md`, never in git.
+
 ## Run it
 
 From the repo root:

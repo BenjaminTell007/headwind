@@ -100,3 +100,4 @@ Secrets (the aisstream key, wallet keys) are in `PRIVATE.md`, which isn't in git
 - Pull before you start a new piece: `git pull origin main`.
 - Never commit `PRIVATE.md`, private keys or `data/live/`. The `.gitignore` already covers them.
 - If two people need to change the same file, say so in the chat first.
+- The server on Railway redeploys on every push to `main` and loses its live ship history when it does. Merge server changes deliberately, check `/api/health` shows your commit, and stop merging server changes an hour before the demo. Details at the top of `server/README.md`.
