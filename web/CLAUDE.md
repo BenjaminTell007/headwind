@@ -43,6 +43,23 @@ If you don't have a note yet, create it with this template:
 - Before merging into `frontend`, pull it, run the page, and check the console is clean.
 - Never commit `PRIVATE.md` or any key.
 
+### Auto-sync hook (recommended)
+
+`web/tools/headway-sync.sh` does the pulling and pushing for you and shows your Claude the other Claude's note the moment it changes. To install it, add this to `~/.claude/settings.json` on your own machine (replace the path with where your clone lives):
+
+```json
+{
+  "hooks": {
+    "SessionStart":     [{ "hooks": [{ "type": "command", "command": "/path/to/Headway/web/tools/headway-sync.sh pull" }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "/path/to/Headway/web/tools/headway-sync.sh pull" }] }],
+    "PostToolUse": [{ "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+                      "hooks": [{ "type": "command", "command": "/path/to/Headway/web/tools/headway-sync.sh commit" }] }]
+  }
+}
+```
+
+It pulls your branch on every message, commits and pushes each file Claude edits to your own branch (never `frontend` or `main`, never `PRIVATE.md`), and never force-pushes.
+
 ## 3. Scope
 
 Frontend only: `web/` and `design/`. Don't edit `server/`, `contracts/`, `scripts/`, `requirements.txt`, `railway.json` or the data pipeline. If the frontend needs a backend change, write it in your note under Asks and tell your human. `web/chain/` is Xavi's wallet and contract code: use it, don't rewrite it.
