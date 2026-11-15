@@ -10,7 +10,7 @@
    whenever you come back to the tab, check the published version (never cached) and,
    if it's newer than this copy, reload once onto it. web/tools/stamp.sh sets both. */
 (function () {
-  var SITE_VERSION = '20261115T2305', URL_ = 'version.json';
+  var SITE_VERSION = '20261115T2308', URL_ = 'version.json';
   function check() {
     fetch(URL_ + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       if (!d.v || d.v === SITE_VERSION) return;
@@ -24,7 +24,7 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
 })();
 </script>
-<link rel="stylesheet" href="app.css?v=20261115T2305">
+<link rel="stylesheet" href="app.css?v=20261115T2308">
 </head>
 <body>
 
@@ -102,15 +102,15 @@
   </div>
 </div>
 
-<script src="js/util.js?v=20261115T2305"></script>
-<script src="js/data.js?v=20261115T2305"></script>
-<script src="js/logo.js?v=20261115T2305"></script>
-<script src="js/brand.js?v=20261115T2305"></script>
-<script src="js/sky.js?v=20261115T2305"></script>
-<script src="js/wxlayer.js?v=20261115T2305"></script>
-<script src="js/ports.js?v=20261115T2305"></script>
-<script src="js/globe.js?v=20261115T2305"></script>
-<script src="js/shipvideo.js?v=20261115T2305"></script>
-<script type="module" src="js/main.js?v=20261115T2305"></script>
+<script src="js/util.js?v=20261115T2308"></script>
+<script src="js/data.js?v=20261115T2308"></script>
+<script src="js/logo.js?v=20261115T2308"></script>
+<script src="js/brand.js?v=20261115T2308"></script>
+<script src="js/sky.js?v=20261115T2308"></script>
+<script src="js/wxlayer.js?v=20261115T2308"></script>
+<script src="js/ports.js?v=20261115T2308"></script>
+<script src="js/globe.js?v=20261115T2308"></script>
+<script src="js/shipvideo.js?v=20261115T2308"></script>
+<script type="module" src="js/main.js?v=20261115T2308"></script>
 </body>
 </html>
