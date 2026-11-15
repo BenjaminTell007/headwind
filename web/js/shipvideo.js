@@ -8,8 +8,8 @@
         moored container ship -> container_port   moored other ship -> jetty
         night at the ship     -> night            grey / rain / fog  -> grey_sea
         tanker -> tanker      container ship -> container_sea      bulk / general -> open_sea
-   3. Live weather on top: colour grade for night, overcast and storm; rain or snow;
-      drifting fog; cloud shadows; lightning; wind-blown spray; vignette and grain.
+   3. Live weather as a colour grade only: darker and greyer for night, overcast, rain and
+      storm. No particle effects, so the footage stays clean.
 
    Same interface as the other ship scenes, so main.js can use any of them:
      open(ship, weather), setWeather(weather), setMode('top' | 'side'), close(), S
@@ -64,7 +64,7 @@
     const fog = Array.from({ length: 14 }, () => [Math.random(), Math.random(), 0.25 + Math.random() * 0.4]);
     const shadows = Array.from({ length: 8 }, () => [Math.random(), Math.random(), 0.2 + Math.random() * 0.35]);
     const spray = Array.from({ length: 160 }, () => [Math.random(), Math.random(), Math.random()]);
-    let flash = 0, label = null;
+    let flash = 0, label = null, started = false;
 
     const resize = () => {
       DPR = Math.min(2, window.devicePixelRatio || 1);
@@ -104,29 +104,50 @@
     };
 
     // satellite pyramid around the ship: 3x3 tiles at a few zoom levels
+    const probeCv = document.createElement('canvas'); probeCv.width = probeCv.height = 8;
+    const probe = probeCv.getContext('2d', { willReadFrequently: true });
     const loadTiles = s => {
       tiles = [];
-      [8, 10, 12, 14, 16].forEach(z => {
+      [5, 7, 9, 11, 13, 15, 17].forEach(z => {
         const [fx, fy] = tileXY(+s.lon, +s.lat, z), x0 = Math.floor(fx) - 1, y0 = Math.floor(fy) - 1;
         const cv = document.createElement('canvas'); cv.width = cv.height = 768;
-        const g = cv.getContext('2d'); let n = 0;
+        const g = cv.getContext('2d'); let n = 0, blank = 0;
         const entry = { z, cv, fx, fy, x0, y0, ready: false };
         for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) {
           const im = new Image(); im.crossOrigin = 'anonymous';
-          im.onload = () => { g.drawImage(im, i * 256, j * 256); if (++n >= 5) entry.ready = true; };
+          im.onload = () => {
+            // far out at sea Esri has no close-up imagery and sends a flat grey "no data" tile:
+            // spot it (bright, colourless, almost no variation) and drop that whole level
+            probe.drawImage(im, 0, 0, 8, 8);
+            const d = probe.getImageData(0, 0, 8, 8).data;
+            let sum = 0, sat = 0, lo = 255, hi = 0;
+            for (let q = 0; q < d.length; q += 4) { const l = (d[q] + d[q + 1] + d[q + 2]) / 3; sum += l; sat += Math.max(d[q], d[q + 1], d[q + 2]) - Math.min(d[q], d[q + 1], d[q + 2]); lo = Math.min(lo, l); hi = Math.max(hi, l); }
+            if (sum / 64 > 150 && sat / 64 < 10 && hi - lo < 40) { if (++blank >= 3) entry.bad = true; return; }
+            g.drawImage(im, i * 256, j * 256);
+            if (++n >= 5 && !entry.bad) entry.ready = true;
+          };
           im.src = ESRI(z, x0 + i, y0 + j);
         }
         tiles.push(entry);
       });
     };
-    // draw the satellite at a continuous zoom Z, centred on the ship
+    // Draw the satellite at a continuous zoom Z, centred on the ship. Every loaded level is
+    // drawn, coarse first, so finer imagery sits as a sharp patch in the middle that grows as
+    // you push in: one unbroken zoom with no level-to-level pops.
     const drawSat = Z => {
-      const usable = tiles.filter(e => e.ready && e.z <= Math.ceil(Z));
-      const e = usable[usable.length - 1] || tiles.find(x => x.ready); if (!e) return false;
-      const scale = 2 ** (Z - e.z) * (Math.max(W, H) / 512);          // screen px per tile px
-      const px = (e.fx - e.x0) * 256, py = (e.fy - e.y0) * 256;      // ship in the mosaic
-      ctx.drawImage(e.cv, W / 2 - px * scale, H / 2 - py * scale, 768 * scale, 768 * scale);
-      return true;
+      let any = false;
+      for (const e of tiles) {
+        if (!e.ready || e.bad || e.z > Z + 3) continue;
+        const scale = 2 ** (Z - e.z) * (Math.max(W, H) / 512);          // screen px per tile px
+        if (scale > 24 && tiles.some(o => o.ready && !o.bad && o.z > e.z)) continue;   // a finer level covers this
+        const px = (e.fx - e.x0) * 256, py = (e.fy - e.y0) * 256;
+        // fade a finer level in as it arrives, so its edge never snaps on
+        ctx.globalAlpha = clamp((Z + 3 - e.z) / 1.2, 0, 1);
+        ctx.drawImage(e.cv, W / 2 - px * scale, H / 2 - py * scale, 768 * scale, 768 * scale);
+        any = true;
+      }
+      ctx.globalAlpha = 1;
+      return any;
     };
 
     const grade = () => {
@@ -143,88 +164,54 @@
       const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
       const t = (now - t0) / 1000;
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      ctx.fillStyle = '#05070a'; ctx.fillRect(0, 0, W, H);
+      ctx.clearRect(0, 0, W, H);
 
-      // 1. satellite zoom (0..4.5 s), 2. dissolve to footage (4.5..6 s)
-      S.intro = clamp(t / 6, 0, 1);
-      const Z = lerp(8, 16.6, ease(clamp(t / 4.8, 0, 1)));
-      const into = clamp((t - 4.4) / 1.6, 0, 1);
-      if (into < 1) drawSat(Z);
+      // hold the start until the wide satellite levels are in (at most 1.5 s), so the zoom
+      // never begins on a blank frame
+      if (!started) {
+        if (tiles.filter(e => e.ready && e.z <= 9).length >= 2 || now - t0 > 1500) { started = true; t0 = now; }
+        else { S.intro = 0; return; }
+      }
+      const t2 = (now - t0) / 1000;
+      // one continuous push-in: fade in over the globe, zoom steadily from a country-wide view
+      // down to the ship, and blend into the footage while still moving
+      const ZOOM_FOR = 5.6, BLEND_AT = 3.9, BLEND_FOR = 1.9;
+      const u = clamp(t2 / ZOOM_FOR, 0, 1), k = u * u * (3 - 2 * u);
+      const Z = lerp(5.2, 18.4, k);
+      const into = clamp((t2 - BLEND_AT) / BLEND_FOR, 0, 1), ein = into * into * (3 - 2 * into);
+      const fadeIn = clamp(t2 / 0.9, 0, 1);
+      S.intro = clamp(t2 / (BLEND_AT + BLEND_FOR), 0, 1);
+      canvas.parentElement.style.background = fadeIn >= 1 ? '#05070a' : 'transparent';
+      ctx.globalAlpha = fadeIn; ctx.fillStyle = '#05070a'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+      if (into < 1) {
+        ctx.save();
+        ctx.globalAlpha = fadeIn;
+        if (ein > 0.02) ctx.filter = `blur(${(ein * 10).toFixed(1)}px) brightness(${(1 - ein * 0.35).toFixed(2)})`;
+        drawSat(Z);
+        ctx.restore(); ctx.filter = 'none'; ctx.globalAlpha = 1;
+      }
       S.alt = into < 1 ? Math.round(40075000 * Math.cos(+ship.lat * RAD) / 2 ** Z * (W / 256) / 2.2) : (S.mode === 'side' ? 140 : 320);
 
       if (into > 0 && video.readyState >= 2) {
         const vw = video.videoWidth, vh = video.videoHeight;
         const zoomIn = S.mode === 'side' ? 1.7 : 1;
-        S.vz = lerp(S.vz || 1.25, zoomIn, 1 - Math.exp(-2.5 * dt));
-        const s = Math.max(W / vw, H / vh) * S.vz * lerp(1.25, 1, ease(into));
-        ctx.globalAlpha = ease(into);
-        ctx.filter = grade();
-        ctx.drawImage(video, (W - vw * s) / 2, (H - vh * s) / 2, vw * s, vh * s);
+        S.vz = lerp(S.vz || 1, zoomIn, 1 - Math.exp(-2.5 * dt));
+        // the footage arrives still pushing in: it starts wide and settles as it sharpens
+        const sc = Math.max(W / vw, H / vh) * S.vz * lerp(0.82, 1, ein);
+        ctx.globalAlpha = ein;
+        ctx.filter = grade() + (ein < 0.98 ? ` blur(${((1 - ein) * 8).toFixed(1)}px)` : '');
+        ctx.drawImage(video, (W - vw * sc) / 2, (H - vh * sc) / 2, vw * sc, vh * sc);
         ctx.filter = 'none'; ctx.globalAlpha = 1;
         note.style.opacity = into > 0.9 ? 1 : 0;
       }
+      if (fadeIn < 1) return;   // weather layers start once we're fully in
 
-      // 3. weather layers
-      const wx = Math.sin(env.windDir * RAD), wy = -Math.cos(env.windDir * RAD);
-      // cloud shadows drifting with the wind
-      if (env.cloud > 0.2 && env.night < 0.6) {
-        shadows.forEach(c => {
-          c[0] = (c[0] + wx * env.wind * 0.00004 + 1) % 1; c[1] = (c[1] + wy * env.wind * 0.00004 + 1) % 1;
-          const r = c[2] * Math.max(W, H), g = ctx.createRadialGradient(c[0] * W, c[1] * H, 0, c[0] * W, c[1] * H, r);
-          g.addColorStop(0, `rgba(0,0,0,${(0.22 * env.cloud).toFixed(3)})`); g.addColorStop(1, 'rgba(0,0,0,0)');
-          ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-        });
-      }
-      // fog banks
-      if (env.fog > 0.1 || env.rain > 0.5) {
-        const a = Math.max(env.fog * 0.5, env.rain * 0.12);
-        fog.forEach(f => {
-          f[0] = (f[0] + wx * 0.00012 + 1.2) % 1.4 - 0.2;
-          const r = f[2] * Math.max(W, H), g = ctx.createRadialGradient(f[0] * W, f[1] * H, 0, f[0] * W, f[1] * H, r);
-          const c = env.night > 0.5 ? '40,46,54' : '205,212,218';
-          g.addColorStop(0, `rgba(${c},${a.toFixed(3)})`); g.addColorStop(1, `rgba(${c},0)`);
-          ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-        });
-      }
-      // wind spray: streaks of white over the water in strong wind
-      if (env.wind > 18) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1;
-        ctx.beginPath();
-        spray.forEach(p => {
-          p[0] = (p[0] + wx * dt * 0.08 * (env.wind / 25) + 1) % 1; p[1] = (p[1] + wy * dt * 0.08 * (env.wind / 25) + 1) % 1;
-          const x = p[0] * W, y = p[1] * H, l = 6 + p[2] * 14;
-          ctx.moveTo(x, y); ctx.lineTo(x - wx * l, y - wy * l);
-        });
-        ctx.stroke();
-      }
-      // rain or snow, falling toward the camera (seen from above: short streaks blown by the wind)
-      const precip = Math.max(env.rain, env.snow, env.storm);
-      if (precip > 0) {
-        const n = Math.floor(drops.length * clamp(precip, 0.25, 1));
-        ctx.strokeStyle = env.snow ? 'rgba(255,255,255,0.8)' : 'rgba(210,222,235,0.45)';
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.lineWidth = env.snow ? 0 : 1.1;
-        ctx.beginPath();
-        for (let i = 0; i < n; i++) {
-          const d = drops[i];
-          d[0] = (d[0] + (wx * 0.05 + 0.02) * dt * d[2] * (env.snow ? 0.3 : 3) + 1) % 1;
-          d[1] = (d[1] + (wy * 0.05 + 0.25) * dt * d[2] * (env.snow ? 0.3 : 3) + 1) % 1;
-          const x = d[0] * W, y = d[1] * H;
-          if (env.snow) ctx.rect(x, y, 2, 2); else { ctx.moveTo(x, y); ctx.lineTo(x - (wx * 0.05 + 0.02) * 120, y - (wy * 0.05 + 0.25) * 60); }
-        }
-        if (env.snow) ctx.fill(); else ctx.stroke();
-      }
-      // lightning
-      if (env.storm) {
-        if (Math.random() < dt * 0.2) flash = 1;
-        if (flash > 0) { ctx.fillStyle = `rgba(225,235,255,${(flash * 0.55).toFixed(3)})`; ctx.fillRect(0, 0, W, H); flash -= dt * 5; }
-      }
+      // 3. weather shows through the colour grade only (rain, fog, spray and lightning layers
+      //    were dropped to keep the footage clean), plus a soft vignette
       // vignette and a little grain
       const v = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
-      v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, `rgba(0,0,0,${(0.45 + env.night * 0.25).toFixed(2)})`);
+      v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, `rgba(0,0,0,${(0.28 + env.night * 0.15).toFixed(2)})`);
       ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
-      // intro: start from black
-      if (t < 0.6) { ctx.fillStyle = `rgba(5,7,10,${(1 - t / 0.6).toFixed(3)})`; ctx.fillRect(0, 0, W, H); }
     };
 
     return {
@@ -232,12 +219,12 @@
       open(s, w) {
         ship = s; S.kind = kindOf(s); env = envFrom(w, s);
         resize(); loadTiles(s); setClip(pickClip());
-        S.on = true; S.vz = 1.25; t0 = performance.now(); last = t0;
+        S.on = true; S.vz = 1; started = false; t0 = performance.now(); last = t0;
         if (!raf) raf = requestAnimationFrame(frame);
       },
       setWeather(w) { env = envFrom(w, ship); setClip(pickClip()); },
       setMode(m) { S.mode = m; },
-      close() { S.on = false; video.pause(); note.style.opacity = 0; },
+      close() { S.on = false; video.pause(); note.style.opacity = 0; canvas.parentElement.style.background = ''; },
     };
   };
 })();
