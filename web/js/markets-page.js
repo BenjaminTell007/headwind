@@ -50,12 +50,15 @@ const left = ms => {
   const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
   return d ? `${d}D ${h}H LEFT` : h ? `${h}H ${String(m).padStart(2, '0')}M LEFT` : `${m}:${String(s % 60).padStart(2, '0')} LEFT`;
 };
-const sourceTag = m => m.group === 'live' ? 'LIVE · AIS GATE' : m.group === 'trade' ? 'TRADE · US CENSUS' : m.group === 'route' ? 'ROUTE · PORTWATCH' : 'STRAIT · PORTWATCH';
-const outcomeText = o => o == null ? '' : typeof o === 'number' ? ['', 'YES', 'NO', 'INVALID'][o] || String(o) : String(o).toUpperCase();
+const sourceTag = m => m.group === 'live' ? 'LIVE · AIS GATE' : m.group === 'arrival' ? 'SHIP · AIS ARRIVAL' : m.group === 'trade' ? 'TRADE · US CENSUS' : m.group === 'route' ? 'ROUTE · PORTWATCH' : 'STRAIT · PORTWATCH';
+const outcomeText = o => o == null ? '' : typeof o === 'number' ? ['', 'YES', 'NO', 'VOID · STAKES RETURNED'][o] || String(o) : String(o).toUpperCase();
 
 /* ---------- "my trades": the dashboard (js/portfolio.js) ---------- */
 /* What has to happen for a side to win, in plain words: "at least 297 ships", "under 35.0 days". */
+const fUTC = t => { const d = new Date(t); return isFinite(d) ? d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' }) + ' UTC' : '—'; };
+const arrivalDeadline = m => m.deadline || (m.threshold ? new Date(Number(m.threshold) * 1000).toISOString() : null);
 const condition = (m, yes) => {
+  if (m.group === 'arrival') return yes ? `the ship arriving after ${fUTC(arrivalDeadline(m))}` : `the ship arriving by ${fUTC(arrivalDeadline(m))}`;
   const base = String(m.threshold_display || '').replace(/^under\s+/i, '');
   if (!base) return yes ? 'the answer to be yes' : 'the answer to be no';
   return (yes === (m.is_above !== false) ? 'at least ' : 'under ') + base;
@@ -144,7 +147,20 @@ const renderSum = () => {
 };
 
 /* ---------- cards ---------- */
-const GROUP_OF = m => m.group === 'live' ? 'live' : STRAIT_GROUPS.includes(m.group) ? 'strait' : m.group === 'route' ? 'route' : 'trade';
+const GROUP_OF = m => m.group === 'live' ? 'live' : m.group === 'arrival' ? 'ship' : STRAIT_GROUPS.includes(m.group) ? 'strait' : m.group === 'route' ? 'route' : 'trade';
+/* Markets that have settled. The server only lists the current ones, so the rest are read from
+   the chain and given the same shape, newest first. */
+const settledRows = () => {
+  const known = new Set(list.filter(m => m.chainId != null).map(m => Number(m.chainId)));
+  const past = onchain.filter(c => c.resolved && !known.has(Number(c.id))).map(c => {
+    const k = c.about && c.about.kind;
+    return { id: 'chain_' + Number(c.id), past: true, question: c.question, chainId: Number(c.id), series: c.series, threshold: Number(c.threshold), is_above: c.isAbove,
+      group: k === 'live' ? 'live' : k === 'arrival' ? 'arrival' : k === 'route' ? 'route' : k === 'trade' ? 'trade' : 'weekly',
+      probYes: c.outcome === 1 ? 1 : c.outcome === 2 ? 0 : 0.5, closes: new Date(c.closeTime * 1000).toISOString(),
+      chain: { outcome: c.outcome, close: new Date(c.closeTime * 1000).toISOString(), resolve_by: new Date(c.resolveBy * 1000).toISOString(), fee_bps: c.feeBps, pool_mon: Number(c.yesReserve + c.noReserve) / 1e18 } };
+  });
+  return list.filter(isSettled).concat(past.sort((a, b) => b.chainId - a.chainId));
+};
 const inTab = m => {
   if (tab === 'all') return isOpen(m);
   if (tab === 'soon') return m.chainId == null;
@@ -153,7 +169,8 @@ const inTab = m => {
 };
 /* The home view: open markets in four plain groups, instead of one long list. */
 const SECTIONS = [
-  ['live', 'Live', 'Ships crossing a gate in the next hour. Settles the same day.'],
+  ['live', 'Live', 'Ships crossing a gate in a set window. Settles minutes after the window ends.'],
+  ['ship', 'Ship arrivals', 'Will one ship reach its port by a deadline? Opened by people hedging a shipment.'],
   ['strait', 'Straits', 'How many ships pass a strait this week, counted by IMF PortWatch.'],
   ['route', 'Routes', 'How long a shipping route takes this week.'],
   ['trade', 'Trade', 'Monthly US trade with one partner, from the official release.'],
@@ -166,11 +183,11 @@ const card = m => {
   const action = settled ? `<div class="won">RESULT: ${outcomeText(m.chain.outcome)}</div>`
     : `<div class="btns"><button data-side="yes" ${open ? '' : 'disabled'}>YES ${Math.round(p * 100)}¢</button><button data-side="no" ${open ? '' : 'disabled'}>NO ${Math.round((1 - p) * 100)}¢</button></div>`;
   return `<article class="kc${live ? ' is-live' : ''}" data-id="${esc(m.id)}" tabindex="0">
-    <div class="top"><span class="tag src">${sourceTag(m)}</span><span class="tag" data-end="${closeMs(m) || ''}">${m.chainId == null ? '' : left(closeMs(m))}</span></div>
+    <div class="top"><span class="tag src">${sourceTag(m)}</span><span class="tag" data-end="${settled ? '' : closeMs(m) || ''}">${m.chainId == null ? '' : settled ? 'SETTLED' : left(closeMs(m))}</span></div>
     <div class="q">${esc(m.question)}</div>
     <div class="mid"><div class="pct">${Math.round(p * 100)}%<small>YES</small></div>${spark(m, 120, 36)}</div>
     <div class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></div>
-    <div class="foot">${foot}<span class="tag">${cn && cn.count_so_far != null ? `WINDOW BEFORE: ${cn.count_so_far} OF ${cn.threshold}` : mine && (mine.yes || mine.no) ? 'YOU HOLD A POSITION' : ''}</span></div>
+    <div class="foot">${foot}<span class="tag">${cn && cn.count_so_far != null ? `${m.demo ? 'THIS ROUND' : 'WINDOW BEFORE'}: ${cn.count_so_far} OF ${cn.threshold}` : mine && (mine.yes || mine.no) ? 'YOU HOLD A POSITION' : ''}</span></div>
     ${action}</article>`;
 };
 const render = () => {
@@ -191,9 +208,9 @@ const render = () => {
     }).join('') || (list.length ? '<div class="mk-empty">No markets are open right now.</div>' : '<div class="mk-empty">Loading markets…</div>'))
       + (later ? `<p class="mk-later">${later} more markets are priced from the same data and ready to open. <button data-t="soon">SEE THEM →</button></p>` : '');
   } else {
-    const rows = list.filter(inTab).sort(by);
+    const rows = tab === 'settled' ? settledRows() : list.filter(inTab).sort(by);
     grid.className = 'mk-grid';
-    grid.innerHTML = rows.map(card).join('') || '<div class="mk-empty">No markets here right now.</div>';
+    grid.innerHTML = rows.map(card).join('') || `<div class="mk-empty">${tab === 'settled' ? (chain ? 'No market has settled yet.' : 'Reading past markets from the chain…') : 'No markets here right now.'}</div>`;
   }
   $('note').textContent = 'Markets settle onchain on Monad testnet against public data. Stakes are testnet MON, which has no real value. Each share pays 1 MON if you are right.';
   if (openId != null && !hedgeOpen) renderDrawer();
@@ -215,7 +232,7 @@ const donePanel = d => `<div class="tb done">
   </div>`;
 
 /* ---------- drawer ---------- */
-const current = () => list.find(m => m.id === openId);
+const current = () => list.find(m => m.id === openId) || (String(openId).startsWith('chain_') ? settledRows().find(m => m.id === openId) : undefined);
 const renderDrawer = () => {
   const m = current(); if (!m) return;
   const p = prob(m), open = isOpen(m), settled = isSettled(m), c = m.chain || {};
@@ -229,19 +246,20 @@ const renderDrawer = () => {
   const amtEl = $('amt'); if (amtEl) amount = amtEl.value;
   const focused = document.activeElement && document.activeElement.id === 'amt';
   $('dbody').innerHTML = `
-    <div class="tag src">${sourceTag(m)} · <span data-end="${m.chainId == null ? '' : closeMs(m) || ''}">${m.chainId == null ? 'NOT OPEN' : left(closeMs(m))}</span></div>
+    <div class="tag src">${sourceTag(m)} · <span data-end="${m.chainId == null || settled ? '' : closeMs(m) || ''}">${m.chainId == null ? 'NOT OPEN' : settled ? 'SETTLED' : left(closeMs(m))}</span></div>
     <h1>${esc(m.question)}</h1>
     <div class="dcols">
       <div>
-        ${cn ? `<div class="dsec"><h3>THE WINDOW BEFORE THIS ONE · BEING COUNTED NOW</h3><div class="count"><b>${cn.count_so_far} / ${cn.threshold}</b><span class="tag">SHIPS SO FAR · <span data-end="${Date.parse(cn.window_end)}">${left(Date.parse(cn.window_end))}</span></span></div>
+        ${cn ? `<div class="dsec"><h3>${m.demo ? 'THIS ROUND' : 'THE WINDOW BEFORE THIS ONE'} · BEING COUNTED NOW</h3><div class="count"><b>${cn.count_so_far} / ${cn.threshold}</b><span class="tag">SHIPS SO FAR · <span data-end="${Date.parse(cn.window_end)}">${left(Date.parse(cn.window_end))}</span></span></div>
           <p style="margin-top:8px">This is the ${utc(cn.window_start)} to ${utc(cn.window_end)} UTC window, shown so you can see the pace at this gate.${tr ? ` Your bet is on the next one, ${utc(tr.window_start)} to ${utc(tr.window_end)} UTC. Betting closes when it starts.` : ''}</p></div>` : ''}
         ${ch ? `<div class="dsec"><h3>THE DATA BEHIND IT</h3>${ch}</div>` : ''}
-        <div class="dsec"><h3>WHY THIS THRESHOLD</h3><p>${esc(m.why || '—')}</p></div>
+        ${m.group === 'arrival' ? `<div class="dsec"><h3>HOW IT IS PRICED</h3><p>From the ship's live position and speed, the weather on the way, straits on the route and the wait at the port.</p></div>`
+          : m.why ? `<div class="dsec"><h3>WHY THIS THRESHOLD</h3><p>${esc(String(m.why).replace(/[\[\]]/g, ''))}</p></div>` : ''}
         <div class="dsec"><h3>RULES</h3><dl class="rules">
-          <dt>PAYS YES IF</dt><dd>The result is ${m.is_above === false ? 'below' : 'at or above'} ${esc(m.threshold_display || String(m.threshold))}.</dd>
-          <dt>SOURCE</dt><dd>${esc(m.settles_on || '—')}</dd>
-          <dt>TRADING CLOSES</dt><dd>${isFinite(closeMs(m)) ? new Date(closeMs(m)).toLocaleString() : '—'}</dd>
-          <dt>SETTLES BY</dt><dd>${c.resolve_by ? new Date(c.resolve_by).toLocaleString() : '—'}</dd>
+          <dt>PAYS YES IF</dt><dd>${m.group === 'arrival' ? `The ship reaches the port after ${fUTC(arrivalDeadline(m))}, or has not reached it by then.` : `The result is ${m.is_above === false ? 'below' : 'at or above'} ${esc(m.threshold_display || String(m.threshold))}.`}</dd>
+          ${m.settles_on ? '<dt>SOURCE</dt>' : ''}<dd${m.settles_on ? '' : ' hidden'}>${esc(String(m.settles_on || '—').replace(/\s*\([^)]*[\/.][^)]*\)/g, ''))}</dd>
+          <dt>TRADING CLOSES</dt><dd>${isFinite(closeMs(m)) ? fUTC(closeMs(m)) : '—'}</dd>
+          <dt>SETTLES BY</dt><dd>${c.resolve_by ? fUTC(c.resolve_by) : '—'}</dd>
           <dt>RESOLVER</dt><dd>The Headway keeper posts the result from the source. If it has not settled by then, anyone can void the market and stakes are returned.</dd>
           <dt>FEE</dt><dd>${c.fee_bps != null ? (c.fee_bps / 100).toFixed(1) + '% per trade, paid to the pool' : '—'}</dd>
           <dt>ONCHAIN</dt><dd>${m.chainId != null ? `Market #${m.chainId}` + (cfg && chain.m ? ` · <a href="${cfg.addressUrl(chain.m.address)}" target="_blank" rel="noopener">contract</a>` : '') : 'Not opened onchain yet'}</dd>
@@ -349,7 +367,8 @@ const renderHedge = () => {
           <div class="kc" style="padding:0;border:0;box-shadow:none;background:none;cursor:default;transform:none"><div class="bar"><i style="width:${(md.p_yes * 100).toFixed(1)}%"></i></div></div>
           ${Math.abs(openP - md.p_yes) >= 0.01 ? `<p class="hfine" style="margin:6px 0 0">The market opens at ${Math.round(openP * 100)}%: prices stay between 2% and 98% until it settles.</p>` : ''}
           ${tooLate ? `<p class="msg" style="margin:14px 0">The model expects this ship around <b>${when(md.expected_arrival)}</b>, after your deadline, so cover would cost almost as much as it pays out. Pick a later deadline, around ${when(laterDeadline(md))} or after, and price it again.</p>
-          <button class="pill" id="hAgain" style="width:100%">PRICE IT AGAIN</button>` : `
+          <button class="go" id="hLater" data-ms="${laterDeadline(md)}" style="width:100%">USE ${when(laterDeadline(md)).toUpperCase()} AND PRICE IT</button>
+          <button class="pill" id="hAgain" style="width:100%;margin-top:8px">PRICE IT AGAIN</button>` : `
           <div class="est">
             <div><span>Estimated loss if late</span><b>${hg.loss_usd != null ? HW.fUSD(hg.loss_usd) : '—'}</b></div>
             <div><span>Suggested cover</span><b>${hg.cover_mon != null ? (+hg.cover_mon).toFixed(3) + ' MON' : '—'}</b></div>
@@ -790,6 +809,7 @@ const setTab = t => {
   document.querySelectorAll('#tabs button').forEach(o => o.classList.toggle('on', o.dataset.t === t));
   document.querySelectorAll('#views button[data-t]').forEach(o => o.classList.toggle('on', (o.dataset.t === 'mine') === (t === 'mine')));
   pf.setMsg(''); pill(); render(); window.scrollTo({ top: 0 });
+  if (t === 'settled') ensureChain().then(() => { if (tab === 'settled') render(); });   // past markets are read from the chain
   if (t === 'mine') pf.schedule(0);
 };
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) setTab(b.dataset.t); });
@@ -820,6 +840,8 @@ $('dbody').addEventListener('click', e => {
   if (e.target.closest('[data-watch]')) { closeDrawer(); return setTab('mine'); }
   if (hedgeOpen) {
     if (e.target.closest('[data-again]')) { hedged = null; hq = null; return renderHedge(); }
+    const later = e.target.closest('#hLater');   // take the deadline the model suggests and price again
+    if (later) { const d = localInput(new Date(+later.dataset.ms)); hv.deadline = d; if ($('hDead')) $('hDead').value = d; return getQuote(); }
     if (e.target.closest('#hQuote') || e.target.closest('#hAgain')) return getQuote();
     if (e.target.closest('#hGo')) return openHedgeMarket();
     return;
