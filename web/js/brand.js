@@ -19,7 +19,7 @@
   if (!document.querySelector('link[data-hw-font]')) {
     const f = document.createElement('link');
     f.rel = 'stylesheet'; f.dataset.hwFont = '1';
-    f.href = 'https://fonts.googleapis.com/css2?family=Unbounded:wght@200;300;400&display=swap';
+    f.href = 'https://fonts.googleapis.com/css2?family=Unbounded:wght@300&display=block';
     document.head.appendChild(f);
   }
   const css = `
@@ -29,8 +29,9 @@
     background-size:320% 100%; background-position:100% 0; -webkit-background-clip:text; background-clip:text; color:transparent;
     animation:hw-sweep 7s cubic-bezier(.45,0,.2,1) infinite; }
   @keyframes hw-sweep { 0% { background-position:100% 0; } 55%, 100% { background-position:0% 0; } }
-  .hw-wordmark.sm { font-size:20px; letter-spacing:.34em; padding-left:.34em; }
-  .hw-wordmark.lg { font-size:clamp(44px, 8.4vw, 132px); font-weight:200; }
+  /* one weight (300) and one letter-spacing (.3em) at every size */
+  .hw-wordmark.sm { font-size:21px; }
+  .hw-wordmark.lg { font-size:clamp(44px, 8.4vw, 132px); }
   @media (max-width: 820px) { .hw-wordmark.sm { font-size:15px; } }
   @media (prefers-reduced-motion: reduce) { .hw-wordmark { animation:none; background-position:0 0; } }
   .hw-loader { position:fixed; inset:0; z-index:60; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; transition:opacity .9s ease, visibility .9s; }
