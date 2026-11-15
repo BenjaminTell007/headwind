@@ -82,7 +82,10 @@ Split work by file where you can. Two people editing `main.js` or `app.css` at t
 
 ## 5. Look and feel (don't break these)
 
-- Colour only ever means vessel type: container `#f08a3c`, tanker `#8f82f2`, dry bulk `#46b36f`, general cargo `#ea86b5`, ro-ro `#e9c84b`, other `#f2f2f2`. Efficiency, odds and drops use brightness, thickness, opacity or length, never hue.
-- Background `#222222`, land `#3a3a3a`, text `#ececec`, dim `#8c8c8c`. YES `#f2f2f2`, NO `#6b6b6b`.
-- Labels: light monospace, caps, wide letter spacing. Numbers: the sans stack.
-- Full rules: the Look and feel section of `BRIEF.md`.
+- Vessel hues only ever mean vessel type: container `#f08a3c`, tanker `#8f82f2`, dry bulk `#46b36f`, general cargo `#ea86b5`, ro-ro `#e9c84b`, other `#f2f2f2`.
+- One exception: the accent blue `#4c8dff` (`--accent`, `HW.C.accent`) for routes, selection, hover and buttons. No other hues.
+- Efficiency, odds and drops use brightness, thickness, opacity or length, never a new hue.
+- Background `#0a0a0a`, countries `#2c2f34`, text `#f2f2f0`, dim `#8a8a8a`. YES `#f2f2f2`, NO `#6b6b6b`.
+- Labels: light monospace, caps, wide letter spacing. Numbers: the sans stack. The logo is the word HEADWAY in that same monospace, white, not animated.
+- The page shows right now only (no replay timeline), per Sam's restyle that Kimball approved on Nov 15.
+- Tokens live in `design/tokens.css`. Full rules: the Look and feel section of `BRIEF.md`.
