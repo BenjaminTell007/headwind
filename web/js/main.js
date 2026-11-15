@@ -103,7 +103,7 @@ $('overview').addEventListener('click', e => { const c = e.target.closest('[data
 /* ---------- light / dark, and the markets drawer ---------- */
 const themeBtn = () => { $('theme').textContent = HW.C.theme === 'light' ? '☾' : '☀'; };
 themeBtn();
-$('theme').addEventListener('click', () => { HW.setTheme(HW.C.theme === 'light' ? 'dark' : 'light'); themeBtn(); if (panelItem) showPanel(panelItem, true); });
+$('theme').addEventListener('click', () => { HW.setTheme(HW.C.theme === 'light' ? 'dark' : 'light'); themeBtn(); if (HW.drawLogo) HW.drawLogo($('brandcv')); if (panelItem) showPanel(panelItem, true); });
 $('mtoggle').addEventListener('click', () => {
   const open = !document.body.classList.toggle('nomarkets');
   $('mtoggle').setAttribute('aria-expanded', open); $('mtoggle').classList.toggle('on', open);
