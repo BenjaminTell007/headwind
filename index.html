@@ -10,7 +10,7 @@
    whenever you come back to the tab, check the published version (never cached) and,
    if it's newer than this copy, reload once onto it. web/tools/stamp.sh sets both. */
 (function () {
-  var SITE_VERSION = '20261115T2117', URL_ = 'web/version.json';
+  var SITE_VERSION = '20261115T2126', URL_ = 'web/version.json';
   function check() {
     fetch(URL_ + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       if (!d.v || d.v === SITE_VERSION) return;
@@ -24,17 +24,12 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
 })();
 </script>
-<link rel="stylesheet" href="web/landing/landing.css?v=20261115T2117">
+<link rel="stylesheet" href="web/landing/landing.css?v=20261115T2126">
 </head>
 <body>
 
 <video id="vid" src="web/landing/ship.mp4" muted loop playsinline autoplay preload="auto"></video>
-<video id="vid2" src="web/landing/port.mp4" muted loop playsinline preload="auto"></video>
-<div id="loader" aria-live="polite">
-  <div class="lw">HEADWAY</div>
-  <div class="lbar"><i id="lfill"></i></div>
-  <div class="lrow tag"><span id="lmsg">LOADING FOOTAGE</span><span id="lpct">0%</span></div>
-</div>
+<div id="loader" aria-live="polite"></div>
 <canvas id="cv" aria-label="Drone footage of a tanker at sea, drawn as a grid of glyphs"></canvas>
 
 <div class="ui">
@@ -47,12 +42,8 @@
     </nav>
   </header>
 
-  <div class="credit tag fade d4">FOOTAGE · YUSUF BELER, DAVID PICKUP / PEXELS</div>
+  <div class="credit tag fade d4">FOOTAGE · YUSUF BELER / PEXELS</div>
 
-  <div class="title" aria-hidden="true">
-    <div class="word">HEADWAY</div>
-    <div class="tag sub">EVERY ROUTE · EVERY STRAIT · EVERY SHIP</div>
-  </div>
 
   <div class="lock">
     <svg viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -81,6 +72,9 @@
 
 </div>
 
-<script src="web/landing/landing.js?v=20261115T2117"></script>
+<script src="web/js/util.js?v=20261115T2126"></script>
+<script src="web/js/logo.js?v=20261115T2126"></script>
+<script src="web/js/brand.js?v=20261115T2126"></script>
+<script src="web/landing/landing.js?v=20261115T2126"></script>
 </body>
 </html>
