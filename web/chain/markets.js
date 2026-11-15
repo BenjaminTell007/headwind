@@ -161,7 +161,7 @@ export async function markets(address) {
     // ---- reads
     count: async () => Number(await read('marketCount')),
     get: async (id) => shapeMarket(id, await read('getMarket', [BigInt(id)])),
-    async list({ from = 0, batch = 25 } = {}) {
+    async list({ from = 0, batch = 50 } = {}) {   // reads are bundled by multicall, see wallet.js
       const n = await api.count();
       const out = [];
       for (let i = from; i < n; i += batch) {

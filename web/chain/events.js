@@ -15,7 +15,7 @@
 // fallback if the node doesn't offer the Monad variants; then commitState is 'Proposed' only.
 import { parseAbi, decodeEventLog } from './lib.js';
 import { MARKETS_ABI } from './abi.js';
-import { RPC_WS, loadDeployments } from './config.js';
+import { RPC_WS_LIST, loadDeployments } from './config.js';
 import { toProb } from './markets.js';
 
 const abi = parseAbi(MARKETS_ABI);
@@ -52,6 +52,7 @@ export async function watch(handlers = {}, { address } = {}) {
   let ws;
   let stopped = false;
   let retry = 500;
+  let attempt = 0;
   let nextId = 1;
   const pending = new Map(); // request id -> what it subscribed to
   const subs = new Map(); // subscription id -> kind
@@ -85,7 +86,7 @@ export async function watch(handlers = {}, { address } = {}) {
   }
 
   function connect() {
-    ws = new WebSocket(RPC_WS);
+    ws = new WebSocket(RPC_WS_LIST[attempt++ % RPC_WS_LIST.length]); // next endpoint on each reconnect
     ws.onopen = () => {
       retry = 500;
       subscribe('logs', ['monadLogs', { address: addr }]);

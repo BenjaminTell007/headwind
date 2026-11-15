@@ -5,14 +5,24 @@
 //   const w = await getWallet({ prefer: 'injected' });
 //   w.address, await w.balance(), await w.send({ to, data, value })
 import {
-  createPublicClient, createWalletClient, custom, http, keccak256,
+  createPublicClient, createWalletClient, custom, http, fallback, keccak256,
   generatePrivateKey, privateKeyToAccount,
 } from './lib.js';
-import { monadTestnet, RPC_HTTP, SERVER, GAS_MARGIN_BPS, MIN_GAS_BALANCE } from './config.js';
+import { monadTestnet, RPC_HTTP_LIST, SERVER, GAS_MARGIN_BPS, MIN_GAS_BALANCE } from './config.js';
 
 const STORAGE_KEY = 'headway.burner.v1';
 
-export const publicClient = createPublicClient({ chain: monadTestnet, transport: http(RPC_HTTP) });
+// Reads go out as few requests as possible: contract reads issued together are bundled into one
+// Multicall3 call, and plain RPC calls into one JSON-RPC batch. If an endpoint rate-limits (429) or
+// fails, the next one in RPC_HTTP_LIST takes over, with a retry and backoff on each.
+export const publicClient = createPublicClient({
+  chain: monadTestnet,
+  batch: { multicall: { wait: 16 } },
+  transport: fallback(
+    RPC_HTTP_LIST.map((url) => http(url, { batch: { wait: 16 }, retryCount: 0, timeout: 8_000 })),
+    { rank: false, retryCount: 2, retryDelay: 300 },
+  ),
+});
 
 // ------------------------------------------------------------------ storage
 
