@@ -4,72 +4,97 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Headway</title>
-<link rel="stylesheet" href="../design/tokens.css">
-<style>
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
-  main { max-width: 1100px; margin: 0 auto; padding: 32px 16px; }
-  h1 { font: 300 28px/1 var(--mono); letter-spacing: 0.4em; margin: 0 0 6px; }
-  .tag { color: var(--dim); font-size: 11px; letter-spacing: 0.18em; }
-  .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 28px 0; }
-  .stat { border-top: 1px solid var(--line); padding-top: 10px; }
-  .stat b { display: block; font: 500 22px/1.2 var(--sans); }
-  .stat span { color: var(--dim); font-size: 11px; letter-spacing: 0.14em; }
-  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
-</style>
+<meta name="description" content="Forecast and hedge trade disruptions: every shipping route and strait, live ships, and markets that settle onchain on Monad.">
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
-<main>
-  <h1>HEADWAY</h1>
-  <div class="tag" id="state">SYS.STATE: CONNECTING</div>
 
-  <div class="strip" id="strip"></div>
-  <div class="strip" id="types"></div>
-  <p class="tag">Starter page: proves the page can read the data files and the live server. The globe goes here.</p>
-</main>
-<script>
-// Where the server is. Change SHARED_SERVER in one place when it moves
-// (Railway now). Add ?local to the page URL to use
-// a server running on your own machine instead.
-const SHARED_SERVER = "https://headway-production-83bb4bd7.up.railway.app";
-const SERVER = location.search.includes("local") ? "http://localhost:8787" : SHARED_SERVER;
+<div id="intro">
+  <canvas id="introcv" width="1360" height="320"></canvas>
+  <div class="tag" id="introtag">SYS.ROUTES: 210 · STRAITS: 28 · LOADING</div>
+</div>
 
-// Only needed if SHARED_SERVER is ever a localtunnel URL again; harmless otherwise.
-const _fetch = window.fetch;
-window.fetch = (url, opts = {}) => _fetch(url, { ...opts, headers: { ...(opts.headers || {}), "bypass-tunnel-reminder": "true" } });
+<div id="app">
+  <canvas id="globe"></canvas>
 
-const colours = { cargo: "var(--container)", tanker: "var(--tanker)", passenger: "var(--general)", other: "var(--other)", unknown: "var(--dim)" };
+  <header>
+    <div class="brand"><canvas id="brandcv" width="528" height="96"></canvas></div>
+    <div class="sys tag">
+      <span>ROUTES <b id="sysRoutes">210</b></span>
+      <span>STRAITS <b id="sysStraits">28</b></span>
+      <span class="live off" id="sysLive">SHIPS LIVE <b id="sysShips">—</b></span>
+      <span>DATA TO <b id="sysAsOf">—</b></span>
+    </div>
+    <form class="search" id="search" autocomplete="off">
+      <span class="tag">FIND</span>
+      <input id="q" placeholder="SHIP NAME, IMO OR MMSI">
+      <span class="err" id="qerr"></span>
+    </form>
+    <button class="wallet" id="wallet">CONNECT WALLET</button>
+  </header>
 
-function stat(label, value) {
-  return `<div class="stat"><b>${value}</b><span>${label}</span></div>`;
-}
+  <section class="overview" id="overview"></section>
 
-async function load() {
-  try {
-    const overview = await (await fetch(`${SERVER}/data/overview.json`)).json();
-    const index = await (await fetch(`${SERVER}/data/efficiency_index.json`)).json();
-    const suez = overview.chokepoints.find(c => c.chokepoint === "Suez Canal");
-    const hormuz = overview.chokepoints.find(c => c.chokepoint === "Strait of Hormuz");
-    document.getElementById("strip").innerHTML =
-      stat("WORLD ROUTE EFFICIENCY", index.world[index.world.length - 1].toFixed(2)) +
-      stat("SUEZ VS 2023", `${suez.pct_vs_2023_precrisis}%`) +
-      stat("HORMUZ VS 2023", `${hormuz.pct_vs_2023_precrisis}%`) +
-      stat("CAPE SHARE NOW", `${overview.cape_share.this_week_pct}%`) +
-      stat("EXTRA DAYS VIA CAPE", overview.reroute.extra_days);
+  <aside class="rail">
+    <div class="head">
+      <span class="tag">MARKETS</span>
+      <div class="tabs" id="mtabs">
+        <button data-g="live" class="on">LIVE</button>
+        <button data-g="route">ROUTES</button>
+        <button data-g="weekly">STRAITS</button>
+        <button data-g="trade">TRADE</button>
+      </div>
+    </div>
+    <div class="mlist" id="mlist"></div>
+    <div class="note" id="mnote"></div>
+  </aside>
 
-    const live = await (await fetch(`${SERVER}/api/ships?max_age_minutes=30&moving_only=true`)).json();
-    const byType = {};
-    for (const ship of live.ships) byType[ship.type_group] = (byType[ship.type_group] || 0) + 1;
-    document.getElementById("types").innerHTML = Object.entries(byType)
-      .sort((a, b) => b[1] - a[1])
-      .map(([t, n]) => `<div class="stat"><b><span class="dot" style="background:${colours[t]}"></span>${n.toLocaleString()}</b><span>${t.toUpperCase()} UNDERWAY</span></div>`)
-      .join("");
-    document.getElementById("state").textContent = `SYS.STATE: ACTIVE · ${live.count.toLocaleString()} SHIPS LIVE`;
-  } catch (err) {
-    document.getElementById("state").textContent = "SYS.STATE: SERVER NOT REACHABLE · start it with uvicorn (see server/README.md)";
-  }
-}
-load();
-setInterval(load, 15000);
-</script>
+  <aside class="panel" id="panel"><button class="x" id="px" aria-label="Close">✕</button><div id="pbody"></div></aside>
+
+  <div class="zoomctl"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div>
+
+  <div class="legend">
+    <span><i style="background:var(--container)"></i>CONTAINER</span>
+    <span><i style="background:var(--tanker)"></i>TANKER</span>
+    <span><i style="background:var(--bulk)"></i>DRY BULK</span>
+    <span><i style="background:var(--general)"></i>GENERAL</span>
+    <span><i style="background:var(--roro)"></i>RO-RO</span>
+  </div>
+
+  <div class="evtext" id="evtext"><div class="tag" id="evwhen"></div><div class="t" id="evtitle"></div></div>
+
+  <div class="timeline">
+    <button class="play" id="play" aria-label="Play">▶</button>
+    <div class="date"><div class="tag" id="tlLabel">WEEK ENDING</div><div class="num" id="tlDate">—</div></div>
+    <div class="track" id="track"><div class="spark" id="tlSpark"></div><input type="range" id="tl" min="0" max="1" step="0.01"></div>
+    <div class="jumps" id="jumps">
+      <button data-d="2021-03-28">EVER GIVEN</button>
+      <button data-d="2023-12-17">PANAMA DROUGHT</button>
+      <button data-d="2024-02-25">RED SEA</button>
+      <button data-d="2026-03-29">HORMUZ</button>
+      <button data-d="now" class="on">NOW</button>
+    </div>
+  </div>
+</div>
+
+<div id="dive">
+  <canvas id="shipcv"></canvas>
+  <div class="hud">
+    <button class="back" id="back">← GLOBE</button>
+    <div class="cams" id="cams"><button data-m="top" class="on">DRONE</button><button data-m="side">PROFILE</button></div>
+    <div class="scale tag" id="hudScale"></div>
+    <svg class="compass" id="compass" viewBox="0 0 62 62"></svg>
+    <svg class="cross" id="cross" viewBox="0 0 54 54"><path d="M0 10V0h10M44 0h10v10M54 44v10H44M10 54H0V44" fill="none" stroke="#ececec" stroke-width="1"/></svg>
+    <div class="card ident" id="ident"></div>
+    <div class="card wx" id="wx"></div>
+  </div>
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/data.js"></script>
+<script src="js/logo.js"></script>
+<script src="js/globe.js"></script>
+<script src="js/ship.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
