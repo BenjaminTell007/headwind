@@ -76,15 +76,24 @@
   };
 
   /* canvas: intrinsic size is the drawing size. step: grid cell in canvas px. */
-  HW.glyphIntro = (canvas, { step = 12, bg = '#0a0a0a', animate = true } = {}) => {
+  // fit: size the word to the canvas width (for the small header logo).
+  // underlay: alpha of a faint solid copy of the letters under the glyphs, so it reads at a glance.
+  HW.glyphIntro = (canvas, { step = 12, bg = '#0a0a0a', animate = true, fit = false, underlay = 0 } = {}) => {
     const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height;
     const off = document.createElement('canvas'); off.width = W; off.height = H;
     const c = off.getContext('2d');
     c.fillStyle = '#fff';
-    const fontPx = Math.round(H * 0.62);
-    c.font = `700 ${fontPx}px "SF Mono", Menlo, Consolas, monospace`;
+    let fontPx = Math.round(H * 0.62);
+    const setFont = () => {
+      c.font = `700 ${fontPx}px "SF Mono", Menlo, Consolas, monospace`;
+      try { c.letterSpacing = Math.round(fontPx * 0.11) + 'px'; } catch (e) { /* older browsers */ }
+    };
+    setFont();
+    if (fit) {   // grow until the word spans the width (but stays inside the height)
+      while (fontPx < H * 0.9 && c.measureText('HEADWAY').width < W * 0.94) { fontPx += 2; setFont(); }
+      while (c.measureText('HEADWAY').width > W * 0.97 && fontPx > 8) { fontPx -= 2; setFont(); }
+    }
     c.textAlign = 'center'; c.textBaseline = 'middle';
-    try { c.letterSpacing = Math.round(fontPx * 0.11) + 'px'; } catch (e) { /* older browsers */ }
     c.fillText('HEADWAY', W / 2 + fontPx * 0.055, H / 2 + fontPx * 0.04);
     const px = c.getImageData(0, 0, W, H).data, cells = [];
     for (let y = step / 2; y < H; y += step) for (let x = step / 2; x < W; x += step) {
@@ -95,6 +104,7 @@
     const draw = now => {
       const t = now / 1000;
       if (bg) { ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); } else ctx.clearRect(0, 0, W, H);
+      if (underlay) { ctx.globalAlpha = underlay; ctx.drawImage(off, 0, 0); ctx.globalAlpha = 1; }
       for (const cell of cells) {
         const g = wave(cell.x * 12 / step, cell.y * 12 / step, t, 0.011, 0.32);
         const k = Math.floor(((g + 4) / 8) * 9.999 + cell.r * 0.6) % 9;

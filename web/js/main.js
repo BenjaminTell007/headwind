@@ -8,7 +8,7 @@ const VESSELS = [['container', C.container, 'CONTAINER'], ['tanker', C.tanker, '
 
 /* ---------- intro and brand ---------- */
 // fall back to the static logo if an old cached logo.js has no glyphIntro
-const intro = (HW.glyphIntro || HW.glyphLogo)($('introcv'), { step: 12, bg: C.bg });
+const intro = (HW.glyphIntro || HW.glyphLogo)($('introcv'), { step: 16, bg: C.bg });   // same glyph size as the other pages' loaders
 const introStart = performance.now();
 
 /* ---------- boot ---------- */
