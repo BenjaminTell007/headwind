@@ -16,6 +16,8 @@
 - `web/js/logo.js`, `web/js/ship.js`, `design/`
 
 ## Done recently
+- Nov 15 22:50 (Kimball asked, "redesign it"): new globe page layout as one block at the end of `web/app.css` (scoped to `#app`): logo left, page switch centred, search + WEATHER right; one slim control dock on the right (rotate/flip and tilt arrows hidden, keys still work); legend as a bottom status bar with the live ship count at its right end; side panel sits between top bar and status bar, left of the dock. No markup changes in your files.
+- Nov 15 22:45: ship view is now real drone footage (`js/shipvideo.js`, clips in `web/ship/`) with a satellite zoom-in and live-weather layers; `?3d` keeps the three.js scene. Landing cleaned up to one big HEADWAY, a tagline and two buttons.
 - Nov 15 22:00 (Kimball asked), touches to your files, kept small:
   - `web/index.html`: import map for three.js in `<head>`; `js/ship3d.js` module before `main.js`; `js/wxlayer.js` after `sky.js`; a WEATHER pill before SIDE LIST; `#strip` and `#hudClock` in the dive HUD.
   - `js/main.js`: picks `HW.makeShipScene3D` when WebGL works; altitude reads `scene.S.alt`; `renderStrip()` (big readouts + HEDGE THIS SHIP link to `markets.html?hedge=NAME&port=DEST`) called from `renderHUD`.

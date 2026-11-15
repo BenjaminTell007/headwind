@@ -1,5 +1,6 @@
-/* The brand on every page: the same animated, colourful glyph HEADWAY in the top-left
-   logo and on one shared loading screen.
+/* The brand on every page: one HEADWAY wordmark (Unbounded Light, widely spaced,
+   off-white with a slow light sweep in the accent blue), used in the top-left logo, on
+   the landing page and on one shared loading screen.
 
    Needs js/util.js and js/logo.js loaded first (HW.glyphIntro is the animated word).
 
@@ -14,10 +15,27 @@
   const HW = window.HW = window.HW || {};
 
   /* ---------- shared styles, injected so every page looks the same ---------- */
+  // the wordmark's typeface (Unbounded, SIL Open Font Licence, from Google Fonts)
+  if (!document.querySelector('link[data-hw-font]')) {
+    const f = document.createElement('link');
+    f.rel = 'stylesheet'; f.dataset.hwFont = '1';
+    f.href = 'https://fonts.googleapis.com/css2?family=Unbounded:wght@200;300;400&display=swap';
+    document.head.appendChild(f);
+  }
   const css = `
+  .hw-wordmark { display:inline-block; font-family:'Unbounded', ui-sans-serif, system-ui, sans-serif; font-weight:300; text-transform:uppercase;
+    letter-spacing:.3em; padding-left:.3em; line-height:1; white-space:nowrap; text-decoration:none;
+    background:linear-gradient(100deg, #f2f2f0 0%, #f2f2f0 38%, #a9c8ff 47%, #4c8dff 50%, #a9c8ff 53%, #f2f2f0 62%, #f2f2f0 100%);
+    background-size:320% 100%; background-position:100% 0; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:hw-sweep 7s cubic-bezier(.45,0,.2,1) infinite; }
+  @keyframes hw-sweep { 0% { background-position:100% 0; } 55%, 100% { background-position:0% 0; } }
+  .hw-wordmark.sm { font-size:20px; letter-spacing:.34em; padding-left:.34em; }
+  .hw-wordmark.lg { font-size:clamp(44px, 8.4vw, 132px); font-weight:200; }
+  @media (max-width: 820px) { .hw-wordmark.sm { font-size:15px; } }
+  @media (prefers-reduced-motion: reduce) { .hw-wordmark { animation:none; background-position:0 0; } }
   .hw-loader { position:fixed; inset:0; z-index:60; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; transition:opacity .9s ease, visibility .9s; }
   .hw-loader.done, .hw-loader.out { opacity:0; visibility:hidden; pointer-events:none; }
-  .hw-loader canvas.hw-word { width:min(1500px, 94vw) !important; height:auto !important; aspect-ratio:2400/560; display:block; }
+  .hw-loader { gap:30px; }
   .hw-loader .hw-bar { width:min(320px, 64vw); height:1px; background:#2a2a2c; position:relative; overflow:hidden; }
   .hw-loader .hw-bar i { position:absolute; left:0; top:0; bottom:0; width:0; background:#4c8dff; transition:width .35s ease; }
   .hw-loader .hw-row { width:min(320px, 64vw); display:flex; justify-content:space-between; gap:12px; font:300 10.5px/1.3 ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing:.2em; text-transform:uppercase; color:#8a8a8a; }
@@ -32,14 +50,11 @@
 
   /* ---------- the logo ---------- */
   const mountLogo = host => {
-    if (!HW.glyphIntro || host.querySelector('canvas.hw-logo')) return;
-    const cv = document.createElement('canvas');
-    cv.className = 'hw-logo';
-    cv.width = 1140; cv.height = 216;           // 3x the shown size, so many small glyphs define each letter
-    cv.setAttribute('aria-label', 'Headway');
+    if (host.querySelector('.hw-wordmark')) return;
     host.textContent = '';
-    host.appendChild(cv);
-    HW.glyphIntro(cv, { step: 8, bg: null, fit: true, underlay: 0.22 });
+    const w = document.createElement('span');
+    w.className = 'hw-wordmark sm'; w.textContent = 'HEADWAY';
+    host.appendChild(w);
   };
 
   /* ---------- the loader ---------- */
@@ -49,12 +64,12 @@
   // turn an element into the shared loader (keeps any ids pages already use)
   const build = (el, { barId, pctId, msgId } = {}) => {
     el.classList.add('hw-loader');
-    let cv = el.querySelector('canvas');
-    if (!cv) { cv = document.createElement('canvas'); el.prepend(cv); }
-    cv.classList.add('hw-word');
-    cv.width = 2400; cv.height = 560;   // big and crisp: the word fills most of the screen
-    // drop anything that isn't the canvas, then add the bar and the status row
-    [...el.children].forEach(c => { if (c !== cv) c.style.display = 'none'; });
+    // hide whatever the page put in (the map page's old glyph canvas), then add the wordmark,
+    // the bar and the status row
+    [...el.children].forEach(c => { c.style.display = 'none'; });
+    const cv = document.createElement('div');
+    cv.className = 'hw-wordmark lg'; cv.textContent = 'HEADWAY';
+    el.appendChild(cv);
     const bar = document.createElement('div'); bar.className = 'hw-bar';
     const fill = document.createElement('i'); if (barId) fill.id = barId; bar.appendChild(fill);
     const row = document.createElement('div'); row.className = 'hw-row';
@@ -62,8 +77,7 @@
     const pct = document.createElement('span'); if (pctId) pct.id = pctId; pct.textContent = '0%';
     row.append(msg, pct);
     el.append(bar, row);
-    // the map page's main.js already animates its own #introcv, so don't start a second one
-    const anim = cv.id !== 'introcv' && HW.glyphIntro ? HW.glyphIntro(cv, { step: 16, bg: '#0a0a0a' }) : null;
+    const anim = null;
     return { el, fill, msg, pct, anim, p: 0, t0: performance.now(), auto: true, finished: false };
   };
 
@@ -102,6 +116,7 @@
   /* ---------- wire up whatever this page has ---------- */
   const init = () => {
     document.querySelectorAll('.brand .word, header .logo').forEach(mountLogo);
+
 
     const landing = document.getElementById('loader');
     const intro = document.getElementById('intro');

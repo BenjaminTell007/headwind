@@ -24,9 +24,8 @@ weeks = D.status.weeks; nW = weeks.length;
 $('introtag').textContent = `SYS.ROUTES: ${D.corridors.features.length} · STRAITS: ${D.straits.length} · DATA TO ${HW.fDate(D.overview.as_of)}`;
 
 globe = HW.makeGlobe($('globe'), D, { onSelect: item => showPanel(item) });
-// the 3D ship scene (js/ship3d.js, three.js) when WebGL works; the 2D one otherwise
-const webglOK = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
-scene = (HW.makeShipScene3D && webglOK ? HW.makeShipScene3D : HW.makeShipScene)($('shipcv'));
+// the ship view: a satellite zoom into real drone footage, dressed in the live weather (js/shipvideo.js)
+scene = HW.makeShipSceneVideo($('shipcv'));
 
 // let the logo play for a moment, then reveal the globe
 setTimeout(() => { $('intro').classList.add('out'); setTimeout(() => { intro.stop(); $('intro').remove(); $('overview').classList.add('in'); }, 1000); }, Math.max(0, 3800 - (performance.now() - introStart)));
@@ -166,7 +165,7 @@ const dive = async ship => {
   const lat = +ship.lat, lon = +ship.lon;
   globe.flyTo(lat, lon, 9, null, 2.2);
   const wxP = HW.weatherAt(lat, lon).catch(() => null);
-  await new Promise(r => setTimeout(r, 1500));
+  await new Promise(r => setTimeout(r, 650));   // the satellite zoom fades in over the globe while it's still flying
   $('dive').classList.add('on');
   scene.open(ship, null);
   renderHUD(ship, null);
