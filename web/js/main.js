@@ -24,12 +24,8 @@ weeks = D.status.weeks; nW = weeks.length;
 $('introtag').textContent = `SYS.ROUTES: ${D.corridors.features.length} · STRAITS: ${D.straits.length} · DATA TO ${HW.fDate(D.overview.as_of)}`;
 
 globe = HW.makeGlobe($('globe'), D, { onSelect: item => showPanel(item) });
-// the 3D ship scene (js/ship3d.js, three.js) when WebGL works; the 2D one otherwise
-const webglOK = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
-// the ship view is real drone footage dressed in the live weather (js/shipvideo.js);
-// ?3d switches to the three.js scene, and the 2D drawing is the last fallback
-const want3d = /[?&]3d\b/.test(location.search);
-scene = (want3d && HW.makeShipScene3D && webglOK ? HW.makeShipScene3D : HW.makeShipSceneVideo || HW.makeShipScene)($('shipcv'));
+// the ship view: a satellite zoom into real drone footage, dressed in the live weather (js/shipvideo.js)
+scene = HW.makeShipSceneVideo($('shipcv'));
 
 // let the logo play for a moment, then reveal the globe
 setTimeout(() => { $('intro').classList.add('out'); setTimeout(() => { intro.stop(); $('intro').remove(); $('overview').classList.add('in'); }, 1000); }, Math.max(0, 3800 - (performance.now() - introStart)));
