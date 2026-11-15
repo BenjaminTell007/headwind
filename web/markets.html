@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Headway · Markets</title>
+<meta name="description" content="Trade on shipping disruptions: straits, routes, trade flows and live gate crossings, settled onchain on Monad.">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="markets.css">
+</head>
+<body class="mk">
+
+<header class="mk-head">
+  <a class="brand" href="../" title="Headway"><span class="word">HEADWAY</span></a>
+  <nav class="nav" aria-label="Pages"><a href="./">GLOBE</a><a class="on" href="markets.html">MARKETS</a></nav>
+  <span class="spacer"></span>
+  <button class="pill icon" id="theme" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
+  <button class="pill" id="wallet">CONNECT WALLET</button>
+</header>
+
+<main class="mk-main">
+  <section class="mk-sum" id="sum"></section>
+
+  <div class="mk-bar">
+    <div class="tabs" id="tabs">
+      <button data-t="open" class="on">OPEN</button>
+      <button data-t="live">LIVE</button>
+      <button data-t="strait">STRAITS</button>
+      <button data-t="route">ROUTES</button>
+      <button data-t="trade">TRADE</button>
+      <button data-t="soon">COMING UP</button>
+      <button data-t="settled">SETTLED</button>
+      <button data-t="mine">MY POSITIONS</button>
+    </div>
+    <span class="spacer"></span>
+    <input id="find" class="mk-find" placeholder="Search markets" aria-label="Search markets">
+    <select id="sort" class="mk-sort" aria-label="Sort">
+      <option value="close">Closing soonest</option>
+      <option value="pool">Biggest pool</option>
+      <option value="yes">Highest YES</option>
+      <option value="no">Lowest YES</option>
+    </select>
+  </div>
+
+  <section class="mk-grid" id="grid"></section>
+  <p class="mk-note" id="note"></p>
+</main>
+
+<div class="mk-scrim" id="scrim"></div>
+<aside class="mk-drawer drawer" id="drawer" aria-hidden="true">
+  <button class="x" id="dx" aria-label="Close">✕</button>
+  <div id="dbody"></div>
+</aside>
+
+<script src="js/util.js"></script>
+<script type="module" src="js/markets-page.js"></script>
+</body>
+</html>
