@@ -412,4 +412,11 @@ const altTick = () => {
 altTick();
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (scene.S.on) $('back').click(); else globe.select(null); } });
 
+// the 3D scene lets you click another ship's name tag: show that ship's details and weather
+window.addEventListener('headway:shipfocus', async e => {
+  const s = { ...e.detail, g: e.detail.type_group || HW.vesselGroup(e.detail.type) };
+  renderHUD(s, null);
+  const w = await HW.weatherAt(+s.lat, +s.lon).catch(() => null);
+  if (w) renderHUD(s, w);
+});
 window.__hw = { D, globe, scene, dive };

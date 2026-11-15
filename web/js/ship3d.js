@@ -285,13 +285,13 @@ const OCEAN_FS = `
     if (vLand > 0.5) discard;                                  // land: the satellite ground shows
     vec3 V = normalize(cameraPosition - vWorld);
     float dist = length(cameraPosition - vWorld);
-    vec2 uv = vWorld.xz * 0.012;
+    vec2 uv = vWorld.xz * 0.021;
     vec3 n1 = texture2D(uNormals, uv + vec2(uTime * 0.012, uTime * 0.009)).rbg * 2.0 - 1.0;
     vec3 n2 = texture2D(uNormals, uv * 2.3 - vec2(uTime * 0.011, -uTime * 0.016)).rbg * 2.0 - 1.0;
     vec3 n3 = texture2D(uNormals, uv * 9.0 + vec2(-uTime * 0.03, uTime * 0.02)).rbg * 2.0 - 1.0;
     float near = 1.0 - smoothstep(200.0, 4000.0, dist);
     vec3 ripple = vec3(n1.x + n2.x * 0.7 + n3.x * 0.4 * near, 0.0, n1.z + n2.z * 0.7 + n3.z * 0.4 * near);
-    vec3 N = normalize(vNormal + ripple * uRipple * (0.35 + 0.65 * near));
+    vec3 N = normalize(vNormal + ripple * uRipple * (0.08 + 0.2 * near));
     float NdV = max(dot(N, V), 0.0);
     float fres = 0.02 + 0.98 * pow(1.0 - NdV, 5.0);
     vec3 R = reflect(-V, N);
@@ -427,7 +427,6 @@ HW.makeShipScene3D = canvas => {
   const oceanMat = new THREE.ShaderMaterial({ uniforms: oceanUniforms, vertexShader: OCEAN_VS, fragmentShader: OCEAN_FS, fog: true });
   const nearGeo = new THREE.PlaneGeometry(3000, 3000, 420, 420); nearGeo.rotateX(-Math.PI / 2);
   const ocean = new THREE.Mesh(nearGeo, oceanMat); ocean.frustumCulled = false; ocean.receiveShadow = false; scene.add(ocean);
-  const farMat = oceanMat.clone(); farMat.uniforms = oceanUniforms;   // shares every uniform
   const farGeo = new THREE.RingGeometry(1380, 50000, 96, 1); farGeo.rotateX(-Math.PI / 2);
   const farOcean = new THREE.Mesh(farGeo, new THREE.ShaderMaterial({ uniforms: { ...oceanUniforms, uDisplace: { value: 0 } }, vertexShader: OCEAN_VS, fragmentShader: OCEAN_FS, fog: true }));
   farOcean.position.y = -0.05; farOcean.frustumCulled = false; scene.add(farOcean);
@@ -442,7 +441,7 @@ HW.makeShipScene3D = canvas => {
   for (let i = 0; i < 180; i++) {
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudMap, transparent: true, depthWrite: false, opacity: 0.85, fog: false }));
     const r = Math.sqrt(Math.random()) * 6000, a = Math.random() * 6.2832;
-    s.position.set(Math.cos(a) * r, 900 + Math.random() * 800, Math.sin(a) * r);
+    s.position.set(Math.cos(a) * r, 1900 + Math.random() * 700, Math.sin(a) * r);
     const sc = 500 + Math.random() * 1000; s.scale.set(sc, sc * 0.55, 1);
     s.userData.base = s.material.opacity = 0.45 + Math.random() * 0.45;
     clouds.add(s);
@@ -565,7 +564,7 @@ HW.makeShipScene3D = canvas => {
     oceanUniforms.uFoam.value = clamp(0.15 + env.wind / 35 + env.wave / 6, 0.1, 1);
     oceanUniforms.uRipple.value = clamp(0.5 + env.wind / 20, 0.5, 2.2);
     const fogCol = new THREE.Color(0.6, 0.66, 0.72).multiplyScalar(lerp(1, 0.06, night));
-    scene.fog = new THREE.FogExp2(fogCol, 0.000025 + env.fog * 0.0016 + env.rain * 0.00035 + env.snow * 0.0006 + env.storm * 0.0004);
+    scene.fog = new THREE.FogExp2(fogCol, 0.000025 + env.fog * 0.00045 + env.rain * 0.00018 + env.snow * 0.0003 + env.storm * 0.0002);
     rain.material.color.set(env.snow ? 0xffffff : 0xcfd8e2);
     rain.material.opacity = env.snow ? 0.75 : 0.3;
     clouds.children.forEach((c, i) => {
@@ -625,7 +624,7 @@ HW.makeShipScene3D = canvas => {
     orbit.tEl = clamp(drag.el + (e.clientY - drag.y) * 0.004, 0.02, 1.5);
   });
   canvas.addEventListener('pointerup', () => { drag = null; });
-  canvas.addEventListener('wheel', e => { e.preventDefault(); orbit.tDist = clamp(orbit.tDist * Math.exp(e.deltaY * 0.0012), 40, 9000); orbit.user = true; }, { passive: false });
+  canvas.addEventListener('wheel', e => { e.preventDefault(); orbit.tDist = clamp(orbit.tDist * Math.exp(e.deltaY * 0.0012), 40, 3200); orbit.user = true; }, { passive: false });
 
   const modeTargets = () => {
     const L = focus ? focus.L : 200, h = focus ? focus.heading : 0;
@@ -685,7 +684,7 @@ HW.makeShipScene3D = canvas => {
     const sm = 1 - Math.exp(-2.6 * dt);
     orbit.az = lerp(orbit.az, orbit.tAz, sm); orbit.el = lerp(orbit.el, orbit.tEl, sm); orbit.dist = lerp(orbit.dist, orbit.tDist, sm);
     camTarget.lerp(v3.set(focus.x, focus.mesh.position.y + focus.L * 0.02, focus.z), 1 - Math.exp(-3 * dt));
-    const el = lerp(1.52, orbit.el, k), dist = lerp(4200, orbit.dist, k), az = lerp(orbit.az + 1.4, orbit.az, k);
+    const el = lerp(1.52, orbit.el, k), dist = lerp(5200, orbit.dist, k), az = lerp(orbit.az + 1.4, orbit.az, k);
     camera.position.set(camTarget.x + Math.cos(el) * Math.cos(az) * dist, Math.max(4, camTarget.y + Math.sin(el) * dist), camTarget.z + Math.cos(el) * Math.sin(az) * dist);
     const camWater = heightAt(camera.position.x, camera.position.z, t) + 2.5;
     if (camera.position.y < camWater) camera.position.y = camWater;
@@ -723,13 +722,13 @@ HW.makeShipScene3D = canvas => {
     clouds.children.forEach(c => { c.position.x += cdx; c.position.z += cdz; const near = Math.abs(c.position.y - camera.position.y); c.material.opacity = c.userData.base * clamp(near / 240, 0.12, 1) * (1 - env.fog * 0.5); });
 
     // night: ship lights and floodlights on the focused ship
-    const lit = night > 0.3 || env.fog > 0.5;
+    const lit = night > 0.3;
     fleet.forEach(f => f.mesh.children.forEach(m => { if (m.userData.lamp) m.visible = lit; }));
     const fx = Math.sin(focus.heading), fz = -Math.cos(focus.heading);
     flood.position.set(focus.x - fx * focus.L * 0.38, focus.mesh.position.y + focus.mesh.userData.accomTop + 12, focus.z - fz * focus.L * 0.38);
     flood2.position.set(focus.x + fx * focus.L * 0.15, focus.mesh.position.y + focus.mesh.userData.D + 22, focus.z + fz * focus.L * 0.15);
-    flood.intensity = lit ? 14000 : 0; flood2.intensity = lit ? 9000 : 0;
-    bloom.strength = lerp(0.28, 0.75, night);
+    flood.intensity = lit ? 2600 : 0; flood2.intensity = lit ? 1800 : 0;
+    bloom.strength = lerp(0.28, 0.42, night);
 
     // name tags: project each ship to the screen; hide far ones and the ones behind us
     const w = canvas.clientWidth, h = canvas.clientHeight;
