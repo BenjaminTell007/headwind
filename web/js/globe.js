@@ -342,7 +342,7 @@
         if (S.shipsFade > 0.02 && S.ships.length) {
           // cargo ships and tankers only (every one is underway, 3 kn or more), drawn as an arrow
           // pointing along its course. Zoomed in, each gets a pin whose tip sits on its position.
-          const pins = S.zoom >= 2.2, len = pins ? 6 : 3.6 + 0.8 * Math.sqrt(S.zoom);
+          const pins = S.zoom >= 2.2, len = pins ? 5.5 : 2.6 + 0.7 * Math.sqrt(S.zoom);
           for (const s of S.ships) {
             const Z = proj(s.v, tmp); if (Z < 0.03) continue;
             const x = tmp[0], y = tmp[1]; if (x < -14 || x > W + 14 || y < -24 || y > H + 8) continue;
@@ -360,17 +360,20 @@
               ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
               ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 6.2832); ctx.fill();
             }
-            // arrow: tip ahead along course, two back corners
-            const px2 = -vy, py2 = vx, w = len * 0.55;
-            ctx.fillStyle = col; ctx.strokeStyle = C.bg; ctx.lineWidth = pins ? 0 : 0.8;
+            // a tiny ship seen from above: pointed bow ahead along its course, straight sides, square stern,
+            // and a pale wheelhouse near the stern
+            const px2 = -vy, py2 = vx, w = len * 0.34;
+            ctx.fillStyle = col; ctx.strokeStyle = C.bg; ctx.lineWidth = pins ? 0 : 0.7;
             ctx.beginPath();
             ctx.moveTo(hx + vx * len, hy + vy * len);
-            ctx.lineTo(hx - vx * len * 0.7 + px2 * w, hy - vy * len * 0.7 + py2 * w);
-            ctx.lineTo(hx - vx * len * 0.35, hy - vy * len * 0.35);
-            ctx.lineTo(hx - vx * len * 0.7 - px2 * w, hy - vy * len * 0.7 - py2 * w);
+            ctx.lineTo(hx + vx * len * 0.42 + px2 * w, hy + vy * len * 0.42 + py2 * w);
+            ctx.lineTo(hx - vx * len + px2 * w, hy - vy * len + py2 * w);
+            ctx.lineTo(hx - vx * len - px2 * w, hy - vy * len - py2 * w);
+            ctx.lineTo(hx + vx * len * 0.42 - px2 * w, hy + vy * len * 0.42 - py2 * w);
             ctx.closePath();
             if (!pins) ctx.stroke();
             ctx.fill();
+            if (len > 3.4) { ctx.fillStyle = C.fg; const bx = hx - vx * len * 0.62, by = hy - vy * len * 0.62, bs = Math.max(0.9, w * 0.75); ctx.fillRect(bx - bs / 2, by - bs / 2, bs, bs); }
             if (P.inside && !P.down) { const d2 = (hx - px) ** 2 + (hy - py) ** 2; if (d2 < shipD) { shipD = d2; shipPick = s; } }
           }
         }
@@ -399,7 +402,7 @@
         }
 
         /* moving pulses on the routes and sonar rings on disrupted straits (js/globefx.js) */
-        if (HW.drawFx) HW.drawFx(ctx, { lanes, straits, straitRatio, laneBlocked, dt, zoom: S.zoom, quiet: S.quiet });
+        if (HW.drawFx) HW.drawFx(ctx, { lanes, straits, straitRatio, laneBlocked, dt, zoom: S.zoom, quiet: S.quiet, view, cx, cy, R });
         /* hover: strait first, then ship, then lane */
         if (!P.down) {
           const was = S.hover && (S.hover.s || S.hover.L || S.hover.ship);
