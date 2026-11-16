@@ -261,4 +261,4 @@ body:has(#panel.open) .wx-legend { opacity:0 !important; pointer-events:none !im
 
 /* Ship view, cleaner (Kimball, Nov 15): ship, weather and the hedge only. The readout strip,
    compass and crosshair are hidden; main.js still fills them. */
-.hud .strip, .hud .compass, .hud .cross { display:none !important; }
+.hud .strip, .hud .compass, .hud .cross, .hud .cams { display:none !important; }   /* DRONE / PROFILE switch too: there is one view now */
