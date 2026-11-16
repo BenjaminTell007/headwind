@@ -28,23 +28,6 @@
     const LX = new Float32Array(nL), LY = new Float32Array(nL), LZ = new Float32Array(nL), LB = new Float32Array(nL);
     for (let i = 0; i < nL; i++) { const v = vec(ld[2 * i] / 100, ld[2 * i + 1] / 100); LX[i] = v[0]; LY[i] = v[1]; LZ[i] = v[2]; LB[i] = rnd(); }
     const LA = new Float32Array(nL); for (let i = 0; i < nL; i++) LA[i] = Math.atan2(LX[i], LZ[i]);   // longitude, for the light sweep
-    // Mountains (Kimball, Nov 15): each land dot's height above sea level, from web/tools/build_elev.py.
-    // Once it loads, the dots rise off the sphere over a couple of seconds, much exaggerated
-    // (Everest is about 9% of the globe's radius), and high ground is brighter.
-    const BX = Float32Array.from(LX), BY = Float32Array.from(LY), BZ = Float32Array.from(LZ), LE = new Float32Array(nL);
-    let elevAt = 0, elevG = 0;
-    fetch('data/land_elev.json').then(r => r.ok ? r.json() : null).then(j => {
-      if (!j || !j.elev) return;
-      const k = (j.unit_m || 50) / 8800;
-      for (let i = 0; i < nL && i < j.elev.length; i++) LE[i] = Math.min(1, Math.sqrt(Math.max(0, j.elev[i] * k)));   // square root so hills show too
-      elevAt = performance.now();
-    }).catch(() => {});
-    const RELIEF = 0.09;
-    const raiseLand = () => {
-      if (!elevAt || elevG >= 1) return;
-      const t = Math.min(1, (performance.now() - elevAt) / 2400); elevG = t * t * (3 - 2 * t);
-      for (let i = 0; i < nL; i++) { const f = 1 + LE[i] * LE[i] * RELIEF * elevG; LX[i] = BX[i] * f; LY[i] = BY[i] * f; LZ[i] = BZ[i] * f; }
-    };
     // country of each land dot and each border ring (-1 = none), from web/tools/build_land.py
     const LC = new Int16Array(nL).fill(-1);
     (D.land.dot_country || []).forEach((c, i) => { if (i < nL) LC[i] = c; });
@@ -207,7 +190,6 @@
            colour at low opacity, so it works in light and dark mode. */
         const ds = HW.clamp(1.25 * Math.sqrt(S.zoom), 1.2, 2.6), hs = ds / 2, px = P.inside ? P.x : -1e4, py = P.y;
         const BUCKET_ALPHA = [0.24, 0.36, 0.58];
-        raiseLand();
         // a slow band of light that travels round the land, west to east, once every 14 s (Kimball: make the globe feel alive)
         const TAU = Math.PI * 2, sweepAt = (performance.now() / 1000 * TAU / 14) % TAU, SWEEP_W = 0.42;
         const FX_TICK = Math.floor(performance.now() / 220), FX_COLS = ['#46b36f', '#f08a3c', '#8f82f2', '#ea86b5', '#e9c84b', C.fg];
@@ -244,7 +226,7 @@
             if (b === 0 && d2 < nearD) { nearD = d2; nearDot = i; }
             if (hc >= 0 && LC[i] === hc) continue;   // drawn bright below
             let sw = sweepAt - LA[i]; if (sw < 0) sw += TAU;   // how far behind the front this dot is
-            const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2 + (sw < SWEEP_W ? (1 - sw / SWEEP_W) ** 2 * 0.55 * S.quiet : 0) + LE[i] * 0.55 * elevG;
+            const lum = (Z < 0.2 ? Z * 5 : 1) * (0.55 + 0.45 * LB[i]) + near * 1.2 + (sw < SWEEP_W ? (1 - sw / SWEEP_W) ** 2 * 0.55 * S.quiet : 0);
             const bucket = lum > 1.05 ? 2 : lum > 0.72 ? 1 : 0;
             if (bucket !== b) continue;
             const gb = bumpOf(sx, sy);
