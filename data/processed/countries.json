@@ -1,0 +1,1576 @@
+{
+ "FJI": {
+  "name": "Fiji",
+  "lat": -17.938,
+  "lon": 177.976,
+  "point_source": "natural_earth",
+  "comtrade_code": 242
+ },
+ "TZA": {
+  "name": "Tanzania",
+  "lat": -6.208,
+  "lon": 34.142,
+  "point_source": "natural_earth",
+  "comtrade_code": 834
+ },
+ "ESH": {
+  "name": "W. Sahara",
+  "lat": 24.231,
+  "lon": -12.572,
+  "point_source": "natural_earth",
+  "comtrade_code": 732
+ },
+ "CAN": {
+  "name": "Canada",
+  "lat": 54.0,
+  "lon": -100.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 124
+ },
+ "USA": {
+  "name": "United States of America",
+  "lat": 39.0,
+  "lon": -98.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 842
+ },
+ "KAZ": {
+  "name": "Kazakhstan",
+  "lat": 48.069,
+  "lon": 66.312,
+  "point_source": "natural_earth",
+  "comtrade_code": 398
+ },
+ "UZB": {
+  "name": "Uzbekistan",
+  "lat": 41.353,
+  "lon": 63.443,
+  "point_source": "natural_earth",
+  "comtrade_code": 860
+ },
+ "PNG": {
+  "name": "Papua New Guinea",
+  "lat": -6.668,
+  "lon": 144.226,
+  "point_source": "natural_earth",
+  "comtrade_code": 598
+ },
+ "IDN": {
+  "name": "Indonesia",
+  "lat": -2.0,
+  "lon": 113.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 360
+ },
+ "ARG": {
+  "name": "Argentina",
+  "lat": -37.239,
+  "lon": -64.081,
+  "point_source": "natural_earth",
+  "comtrade_code": 32
+ },
+ "CHL": {
+  "name": "Chile",
+  "lat": -33.5,
+  "lon": -70.7,
+  "point_source": "hand_anchor",
+  "comtrade_code": 152
+ },
+ "COD": {
+  "name": "Dem. Rep. Congo",
+  "lat": -4.099,
+  "lon": 22.391,
+  "point_source": "natural_earth",
+  "comtrade_code": 180
+ },
+ "SOM": {
+  "name": "Somalia",
+  "lat": 5.17,
+  "lon": 46.794,
+  "point_source": "natural_earth",
+  "comtrade_code": 706
+ },
+ "KEN": {
+  "name": "Kenya",
+  "lat": 0.312,
+  "lon": 37.513,
+  "point_source": "natural_earth",
+  "comtrade_code": 404
+ },
+ "SDN": {
+  "name": "Sudan",
+  "lat": 15.278,
+  "lon": 29.616,
+  "point_source": "natural_earth",
+  "comtrade_code": 736
+ },
+ "TCD": {
+  "name": "Chad",
+  "lat": 15.278,
+  "lon": 18.307,
+  "point_source": "natural_earth",
+  "comtrade_code": 148
+ },
+ "HTI": {
+  "name": "Haiti",
+  "lat": 18.944,
+  "lon": -72.147,
+  "point_source": "natural_earth",
+  "comtrade_code": 332
+ },
+ "DOM": {
+  "name": "Dominican Rep.",
+  "lat": 18.701,
+  "lon": -70.13,
+  "point_source": "natural_earth",
+  "comtrade_code": 214
+ },
+ "RUS": {
+  "name": "Russia",
+  "lat": 56.0,
+  "lon": 40.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 643
+ },
+ "BHS": {
+  "name": "Bahamas",
+  "lat": 24.458,
+  "lon": -77.923,
+  "point_source": "natural_earth",
+  "comtrade_code": 44
+ },
+ "FLK": {
+  "name": "Falkland Is.",
+  "lat": -51.7,
+  "lon": -59.389,
+  "point_source": "natural_earth",
+  "comtrade_code": 238
+ },
+ "NOR": {
+  "name": "Norway",
+  "lat": 61.0,
+  "lon": 9.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 578
+ },
+ "GRL": {
+  "name": "Greenland",
+  "lat": 71.867,
+  "lon": -39.283,
+  "point_source": "natural_earth",
+  "comtrade_code": 304
+ },
+ "ATF": {
+  "name": "Fr. S. Antarctic Lands",
+  "lat": -49.154,
+  "lon": 69.647,
+  "point_source": "natural_earth",
+  "comtrade_code": 260
+ },
+ "TLS": {
+  "name": "Timor-Leste",
+  "lat": -8.781,
+  "lon": 125.863,
+  "point_source": "natural_earth",
+  "comtrade_code": 626
+ },
+ "ZAF": {
+  "name": "South Africa",
+  "lat": -28.409,
+  "lon": 26.148,
+  "point_source": "natural_earth",
+  "comtrade_code": 710
+ },
+ "LSO": {
+  "name": "Lesotho",
+  "lat": -29.501,
+  "lon": 28.244,
+  "point_source": "natural_earth",
+  "comtrade_code": 426
+ },
+ "MEX": {
+  "name": "Mexico",
+  "lat": 23.599,
+  "lon": -102.25,
+  "point_source": "natural_earth",
+  "comtrade_code": 484
+ },
+ "URY": {
+  "name": "Uruguay",
+  "lat": -32.387,
+  "lon": -55.819,
+  "point_source": "natural_earth",
+  "comtrade_code": 858
+ },
+ "BRA": {
+  "name": "Brazil",
+  "lat": -10.0,
+  "lon": -52.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 76
+ },
+ "BOL": {
+  "name": "Bolivia",
+  "lat": -16.4,
+  "lon": -63.639,
+  "point_source": "natural_earth",
+  "comtrade_code": 68
+ },
+ "PER": {
+  "name": "Peru",
+  "lat": -9.248,
+  "lon": -75.875,
+  "point_source": "natural_earth",
+  "comtrade_code": 604
+ },
+ "COL": {
+  "name": "Colombia",
+  "lat": 3.969,
+  "lon": -72.486,
+  "point_source": "natural_earth",
+  "comtrade_code": 170
+ },
+ "PAN": {
+  "name": "Panama",
+  "lat": 8.406,
+  "lon": -81.483,
+  "point_source": "natural_earth",
+  "comtrade_code": 590
+ },
+ "CRI": {
+  "name": "Costa Rica",
+  "lat": 9.706,
+  "lon": -83.684,
+  "point_source": "natural_earth",
+  "comtrade_code": 188
+ },
+ "NIC": {
+  "name": "Nicaragua",
+  "lat": 12.89,
+  "lon": -85.574,
+  "point_source": "natural_earth",
+  "comtrade_code": 558
+ },
+ "HND": {
+  "name": "Honduras",
+  "lat": 14.488,
+  "lon": -87.228,
+  "point_source": "natural_earth",
+  "comtrade_code": 340
+ },
+ "SLV": {
+  "name": "El Salvador",
+  "lat": 13.815,
+  "lon": -88.92,
+  "point_source": "natural_earth",
+  "comtrade_code": 222
+ },
+ "GTM": {
+  "name": "Guatemala",
+  "lat": 15.792,
+  "lon": -90.334,
+  "point_source": "natural_earth",
+  "comtrade_code": 320
+ },
+ "BLZ": {
+  "name": "Belize",
+  "lat": 17.311,
+  "lon": -88.699,
+  "point_source": "natural_earth",
+  "comtrade_code": 84
+ },
+ "VEN": {
+  "name": "Venezuela",
+  "lat": 6.482,
+  "lon": -65.426,
+  "point_source": "natural_earth",
+  "comtrade_code": 862
+ },
+ "GUY": {
+  "name": "Guyana",
+  "lat": 4.913,
+  "lon": -58.845,
+  "point_source": "natural_earth",
+  "comtrade_code": 328
+ },
+ "SUR": {
+  "name": "Suriname",
+  "lat": 3.84,
+  "lon": -56.032,
+  "point_source": "natural_earth",
+  "comtrade_code": 740
+ },
+ "FRA": {
+  "name": "France",
+  "lat": 46.6,
+  "lon": 2.4,
+  "point_source": "hand_anchor",
+  "comtrade_code": 250
+ },
+ "ECU": {
+  "name": "Ecuador",
+  "lat": -1.763,
+  "lon": -78.279,
+  "point_source": "natural_earth",
+  "comtrade_code": 218
+ },
+ "PRI": {
+  "name": "Puerto Rico",
+  "lat": 18.301,
+  "lon": -66.445,
+  "point_source": "natural_earth",
+  "comtrade_code": 630
+ },
+ "JAM": {
+  "name": "Jamaica",
+  "lat": 18.024,
+  "lon": -77.152,
+  "point_source": "natural_earth",
+  "comtrade_code": 388
+ },
+ "CUB": {
+  "name": "Cuba",
+  "lat": 21.39,
+  "lon": -77.705,
+  "point_source": "natural_earth",
+  "comtrade_code": 192
+ },
+ "ZWE": {
+  "name": "Zimbabwe",
+  "lat": -19.004,
+  "lon": 29.322,
+  "point_source": "natural_earth",
+  "comtrade_code": 716
+ },
+ "BWA": {
+  "name": "Botswana",
+  "lat": -22.46,
+  "lon": 24.31,
+  "point_source": "natural_earth",
+  "comtrade_code": 72
+ },
+ "NAM": {
+  "name": "Namibia",
+  "lat": -23.255,
+  "lon": 17.146,
+  "point_source": "natural_earth",
+  "comtrade_code": 516
+ },
+ "SEN": {
+  "name": "Senegal",
+  "lat": 14.495,
+  "lon": -14.729,
+  "point_source": "natural_earth",
+  "comtrade_code": 686
+ },
+ "MLI": {
+  "name": "Mali",
+  "lat": 17.955,
+  "lon": -0.701,
+  "point_source": "natural_earth",
+  "comtrade_code": 466
+ },
+ "MRT": {
+  "name": "Mauritania",
+  "lat": 21.163,
+  "lon": -11.493,
+  "point_source": "natural_earth",
+  "comtrade_code": 478
+ },
+ "BEN": {
+  "name": "Benin",
+  "lat": 9.236,
+  "lon": 2.285,
+  "point_source": "natural_earth",
+  "comtrade_code": 204
+ },
+ "NER": {
+  "name": "Niger",
+  "lat": 17.39,
+  "lon": 9.774,
+  "point_source": "natural_earth",
+  "comtrade_code": 562
+ },
+ "NGA": {
+  "name": "Nigeria",
+  "lat": 8.928,
+  "lon": 7.832,
+  "point_source": "natural_earth",
+  "comtrade_code": 566
+ },
+ "CMR": {
+  "name": "Cameroon",
+  "lat": 7.226,
+  "lon": 13.492,
+  "point_source": "natural_earth",
+  "comtrade_code": 120
+ },
+ "TGO": {
+  "name": "Togo",
+  "lat": 8.495,
+  "lon": 1.119,
+  "point_source": "natural_earth",
+  "comtrade_code": 768
+ },
+ "GHA": {
+  "name": "Ghana",
+  "lat": 7.816,
+  "lon": -1.087,
+  "point_source": "natural_earth",
+  "comtrade_code": 288
+ },
+ "CIV": {
+  "name": "Côte d'Ivoire",
+  "lat": 7.541,
+  "lon": -5.683,
+  "point_source": "natural_earth",
+  "comtrade_code": 384
+ },
+ "GIN": {
+  "name": "Guinea",
+  "lat": 9.951,
+  "lon": -9.658,
+  "point_source": "natural_earth",
+  "comtrade_code": 324
+ },
+ "GNB": {
+  "name": "Guinea-Bissau",
+  "lat": 11.885,
+  "lon": -15.037,
+  "point_source": "natural_earth",
+  "comtrade_code": 624
+ },
+ "LBR": {
+  "name": "Liberia",
+  "lat": 6.33,
+  "lon": -9.71,
+  "point_source": "natural_earth",
+  "comtrade_code": 430
+ },
+ "SLE": {
+  "name": "Sierra Leone",
+  "lat": 8.561,
+  "lon": -11.844,
+  "point_source": "natural_earth",
+  "comtrade_code": 694
+ },
+ "BFA": {
+  "name": "Burkina Faso",
+  "lat": 12.241,
+  "lon": -1.276,
+  "point_source": "natural_earth",
+  "comtrade_code": 854
+ },
+ "CAF": {
+  "name": "Central African Rep.",
+  "lat": 6.763,
+  "lon": 20.479,
+  "point_source": "natural_earth",
+  "comtrade_code": 140
+ },
+ "COG": {
+  "name": "Congo",
+  "lat": -0.648,
+  "lon": 15.944,
+  "point_source": "natural_earth",
+  "comtrade_code": 178
+ },
+ "GAB": {
+  "name": "Gabon",
+  "lat": -0.945,
+  "lon": 11.593,
+  "point_source": "natural_earth",
+  "comtrade_code": 266
+ },
+ "GNQ": {
+  "name": "Eq. Guinea",
+  "lat": 1.711,
+  "lon": 10.377,
+  "point_source": "natural_earth",
+  "comtrade_code": 226
+ },
+ "ZMB": {
+  "name": "Zambia",
+  "lat": -13.08,
+  "lon": 25.37,
+  "point_source": "natural_earth",
+  "comtrade_code": 894
+ },
+ "MWI": {
+  "name": "Malawi",
+  "lat": -13.175,
+  "lon": 33.668,
+  "point_source": "natural_earth",
+  "comtrade_code": 454
+ },
+ "MOZ": {
+  "name": "Mozambique",
+  "lat": -18.319,
+  "lon": 34.697,
+  "point_source": "natural_earth",
+  "comtrade_code": 508
+ },
+ "SWZ": {
+  "name": "eSwatini",
+  "lat": -26.566,
+  "lon": 31.36,
+  "point_source": "natural_earth",
+  "comtrade_code": 748
+ },
+ "AGO": {
+  "name": "Angola",
+  "lat": -11.88,
+  "lon": 18.81,
+  "point_source": "natural_earth",
+  "comtrade_code": 24
+ },
+ "BDI": {
+  "name": "Burundi",
+  "lat": -3.464,
+  "lon": 29.957,
+  "point_source": "natural_earth",
+  "comtrade_code": 108
+ },
+ "ISR": {
+  "name": "Israel",
+  "lat": 31.421,
+  "lon": 34.691,
+  "point_source": "natural_earth",
+  "comtrade_code": 376
+ },
+ "LBN": {
+  "name": "Lebanon",
+  "lat": 33.865,
+  "lon": 35.795,
+  "point_source": "natural_earth",
+  "comtrade_code": 422
+ },
+ "MDG": {
+  "name": "Madagascar",
+  "lat": -18.647,
+  "lon": 46.669,
+  "point_source": "natural_earth",
+  "comtrade_code": 450
+ },
+ "PSE": {
+  "name": "Palestine",
+  "lat": 32.13,
+  "lon": 35.302,
+  "point_source": "natural_earth",
+  "comtrade_code": 275
+ },
+ "GMB": {
+  "name": "Gambia",
+  "lat": 13.402,
+  "lon": -16.042,
+  "point_source": "natural_earth",
+  "comtrade_code": 270
+ },
+ "TUN": {
+  "name": "Tunisia",
+  "lat": 33.942,
+  "lon": 8.914,
+  "point_source": "natural_earth",
+  "comtrade_code": 788
+ },
+ "DZA": {
+  "name": "Algeria",
+  "lat": 27.916,
+  "lon": 0.526,
+  "point_source": "natural_earth",
+  "comtrade_code": 12
+ },
+ "JOR": {
+  "name": "Jordan",
+  "lat": 31.295,
+  "lon": 36.312,
+  "point_source": "natural_earth",
+  "comtrade_code": 400
+ },
+ "ARE": {
+  "name": "United Arab Emirates",
+  "lat": 24.282,
+  "lon": 54.988,
+  "point_source": "natural_earth",
+  "comtrade_code": 784
+ },
+ "QAT": {
+  "name": "Qatar",
+  "lat": 25.349,
+  "lon": 51.179,
+  "point_source": "natural_earth",
+  "comtrade_code": 634
+ },
+ "KWT": {
+  "name": "Kuwait",
+  "lat": 29.203,
+  "lon": 47.393,
+  "point_source": "natural_earth",
+  "comtrade_code": 414
+ },
+ "IRQ": {
+  "name": "Iraq",
+  "lat": 33.198,
+  "lon": 42.415,
+  "point_source": "natural_earth",
+  "comtrade_code": 368
+ },
+ "OMN": {
+  "name": "Oman",
+  "lat": 20.798,
+  "lon": 56.977,
+  "point_source": "natural_earth",
+  "comtrade_code": 512
+ },
+ "VUT": {
+  "name": "Vanuatu",
+  "lat": -15.163,
+  "lon": 166.899,
+  "point_source": "natural_earth",
+  "comtrade_code": 548
+ },
+ "KHM": {
+  "name": "Cambodia",
+  "lat": 12.866,
+  "lon": 104.999,
+  "point_source": "natural_earth",
+  "comtrade_code": 116
+ },
+ "THA": {
+  "name": "Thailand",
+  "lat": 13.037,
+  "lon": 101.663,
+  "point_source": "natural_earth",
+  "comtrade_code": 764
+ },
+ "LAO": {
+  "name": "Laos",
+  "lat": 18.175,
+  "lon": 102.082,
+  "point_source": "natural_earth",
+  "comtrade_code": 418
+ },
+ "MMR": {
+  "name": "Myanmar",
+  "lat": 18.997,
+  "lon": 95.873,
+  "point_source": "natural_earth",
+  "comtrade_code": 104
+ },
+ "VNM": {
+  "name": "Vietnam",
+  "lat": 15.994,
+  "lon": 107.777,
+  "point_source": "natural_earth",
+  "comtrade_code": 704
+ },
+ "PRK": {
+  "name": "North Korea",
+  "lat": 40.338,
+  "lon": 126.804,
+  "point_source": "natural_earth",
+  "comtrade_code": 408
+ },
+ "KOR": {
+  "name": "South Korea",
+  "lat": 36.205,
+  "lon": 127.901,
+  "point_source": "natural_earth",
+  "comtrade_code": 410
+ },
+ "MNG": {
+  "name": "Mongolia",
+  "lat": 46.847,
+  "lon": 105.334,
+  "point_source": "natural_earth",
+  "comtrade_code": 496
+ },
+ "IND": {
+  "name": "India",
+  "lat": 21.872,
+  "lon": 79.179,
+  "point_source": "natural_earth",
+  "comtrade_code": 356
+ },
+ "BGD": {
+  "name": "Bangladesh",
+  "lat": 23.564,
+  "lon": 89.876,
+  "point_source": "natural_earth",
+  "comtrade_code": 50
+ },
+ "BTN": {
+  "name": "Bhutan",
+  "lat": 27.612,
+  "lon": 90.496,
+  "point_source": "natural_earth",
+  "comtrade_code": 64
+ },
+ "NPL": {
+  "name": "Nepal",
+  "lat": 28.31,
+  "lon": 83.444,
+  "point_source": "natural_earth",
+  "comtrade_code": 524
+ },
+ "PAK": {
+  "name": "Pakistan",
+  "lat": 30.358,
+  "lon": 70.093,
+  "point_source": "natural_earth",
+  "comtrade_code": 586
+ },
+ "AFG": {
+  "name": "Afghanistan",
+  "lat": 33.833,
+  "lon": 65.315,
+  "point_source": "natural_earth",
+  "comtrade_code": 4
+ },
+ "TJK": {
+  "name": "Tajikistan",
+  "lat": 38.754,
+  "lon": 71.04,
+  "point_source": "natural_earth",
+  "comtrade_code": 762
+ },
+ "KGZ": {
+  "name": "Kyrgyzstan",
+  "lat": 41.289,
+  "lon": 75.192,
+  "point_source": "natural_earth",
+  "comtrade_code": 417
+ },
+ "TKM": {
+  "name": "Turkmenistan",
+  "lat": 39.121,
+  "lon": 58.672,
+  "point_source": "natural_earth",
+  "comtrade_code": 795
+ },
+ "IRN": {
+  "name": "Iran",
+  "lat": 32.326,
+  "lon": 54.118,
+  "point_source": "natural_earth",
+  "comtrade_code": 364
+ },
+ "SYR": {
+  "name": "Syria",
+  "lat": 35.027,
+  "lon": 38.574,
+  "point_source": "natural_earth",
+  "comtrade_code": 760
+ },
+ "ARM": {
+  "name": "Armenia",
+  "lat": 39.952,
+  "lon": 45.064,
+  "point_source": "natural_earth",
+  "comtrade_code": 51
+ },
+ "SWE": {
+  "name": "Sweden",
+  "lat": 62.275,
+  "lon": 14.786,
+  "point_source": "natural_earth",
+  "comtrade_code": 752
+ },
+ "BLR": {
+  "name": "Belarus",
+  "lat": 53.706,
+  "lon": 27.786,
+  "point_source": "natural_earth",
+  "comtrade_code": 112
+ },
+ "UKR": {
+  "name": "Ukraine",
+  "lat": 48.805,
+  "lon": 30.981,
+  "point_source": "natural_earth",
+  "comtrade_code": 804
+ },
+ "POL": {
+  "name": "Poland",
+  "lat": 51.884,
+  "lon": 19.076,
+  "point_source": "natural_earth",
+  "comtrade_code": 616
+ },
+ "AUT": {
+  "name": "Austria",
+  "lat": 47.919,
+  "lon": 14.953,
+  "point_source": "natural_earth",
+  "comtrade_code": 40
+ },
+ "HUN": {
+  "name": "Hungary",
+  "lat": 47.245,
+  "lon": 19.103,
+  "point_source": "natural_earth",
+  "comtrade_code": 348
+ },
+ "MDA": {
+  "name": "Moldova",
+  "lat": 47.138,
+  "lon": 28.649,
+  "point_source": "natural_earth",
+  "comtrade_code": 498
+ },
+ "ROU": {
+  "name": "Romania",
+  "lat": 46.036,
+  "lon": 24.212,
+  "point_source": "natural_earth",
+  "comtrade_code": 642
+ },
+ "LTU": {
+  "name": "Lithuania",
+  "lat": 55.091,
+  "lon": 24.128,
+  "point_source": "natural_earth",
+  "comtrade_code": 440
+ },
+ "LVA": {
+  "name": "Latvia",
+  "lat": 56.895,
+  "lon": 24.504,
+  "point_source": "natural_earth",
+  "comtrade_code": 428
+ },
+ "EST": {
+  "name": "Estonia",
+  "lat": 58.498,
+  "lon": 25.562,
+  "point_source": "natural_earth",
+  "comtrade_code": 233
+ },
+ "DEU": {
+  "name": "Germany",
+  "lat": 51.431,
+  "lon": 10.432,
+  "point_source": "natural_earth",
+  "comtrade_code": 276
+ },
+ "BGR": {
+  "name": "Bulgaria",
+  "lat": 42.739,
+  "lon": 25.139,
+  "point_source": "natural_earth",
+  "comtrade_code": 100
+ },
+ "GRC": {
+  "name": "Greece",
+  "lat": 39.08,
+  "lon": 21.806,
+  "point_source": "natural_earth",
+  "comtrade_code": 300
+ },
+ "TUR": {
+  "name": "Turkey",
+  "lat": 38.634,
+  "lon": 35.455,
+  "point_source": "natural_earth",
+  "comtrade_code": 792
+ },
+ "ALB": {
+  "name": "Albania",
+  "lat": 41.248,
+  "lon": 19.968,
+  "point_source": "natural_earth",
+  "comtrade_code": 8
+ },
+ "HRV": {
+  "name": "Croatia",
+  "lat": 44.545,
+  "lon": 15.584,
+  "point_source": "natural_earth",
+  "comtrade_code": 191
+ },
+ "CHE": {
+  "name": "Switzerland",
+  "lat": 46.81,
+  "lon": 8.287,
+  "point_source": "natural_earth",
+  "comtrade_code": 757
+ },
+ "LUX": {
+  "name": "Luxembourg",
+  "lat": 49.716,
+  "lon": 5.964,
+  "point_source": "natural_earth",
+  "comtrade_code": 442
+ },
+ "BEL": {
+  "name": "Belgium",
+  "lat": 50.58,
+  "lon": 4.737,
+  "point_source": "natural_earth",
+  "comtrade_code": 58
+ },
+ "NLD": {
+  "name": "Netherlands",
+  "lat": 52.04,
+  "lon": 5.398,
+  "point_source": "natural_earth",
+  "comtrade_code": 528
+ },
+ "PRT": {
+  "name": "Portugal",
+  "lat": 39.511,
+  "lon": -8.368,
+  "point_source": "natural_earth",
+  "comtrade_code": 620
+ },
+ "ESP": {
+  "name": "Spain",
+  "lat": 39.918,
+  "lon": -3.52,
+  "point_source": "natural_earth",
+  "comtrade_code": 724
+ },
+ "IRL": {
+  "name": "Ireland",
+  "lat": 53.51,
+  "lon": -7.807,
+  "point_source": "natural_earth",
+  "comtrade_code": 372
+ },
+ "NCL": {
+  "name": "New Caledonia",
+  "lat": -21.415,
+  "lon": 165.687,
+  "point_source": "natural_earth",
+  "comtrade_code": 540
+ },
+ "SLB": {
+  "name": "Solomon Is.",
+  "lat": -7.887,
+  "lon": 159.096,
+  "point_source": "natural_earth",
+  "comtrade_code": 90
+ },
+ "NZL": {
+  "name": "New Zealand",
+  "lat": -42.0,
+  "lon": 172.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 554
+ },
+ "AUS": {
+  "name": "Australia",
+  "lat": -25.0,
+  "lon": 134.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 36
+ },
+ "LKA": {
+  "name": "Sri Lanka",
+  "lat": 7.862,
+  "lon": 80.684,
+  "point_source": "natural_earth",
+  "comtrade_code": 144
+ },
+ "CHN": {
+  "name": "China",
+  "lat": 33.0,
+  "lon": 108.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 156
+ },
+ "TWN": {
+  "name": "Taiwan",
+  "lat": 23.975,
+  "lon": 120.989,
+  "point_source": "natural_earth",
+  "comtrade_code": 490
+ },
+ "ITA": {
+  "name": "Italy",
+  "lat": 42.558,
+  "lon": 12.631,
+  "point_source": "natural_earth",
+  "comtrade_code": 380
+ },
+ "DNK": {
+  "name": "Denmark",
+  "lat": 56.324,
+  "lon": 9.461,
+  "point_source": "natural_earth",
+  "comtrade_code": 208
+ },
+ "GBR": {
+  "name": "United Kingdom",
+  "lat": 53.0,
+  "lon": -1.5,
+  "point_source": "hand_anchor",
+  "comtrade_code": 826
+ },
+ "ISL": {
+  "name": "Iceland",
+  "lat": 64.988,
+  "lon": -18.458,
+  "point_source": "natural_earth",
+  "comtrade_code": 352
+ },
+ "AZE": {
+  "name": "Azerbaijan",
+  "lat": 40.038,
+  "lon": 47.635,
+  "point_source": "natural_earth",
+  "comtrade_code": 31
+ },
+ "GEO": {
+  "name": "Georgia",
+  "lat": 42.298,
+  "lon": 43.602,
+  "point_source": "natural_earth",
+  "comtrade_code": 268
+ },
+ "PHL": {
+  "name": "Philippines",
+  "lat": 15.669,
+  "lon": 120.761,
+  "point_source": "natural_earth",
+  "comtrade_code": 608
+ },
+ "MYS": {
+  "name": "Malaysia",
+  "lat": 4.0,
+  "lon": 102.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 458
+ },
+ "BRN": {
+  "name": "Brunei",
+  "lat": 4.713,
+  "lon": 114.893,
+  "point_source": "natural_earth",
+  "comtrade_code": 96
+ },
+ "SVN": {
+  "name": "Slovenia",
+  "lat": 46.127,
+  "lon": 14.732,
+  "point_source": "natural_earth",
+  "comtrade_code": 705
+ },
+ "FIN": {
+  "name": "Finland",
+  "lat": 65.03,
+  "lon": 27.373,
+  "point_source": "natural_earth",
+  "comtrade_code": 246
+ },
+ "SVK": {
+  "name": "Slovakia",
+  "lat": 48.712,
+  "lon": 19.63,
+  "point_source": "natural_earth",
+  "comtrade_code": 703
+ },
+ "CZE": {
+  "name": "Czechia",
+  "lat": 49.758,
+  "lon": 15.538,
+  "point_source": "natural_earth",
+  "comtrade_code": 203
+ },
+ "ERI": {
+  "name": "Eritrea",
+  "lat": 15.198,
+  "lon": 38.296,
+  "point_source": "natural_earth",
+  "comtrade_code": 232
+ },
+ "JPN": {
+  "name": "Japan",
+  "lat": 36.0,
+  "lon": 138.0,
+  "point_source": "hand_anchor",
+  "comtrade_code": 392
+ },
+ "PRY": {
+  "name": "Paraguay",
+  "lat": -23.114,
+  "lon": -58.637,
+  "point_source": "natural_earth",
+  "comtrade_code": 600
+ },
+ "YEM": {
+  "name": "Yemen",
+  "lat": 15.815,
+  "lon": 47.473,
+  "point_source": "natural_earth",
+  "comtrade_code": 887
+ },
+ "SAU": {
+  "name": "Saudi Arabia",
+  "lat": 24.265,
+  "lon": 44.553,
+  "point_source": "natural_earth",
+  "comtrade_code": 682
+ },
+ "ATA": {
+  "name": "Antarctica",
+  "lat": -76.654,
+  "lon": 67.374,
+  "point_source": "natural_earth",
+  "comtrade_code": 10
+ },
+ "CYP": {
+  "name": "Cyprus",
+  "lat": 34.84,
+  "lon": 33.033,
+  "point_source": "natural_earth",
+  "comtrade_code": 196
+ },
+ "MAR": {
+  "name": "Morocco",
+  "lat": 28.49,
+  "lon": -9.983,
+  "point_source": "natural_earth",
+  "comtrade_code": 504
+ },
+ "EGY": {
+  "name": "Egypt",
+  "lat": 26.895,
+  "lon": 29.37,
+  "point_source": "natural_earth",
+  "comtrade_code": 818
+ },
+ "LBY": {
+  "name": "Libya",
+  "lat": 26.303,
+  "lon": 17.259,
+  "point_source": "natural_earth",
+  "comtrade_code": 434
+ },
+ "ETH": {
+  "name": "Ethiopia",
+  "lat": 9.362,
+  "lon": 38.726,
+  "point_source": "natural_earth",
+  "comtrade_code": 230
+ },
+ "DJI": {
+  "name": "Djibouti",
+  "lat": 11.855,
+  "lon": 42.412,
+  "point_source": "natural_earth",
+  "comtrade_code": 262
+ },
+ "UGA": {
+  "name": "Uganda",
+  "lat": 1.38,
+  "lon": 32.547,
+  "point_source": "natural_earth",
+  "comtrade_code": 800
+ },
+ "RWA": {
+  "name": "Rwanda",
+  "lat": -1.957,
+  "lon": 30.031,
+  "point_source": "natural_earth",
+  "comtrade_code": 646
+ },
+ "BIH": {
+  "name": "Bosnia and Herz.",
+  "lat": 43.853,
+  "lon": 18.115,
+  "point_source": "natural_earth",
+  "comtrade_code": 70
+ },
+ "MKD": {
+  "name": "Macedonia",
+  "lat": 41.681,
+  "lon": 21.72,
+  "point_source": "natural_earth",
+  "comtrade_code": 807
+ },
+ "SRB": {
+  "name": "Serbia",
+  "lat": 44.137,
+  "lon": 21.013,
+  "point_source": "natural_earth",
+  "comtrade_code": 688
+ },
+ "MNE": {
+  "name": "Montenegro",
+  "lat": 42.75,
+  "lon": 19.396,
+  "point_source": "natural_earth",
+  "comtrade_code": 499
+ },
+ "XKX": {
+  "name": "Kosovo",
+  "lat": 42.514,
+  "lon": 20.914,
+  "point_source": "natural_earth"
+ },
+ "TTO": {
+  "name": "Trinidad and Tobago",
+  "lat": 10.563,
+  "lon": -61.29,
+  "point_source": "natural_earth",
+  "comtrade_code": 780
+ },
+ "SSD": {
+  "name": "S. Sudan",
+  "lat": 8.027,
+  "lon": 28.97,
+  "point_source": "natural_earth",
+  "comtrade_code": 728
+ },
+ "MYT": {
+  "name": "Mayotte",
+  "lat": -12.824,
+  "lon": 45.128,
+  "point_source": "portwatch",
+  "comtrade_code": 175
+ },
+ "GUF": {
+  "name": "French Guiana",
+  "lat": 3.857,
+  "lon": -53.322,
+  "point_source": "portwatch",
+  "comtrade_code": 254
+ },
+ "GLP": {
+  "name": "Guadeloupe",
+  "lat": 16.244,
+  "lon": -61.544,
+  "point_source": "portwatch",
+  "comtrade_code": 312
+ },
+ "MTQ": {
+  "name": "Martinique",
+  "lat": 14.643,
+  "lon": -61.014,
+  "point_source": "portwatch",
+  "comtrade_code": 474
+ },
+ "BES": {
+  "name": "Bonaire,  Saint Eustatius and Saba",
+  "lat": 12.181,
+  "lon": -68.294,
+  "point_source": "portwatch",
+  "comtrade_code": 535
+ },
+ "MAF": {
+  "name": "Saint Martin",
+  "lat": 18.078,
+  "lon": -63.067,
+  "point_source": "portwatch",
+  "comtrade_code": 663
+ },
+ "SXM": {
+  "name": "Sint Maarten",
+  "lat": 18.039,
+  "lon": -63.069,
+  "point_source": "portwatch",
+  "comtrade_code": 534
+ },
+ "GIB": {
+  "name": "Gibraltar",
+  "lat": 36.14,
+  "lon": -5.346,
+  "point_source": "portwatch",
+  "comtrade_code": 292
+ },
+ "HKG": {
+  "name": "Hong Kong SAR",
+  "lat": 22.395,
+  "lon": 114.142,
+  "point_source": "portwatch",
+  "comtrade_code": 344
+ },
+ "CUW": {
+  "name": "Curaçao",
+  "lat": 12.2,
+  "lon": -68.969,
+  "point_source": "portwatch",
+  "comtrade_code": 531
+ },
+ "ABW": {
+  "name": "Aruba",
+  "lat": 12.516,
+  "lon": -69.976,
+  "point_source": "portwatch",
+  "comtrade_code": 533
+ },
+ "TCA": {
+  "name": "Turks and Caicos Islands",
+  "lat": 21.8,
+  "lon": -71.741,
+  "point_source": "portwatch",
+  "comtrade_code": 796
+ },
+ "PYF": {
+  "name": "French Polynesia",
+  "lat": -17.675,
+  "lon": -149.4,
+  "point_source": "portwatch",
+  "comtrade_code": 258
+ },
+ "SYC": {
+  "name": "Seychelles",
+  "lat": -4.66,
+  "lon": 55.473,
+  "point_source": "portwatch",
+  "comtrade_code": 690
+ },
+ "KIR": {
+  "name": "Kiribati",
+  "lat": 1.868,
+  "lon": -157.39,
+  "point_source": "portwatch",
+  "comtrade_code": 296
+ },
+ "MHL": {
+  "name": "Marshall Islands",
+  "lat": 7.308,
+  "lon": 168.72,
+  "point_source": "portwatch",
+  "comtrade_code": 584
+ },
+ "GRD": {
+  "name": "Grenada",
+  "lat": 12.113,
+  "lon": -61.679,
+  "point_source": "portwatch",
+  "comtrade_code": 308
+ },
+ "VCT": {
+  "name": "St.  Vincent and the Grenadines",
+  "lat": 13.255,
+  "lon": -61.194,
+  "point_source": "portwatch",
+  "comtrade_code": 670
+ },
+ "BRB": {
+  "name": "Barbados",
+  "lat": 13.183,
+  "lon": -59.557,
+  "point_source": "portwatch",
+  "comtrade_code": 52
+ },
+ "LCA": {
+  "name": "St.  Lucia",
+  "lat": 13.896,
+  "lon": -60.969,
+  "point_source": "portwatch",
+  "comtrade_code": 662
+ },
+ "DMA": {
+  "name": "Dominica",
+  "lat": 15.429,
+  "lon": -61.36,
+  "point_source": "portwatch",
+  "comtrade_code": 212
+ },
+ "MSR": {
+  "name": "Montserrat",
+  "lat": 16.735,
+  "lon": -62.187,
+  "point_source": "portwatch",
+  "comtrade_code": 500
+ },
+ "ATG": {
+  "name": "Antigua and Barbuda",
+  "lat": 17.071,
+  "lon": -61.785,
+  "point_source": "portwatch",
+  "comtrade_code": 28
+ },
+ "KNA": {
+  "name": "St.  Kitts and Nevis",
+  "lat": 17.315,
+  "lon": -62.746,
+  "point_source": "portwatch",
+  "comtrade_code": 658
+ },
+ "VIR": {
+  "name": "United States Virgin Islands",
+  "lat": 17.738,
+  "lon": -64.762,
+  "point_source": "portwatch",
+  "comtrade_code": 850
+ },
+ "BLM": {
+  "name": "Saint-Barthélemy",
+  "lat": 17.906,
+  "lon": -62.831,
+  "point_source": "portwatch",
+  "comtrade_code": 652
+ },
+ "AIA": {
+  "name": "Anguilla",
+  "lat": 18.223,
+  "lon": -63.06,
+  "point_source": "portwatch",
+  "comtrade_code": 660
+ },
+ "VGB": {
+  "name": "British Virgin Islands",
+  "lat": 18.422,
+  "lon": -64.624,
+  "point_source": "portwatch",
+  "comtrade_code": 92
+ },
+ "CYM": {
+  "name": "Cayman Islands",
+  "lat": 19.311,
+  "lon": -81.252,
+  "point_source": "portwatch",
+  "comtrade_code": 136
+ },
+ "MUS": {
+  "name": "Mauritius",
+  "lat": -20.281,
+  "lon": 57.564,
+  "point_source": "portwatch",
+  "comtrade_code": 480
+ },
+ "COM": {
+  "name": "Comoros",
+  "lat": -11.659,
+  "lon": 43.348,
+  "point_source": "portwatch",
+  "comtrade_code": 174
+ },
+ "STP": {
+  "name": "São Tomé and Príncipe",
+  "lat": 0.227,
+  "lon": 6.606,
+  "point_source": "portwatch",
+  "comtrade_code": 678
+ },
+ "CPV": {
+  "name": "Cabo Verde",
+  "lat": 15.076,
+  "lon": -23.634,
+  "point_source": "portwatch",
+  "comtrade_code": 132
+ },
+ "MLT": {
+  "name": "Malta",
+  "lat": 35.891,
+  "lon": 14.442,
+  "point_source": "portwatch",
+  "comtrade_code": 470
+ },
+ "SGP": {
+  "name": "Singapore",
+  "lat": 1.353,
+  "lon": 103.81,
+  "point_source": "portwatch",
+  "comtrade_code": 702
+ },
+ "COK": {
+  "name": "Cook Islands",
+  "lat": -21.223,
+  "lon": -159.788,
+  "point_source": "portwatch",
+  "comtrade_code": 184
+ },
+ "TON": {
+  "name": "Tonga",
+  "lat": -21.159,
+  "lon": -175.204,
+  "point_source": "portwatch",
+  "comtrade_code": 776
+ },
+ "WSM": {
+  "name": "Samoa",
+  "lat": -13.634,
+  "lon": -172.441,
+  "point_source": "portwatch",
+  "comtrade_code": 882
+ },
+ "TUV": {
+  "name": "Tuvalu",
+  "lat": -8.515,
+  "lon": 179.218,
+  "point_source": "portwatch",
+  "comtrade_code": 798
+ },
+ "MDV": {
+  "name": "Maldives",
+  "lat": -0.607,
+  "lon": 73.101,
+  "point_source": "portwatch",
+  "comtrade_code": 462
+ },
+ "NRU": {
+  "name": "Nauru",
+  "lat": -0.522,
+  "lon": 166.929,
+  "point_source": "portwatch",
+  "comtrade_code": 520
+ },
+ "FSM": {
+  "name": "Micronesia",
+  "lat": 6.879,
+  "lon": 158.229,
+  "point_source": "portwatch",
+  "comtrade_code": 583
+ },
+ "ASM": {
+  "name": "American Samoa",
+  "lat": -14.306,
+  "lon": -170.701,
+  "point_source": "portwatch",
+  "comtrade_code": 16
+ },
+ "PLW": {
+  "name": "Palau",
+  "lat": 7.535,
+  "lon": 134.58,
+  "point_source": "portwatch",
+  "comtrade_code": 585
+ },
+ "GUM": {
+  "name": "Guam",
+  "lat": 13.445,
+  "lon": 144.78,
+  "point_source": "portwatch",
+  "comtrade_code": 316
+ },
+ "MNP": {
+  "name": "Northern Mariana Islands",
+  "lat": 15.178,
+  "lon": 145.741,
+  "point_source": "portwatch",
+  "comtrade_code": 580
+ },
+ "BHR": {
+  "name": "Bahrain",
+  "lat": 26.048,
+  "lon": 50.541,
+  "point_source": "portwatch",
+  "comtrade_code": 48
+ },
+ "MAC": {
+  "name": "Macao SAR",
+  "lat": 22.198,
+  "lon": 113.546,
+  "point_source": "portwatch",
+  "comtrade_code": 446
+ },
+ "REU": {
+  "name": "Réunion",
+  "lat": -21.12,
+  "lon": 55.544,
+  "point_source": "portwatch",
+  "comtrade_code": 638
+ },
+ "FRO": {
+  "name": "Faroe Islands",
+  "lat": 62.077,
+  "lon": -6.876,
+  "point_source": "portwatch",
+  "comtrade_code": 234
+ }
+}

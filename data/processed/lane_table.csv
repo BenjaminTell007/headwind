@@ -1,0 +1,38 @@
+lane_id,origin,destination,vessel,group,nm,days,passages,chokepoints,alt_kind,alt_nm,alt_days,extra_nm,extra_days
+Shanghai-Rotterdam,Shanghai,Rotterdam,container,Asia-Europe,10526,29.2,babalmandab|gibraltar|malacca|suez,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait|Taiwan Strait,cape,13846.0,38.5,3320.0,9.2
+Ningbo-Hamburg,Ningbo,Hamburg,container,Asia-Europe,10727,29.8,babalmandab|gibraltar|malacca|suez,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait|Taiwan Strait,cape,14047.0,39.0,3320.0,9.2
+Shenzhen-Antwerp,Shenzhen,Antwerp,container,Asia-Europe,9821,27.3,babalmandab|gibraltar|malacca|suez,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait,cape,13155.0,36.5,3335.0,9.3
+Busan-Rotterdam,Busan,Rotterdam,container,Asia-Europe,10908,30.3,babalmandab|gibraltar|malacca|suez,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait|Taiwan Strait|Korea Strait,cape,14228.0,39.5,3320.0,9.2
+Singapore-Rotterdam,Singapore,Rotterdam,container,Asia-Europe,8370,23.3,babalmandab|gibraltar|malacca|suez,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait,cape,11859.0,32.9,3488.0,9.7
+Kaohsiung-Felixstowe,Kaohsiung,Felixstowe,container,Asia-Europe,9988,27.7,babalmandab|gibraltar|malacca|suez,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Gibraltar Strait|Dover Strait,cape,13280.0,36.9,3292.0,9.1
+Shanghai-Piraeus,Shanghai,Piraeus,container,Asia-Med,7828,21.7,babalmandab|malacca|suez,Suez Canal|Bab el-Mandeb Strait|Malacca Strait|Taiwan Strait,cape,14214.0,39.5,6386.0,17.7
+Shenzhen-Genoa,Shenzhen,Genoa,container,Asia-Med,7971,22.1,babalmandab|malacca|suez,Suez Canal|Bab el-Mandeb Strait|Malacca Strait,cape,12956.0,36.0,4986.0,13.8
+Shanghai-Los_Angeles,Shanghai,Los Angeles,container,Transpacific,5763,16.0,,Korea Strait|Tsugaru Strait,,,,,
+Busan-Los_Angeles,Busan,Los Angeles,container,Transpacific,5308,14.7,,Korea Strait|Tsugaru Strait,,,,,
+Shenzhen-Los_Angeles,Shenzhen,Los Angeles,container,Transpacific,6448,17.9,,Taiwan Strait,,,,,
+Tokyo-Los_Angeles,Tokyo,Los Angeles,container,Transpacific,4926,13.7,,,,,,,
+Busan-Vancouver,Busan,Vancouver,container,Transpacific,4707,13.1,,Korea Strait|Tsugaru Strait,,,,,
+Shanghai-New_York,Shanghai,New York,container,Asia-US East,10670,29.6,panama,Panama Canal|Korea Strait|Tsugaru Strait|Windward Passage,no_panama,12339.0,34.3,1669.0,4.6
+Shenzhen-Savannah,Shenzhen,Savannah,container,Asia-US East,10955,30.4,panama,Panama Canal|Taiwan Strait|Windward Passage,no_panama,12143.0,33.7,1188.0,3.3
+Rotterdam-New_York,Rotterdam,New York,container,Transatlantic,3306,9.2,,Dover Strait,,,,,
+Hamburg-Savannah,Hamburg,Savannah,container,Transatlantic,4047,11.2,,,,,,,
+Felixstowe-New_York,Felixstowe,New York,container,Transatlantic,3250,9.0,,Dover Strait,,,,,
+Valencia-Houston,Valencia,Houston,container,Transatlantic,5145,14.3,gibraltar,Gibraltar Strait,,,,,
+Nhava_Sheva-Rotterdam,Nhava Sheva,Rotterdam,container,India-Europe,6374,17.7,gibraltar|babalmandab|suez,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait|Dover Strait,cape,10841.0,30.1,4468.0,12.4
+Nhava_Sheva-New_York,Nhava Sheva,New York,container,India-US,8186,22.7,gibraltar|babalmandab|suez,Suez Canal|Bab el-Mandeb Strait|Gibraltar Strait,cape,11467.0,31.9,3280.0,9.1
+Colombo-Singapore,Colombo,Singapore,container,Intra-Asia,1612,4.5,malacca,Malacca Strait,,,,,
+Shanghai-Lagos,Shanghai,Lagos,container,Asia-Africa,10293,28.6,south_africa|sunda,Cape of Good Hope|Taiwan Strait|Sunda Strait,,,,,
+Lagos-Rotterdam,Lagos,Rotterdam,container,Africa-Europe,4252,11.8,,Dover Strait,,,,,
+Ras_Tanura-Ningbo,Ras Tanura,Ningbo,tanker,Gulf-Asia,5853,18.8,malacca|ormuz,Malacca Strait|Strait of Hormuz|Taiwan Strait,,,,,
+Ras_Tanura-Tokyo,Ras Tanura,Tokyo,tanker,Gulf-Asia,6698,21.5,malacca|ormuz,Malacca Strait|Strait of Hormuz|Luzon Strait,,,,,
+Ras_Tanura-Rotterdam,Ras Tanura,Rotterdam,tanker,Gulf-Europe,6524,20.9,babalmandab|gibraltar|ormuz|suez,Suez Canal|Bab el-Mandeb Strait|Strait of Hormuz|Gibraltar Strait|Dover Strait,cape,11307.0,36.2,4783.0,15.3
+Jebel_Ali-Nhava_Sheva,Jebel Ali,Nhava Sheva,tanker,Gulf-India,1197,3.8,ormuz,Strait of Hormuz,,,,,
+Houston-Rotterdam,Houston,Rotterdam,tanker,US-Europe,5019,16.1,,Dover Strait,,,,,
+Houston-Ningbo,Houston,Ningbo,tanker,US-Asia,10235,32.8,panama,Panama Canal|Korea Strait|Tsugaru Strait|Yucatan Channel,no_panama,13827.0,44.3,3592.0,11.5
+Santos-Shanghai,Santos,Shanghai,bulk,Brazil-Asia,11052,35.4,south_africa|sunda,Cape of Good Hope|Taiwan Strait|Sunda Strait,,,,,
+Santos-Rotterdam,Santos,Rotterdam,bulk,Brazil-Europe,5487,17.6,,Dover Strait,,,,,
+Port_Hedland-Shanghai,Port Hedland,Shanghai,bulk,Australia-Asia,3258,10.4,,Taiwan Strait|Lombok Strait|Makassar Strait|Mindoro Strait,,,,,
+Durban-Shanghai,Durban,Shanghai,bulk,Africa-Asia,6987,22.4,sunda,Taiwan Strait|Sunda Strait,,,,,
+Constanta-Piraeus,Constanta,Piraeus,bulk,Black Sea-Med,565,1.8,bosporus,Bosporus Strait,,,,,
+Constanta-Rotterdam,Constanta,Rotterdam,bulk,Black Sea-Europe,3377,10.8,bosporus|gibraltar,Bosporus Strait|Gibraltar Strait|Dover Strait,,,,,
+Gdansk-Rotterdam,Gdansk,Rotterdam,container,Baltic-Europe,885,2.5,,Oresund Strait,,,,,

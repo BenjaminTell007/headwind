@@ -1,0 +1,103 @@
+/* Landing page (repo root index.html). Same tokens as the app: near-black,
+   off-white, one accent blue, tanker purple only on the tanker. */
+:root {
+  --bg:#0a0a0a; --fg:#f2f2f0; --dim:#8a8a8a; --faint:#4a4a4a; --line:#2a2a2c;
+  --accent:#4c8dff; --tanker:#f08a3c;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; background:var(--bg); color:var(--fg); overflow:hidden; }
+body { font:400 13px/1.4 var(--sans); -webkit-font-smoothing:antialiased; }
+a { color:inherit; text-decoration:none; }
+.tag { font:300 10.5px/1.2 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--dim); }
+
+#cv { position:fixed; inset:0; width:100%; height:100%; display:block; }
+video { display:none; }
+
+/* everything over the footage fades in once the reveal has started */
+.ui { position:fixed; inset:0; pointer-events:none; }
+.ui > * { pointer-events:auto; }
+/* darken the bottom and top so the text reads over the footage */
+.ui::before { content:''; position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity 1.4s ease;
+  background:
+    linear-gradient(0deg, rgba(10,10,10,.92) 0%, rgba(10,10,10,.7) 22%, rgba(10,10,10,0) 50%),
+    linear-gradient(180deg, rgba(10,10,10,.75) 0, rgba(10,10,10,0) 130px); }
+.on .ui::before { opacity:1; }
+.fade { opacity:0; transform:translateY(8px); transition:opacity 1.1s ease, transform 1.1s cubic-bezier(.2,.8,.2,1); }
+.on .fade { opacity:1; transform:none; }
+.on .d1 { transition-delay:.15s; } .on .d2 { transition-delay:.35s; } .on .d3 { transition-delay:.55s; } .on .d4 { transition-delay:.8s; }
+
+header { position:absolute; left:32px; right:32px; top:26px; display:flex; align-items:center; justify-content:space-between; }
+.logo { font:300 17px/1 var(--mono); letter-spacing:.42em; color:var(--fg); }
+nav { display:flex; gap:26px; align-items:center; }
+nav a.tag:hover { color:var(--fg); }
+
+.btn { font:400 11px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; padding:12px 18px; border-radius:999px; border:1px solid var(--line); color:var(--fg); background:rgba(10,10,10,.55); backdrop-filter:blur(8px); transition:border-color .25s, background .25s; display:inline-flex; gap:10px; align-items:center; cursor:pointer; }
+.btn:hover { border-color:var(--fg); }
+.btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn.primary:hover { background:#6aa0ff; border-color:#6aa0ff; }
+.btn .arr { transition:transform .25s; } .btn:hover .arr { transform:translateX(3px); }
+
+.hero { position:absolute; left:32px; bottom:44px; max-width:640px; }
+.hero h1 { max-height:240px; overflow:hidden; font:300 clamp(30px, 4vw, 54px)/1.04 var(--sans); letter-spacing:-.025em; margin:14px 0 18px; }
+.hero h1 em { font-style:normal; color:var(--dim); }
+.hero p { font:400 15px/1.55 var(--sans); color:#c4c4c2; margin:0 0 26px; max-width:520px; }
+.hero .row { display:flex; gap:12px; flex-wrap:wrap; }
+
+.readout { position:absolute; right:32px; bottom:44px; width:300px; border-top:1px solid var(--line); }
+.readout .r { display:flex; justify-content:space-between; align-items:baseline; padding:11px 0; border-bottom:1px solid var(--line); }
+.readout .r b { font:400 19px/1 var(--sans); letter-spacing:-.01em; font-variant-numeric:tabular-nums; }
+.readout .live::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--fg); margin-right:8px; vertical-align:1px; animation:pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity:.25; } }
+
+/* corner brackets that lock onto the ship */
+.lock { position:absolute; left:51%; top:44%; width:76vw; height:20vh; transform:translate(-50%,-50%) scale(1.08); opacity:0; transition:opacity .8s ease .2s, transform 1.2s cubic-bezier(.2,.8,.2,1) .2s; pointer-events:none; }
+.on .lock { opacity:1; transform:translate(-50%,-50%) scale(1); }
+.lock svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+.lock .lab { position:absolute; left:0; top:-26px; display:flex; gap:14px; }
+.lock .lab .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent); margin-right:7px; vertical-align:0; }
+.lock .lab2 { position:absolute; right:0; bottom:-24px; }
+
+.credit { position:absolute; right:32px; top:58px; font-size:9.5px; color:var(--faint); }
+.hint { position:absolute; left:50%; bottom:18px; transform:translateX(-50%); color:var(--faint); }
+
+/* act 2: the big title over the fleet */
+.title { position:absolute; left:0; right:0; top:34%; text-align:center; pointer-events:none; opacity:0; transform:scale(1.04); transition:opacity 1.6s ease .6s, transform 2.4s cubic-bezier(.2,.8,.2,1) .6s; }
+.title .word { font:300 clamp(46px, 10.5vw, 168px)/1 var(--mono); letter-spacing:.42em; padding-left:.42em; color:#fff; text-shadow:0 0 40px rgba(10,10,10,.85), 0 0 12px rgba(10,10,10,.9); }
+.title .sub { margin-top:18px; color:#d0d0ce; letter-spacing:.32em; }
+.act2 .title { opacity:1; transform:none; }
+.act2 .lock { opacity:0; transition:opacity .5s; }
+.act2 .hero h1 { opacity:0; max-height:0; margin:0; transition:opacity .5s, max-height .9s cubic-bezier(.2,.8,.2,1), margin .9s; }
+.act2 .hero .tag { opacity:0; transition:opacity .6s; }
+
+/* leaving: everything else fades while the matrix closes over the footage */
+.leaving .ui { opacity:0; transition:opacity .5s; }
+
+@media (max-width: 900px) {
+  header { left:16px; right:16px; top:18px; }
+  nav .tag { display:none; }
+  .hero { left:16px; right:16px; bottom:28px; }
+  .hero p { font-size:14px; }
+  .readout, .credit, .hint { display:none; }
+  .lock { width:88vw; height:16vh; }
+}
+@media (prefers-reduced-motion: reduce) { .fade, .lock { transition:none; } }
+
+/* loading screen: shown until the tanker clip can play */
+#loader { position:fixed; inset:0; z-index:50; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; transition:opacity .8s ease, visibility .8s; }
+#loader.done { opacity:0; visibility:hidden; }
+#loader .lw { font:300 clamp(28px, 4vw, 44px)/1 var(--mono); letter-spacing:.42em; padding-left:.42em; color:var(--fg); }
+#loader .lbar { width:min(260px, 60vw); height:1px; background:var(--line); position:relative; overflow:hidden; }
+#loader .lbar i { position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent); transition:width .3s ease; }
+#loader .lrow { width:min(260px, 60vw); display:flex; justify-content:space-between; }
+
+/* clean layout (Nov 15): one big HEADWAY in the middle, a tagline, two buttons, a small credit */
+.center { position:absolute; left:0; right:0; top:auto; bottom:9vh; transform:none; display:flex; flex-direction:column; align-items:center; gap:22px; pointer-events:none; }
+.center > * { pointer-events:auto; }
+.center::before { content:''; position:absolute; left:50%; top:50%; width:min(1500px, 120vw); height:520px; transform:translate(-50%,-50%); background:radial-gradient(closest-side, rgba(10,10,10,.45), rgba(10,10,10,0)); z-index:-1; pointer-events:none; }
+.hw-bigword { width:min(900px, 84vw); height:auto; aspect-ratio:2400/400; display:block; }
+.tagline { font:300 clamp(17px, 1.7vw, 24px)/1.3 var(--sans); letter-spacing:.01em; color:#e9e9e7; margin:0; }
+.center .row { display:flex; gap:12px; }
+.credit { position:absolute; left:0; right:0; top:auto; bottom:18px; text-align:center; font-size:9.5px; color:rgba(255,255,255,.4); }
+.ui::before { background: linear-gradient(0deg, rgba(10,10,10,.55) 0%, rgba(10,10,10,0) 30%) !important; }

@@ -1,0 +1,211 @@
+corridor_id,region_a,region_b,normal_days,expected_days,extra_days,blocked_share,efficiency,binding_passage
+middle_east_gulf__east_mediterranean,Middle East Gulf,East Mediterranean,10.0,23.8,13.8,0.96,0.017,red_sea
+middle_east_gulf__black_sea,Middle East Gulf,Black Sea,11.1,25.2,14.1,0.96,0.018,red_sea
+middle_east_gulf__west_mediterranean,Middle East Gulf,West Mediterranean,12.9,23.0,10.1,0.96,0.022,hormuz
+middle_east_gulf__north_europe,Middle East Gulf,North Europe,17.5,25.9,8.4,0.96,0.027,hormuz
+middle_east_gulf__baltic,Middle East Gulf,Baltic,19.8,28.2,8.4,0.96,0.028,hormuz
+middle_east_gulf__north_america_east,Middle East Gulf,North America East,22.5,28.9,6.4,0.96,0.031,hormuz
+middle_east_gulf__caribbean,Middle East Gulf,Caribbean,24.7,28.7,4.0,0.96,0.034,hormuz
+middle_east_gulf__us_gulf,Middle East Gulf,US Gulf,26.8,31.6,4.8,0.96,0.034,hormuz
+middle_east_gulf__south_america_west,Middle East Gulf,South America West,29.7,31.4,1.7,0.96,0.038,hormuz
+northeast_asia__middle_east_gulf,Northeast Asia,Middle East Gulf,16.8,16.8,0.0,0.96,0.04,hormuz
+middle_east_gulf__north_america_west,Middle East Gulf,North America West,31.4,31.4,0.0,0.96,0.04,hormuz
+middle_east_gulf__east_africa,Middle East Gulf,East Africa,7.0,7.0,0.0,0.96,0.04,hormuz
+middle_east_gulf__west_africa,Middle East Gulf,West Africa,20.9,20.9,0.0,0.96,0.04,hormuz
+middle_east_gulf__red_sea,Middle East Gulf,Red Sea,6.4,6.4,0.0,0.96,0.04,hormuz
+south_asia__middle_east_gulf,South Asia,Middle East Gulf,3.3,3.3,0.0,0.96,0.04,hormuz
+middle_east_gulf__southern_africa,Middle East Gulf,Southern Africa,11.3,11.3,0.0,0.96,0.04,hormuz
+middle_east_gulf__oceania,Middle East Gulf,Oceania,20.0,20.0,0.0,0.96,0.04,hormuz
+middle_east_gulf__south_america_east,Middle East Gulf,South America East,23.0,23.0,0.0,0.96,0.04,hormuz
+southeast_asia__middle_east_gulf,Southeast Asia,Middle East Gulf,9.8,9.8,0.0,0.96,0.04,hormuz
+east_asia__middle_east_gulf,East Asia,Middle East Gulf,15.8,15.8,0.0,0.96,0.04,hormuz
+south_asia__black_sea,South Asia,Black Sea,11.3,24.9,13.6,0.512,0.222,red_sea
+black_sea__east_africa,Black Sea,East Africa,11.4,21.3,9.9,0.512,0.261,red_sea
+southeast_asia__black_sea,Southeast Asia,Black Sea,16.9,28.7,11.8,0.512,0.287,red_sea
+east_asia__black_sea,East Asia,Black Sea,22.8,34.4,11.6,0.512,0.324,bosporus
+northeast_asia__black_sea,Northeast Asia,Black Sea,23.9,35.5,11.6,0.512,0.329,bosporus
+red_sea__south_america_west,Red Sea,South America West,23.4,24.4,1.0,0.635,0.349,red_sea
+red_sea__north_america_west,Red Sea,North America West,27.8,28.6,0.8,0.635,0.355,red_sea
+red_sea__east_africa,Red Sea,East Africa,6.8,6.8,0.0,0.635,0.365,red_sea
+red_sea__black_sea,Red Sea,Black Sea,4.8,4.8,0.0,0.635,0.365,red_sea
+southeast_asia__red_sea,Southeast Asia,Red Sea,12.2,12.2,0.0,0.635,0.365,red_sea
+south_asia__red_sea,South Asia,Red Sea,6.7,6.7,0.0,0.635,0.365,red_sea
+red_sea__north_europe,Red Sea,North Europe,11.2,11.2,0.0,0.635,0.365,red_sea
+red_sea__baltic,Red Sea,Baltic,13.5,13.5,0.0,0.635,0.365,red_sea
+red_sea__south_america_east,Red Sea,South America East,19.8,19.8,0.0,0.635,0.365,red_sea
+red_sea__caribbean,Red Sea,Caribbean,18.4,18.4,0.0,0.635,0.365,red_sea
+red_sea__east_mediterranean,Red Sea,East Mediterranean,3.7,3.7,0.0,0.635,0.365,red_sea
+red_sea__us_gulf,Red Sea,US Gulf,20.5,20.5,0.0,0.635,0.365,red_sea
+red_sea__north_america_east,Red Sea,North America East,16.2,16.2,0.0,0.635,0.365,red_sea
+red_sea__southern_africa,Red Sea,Southern Africa,11.0,11.0,0.0,0.635,0.365,red_sea
+red_sea__west_africa,Red Sea,West Africa,16.2,16.2,0.0,0.635,0.365,red_sea
+red_sea__west_mediterranean,Red Sea,West Mediterranean,6.6,6.6,0.0,0.635,0.365,red_sea
+red_sea__oceania,Red Sea,Oceania,21.4,21.4,0.0,0.635,0.365,red_sea
+east_asia__red_sea,East Asia,Red Sea,18.2,18.2,0.0,0.635,0.365,red_sea
+northeast_asia__red_sea,Northeast Asia,Red Sea,19.3,19.3,0.0,0.635,0.365,red_sea
+black_sea__oceania,Black Sea,Oceania,26.0,33.5,7.5,0.512,0.379,bosporus
+black_sea__southern_africa,Black Sea,Southern Africa,15.7,19.8,4.1,0.512,0.388,bosporus
+south_asia__east_mediterranean,South Asia,East Mediterranean,10.2,23.5,13.3,0.0,0.435,red_sea
+black_sea__north_america_west,Black Sea,North America West,26.0,27.6,1.6,0.512,0.461,bosporus
+black_sea__south_america_west,Black Sea,South America West,21.6,22.8,1.2,0.512,0.463,bosporus
+black_sea__caribbean,Black Sea,Caribbean,16.6,16.6,0.0,0.512,0.488,bosporus
+black_sea__us_gulf,Black Sea,US Gulf,18.7,18.7,0.0,0.512,0.488,bosporus
+black_sea__north_america_east,Black Sea,North America East,14.4,14.4,0.0,0.512,0.488,bosporus
+east_mediterranean__black_sea,East Mediterranean,Black Sea,1.6,1.6,0.0,0.512,0.488,bosporus
+black_sea__west_africa,Black Sea,West Africa,14.4,14.4,0.0,0.512,0.488,bosporus
+black_sea__baltic,Black Sea,Baltic,11.8,11.8,0.0,0.512,0.488,bosporus
+west_mediterranean__black_sea,West Mediterranean,Black Sea,4.8,4.8,0.0,0.512,0.488,bosporus
+black_sea__south_america_east,Black Sea,South America East,18.0,18.0,0.0,0.512,0.488,bosporus
+black_sea__north_europe,Black Sea,North Europe,9.4,9.4,0.0,0.512,0.488,bosporus
+east_mediterranean__east_africa,East Mediterranean,East Africa,10.3,19.9,9.6,0.0,0.518,red_sea
+southeast_asia__east_mediterranean,Southeast Asia,East Mediterranean,15.8,27.4,11.6,0.0,0.578,red_sea
+south_asia__west_mediterranean,South Asia,West Mediterranean,13.2,22.8,9.6,0.0,0.579,red_sea
+east_asia__east_mediterranean,East Asia,East Mediterranean,21.7,32.9,11.2,0.0,0.659,red_sea
+northeast_asia__east_mediterranean,Northeast Asia,East Mediterranean,22.8,34.0,11.2,0.0,0.67,red_sea
+south_asia__north_europe,South Asia,North Europe,17.7,25.6,7.9,0.0,0.692,red_sea
+west_mediterranean__east_africa,West Mediterranean,East Africa,13.3,19.2,5.9,0.0,0.692,red_sea
+caribbean__south_america_west,Caribbean,South America West,5.7,8.1,2.4,0.0,0.702,panama
+southeast_asia__west_mediterranean,Southeast Asia,West Mediterranean,18.7,26.5,7.8,0.0,0.705,red_sea
+south_asia__baltic,South Asia,Baltic,20.1,28.0,7.9,0.0,0.718,red_sea
+us_gulf__south_america_west,US Gulf,South America West,8.2,10.7,2.5,0.0,0.764,panama
+east_asia__west_mediterranean,East Asia,West Mediterranean,24.7,32.3,7.6,0.0,0.766,red_sea
+north_america_west__caribbean,North America West,Caribbean,10.0,13.0,3.0,0.0,0.771,panama
+northeast_asia__west_mediterranean,Northeast Asia,West Mediterranean,25.8,33.4,7.6,0.0,0.773,red_sea
+east_mediterranean__oceania,East Mediterranean,Oceania,24.9,32.1,7.2,0.0,0.776,red_sea
+southeast_asia__north_europe,Southeast Asia,North Europe,23.3,29.5,6.2,0.0,0.791,red_sea
+east_mediterranean__southern_africa,East Mediterranean,Southern Africa,14.6,18.3,3.7,0.0,0.796,red_sea
+south_asia__north_america_east,South Asia,North America East,22.7,28.5,5.8,0.0,0.797,red_sea
+us_gulf__north_america_west,US Gulf,North America West,12.5,15.6,3.1,0.0,0.802,panama
+southeast_asia__baltic,Southeast Asia,Baltic,25.6,31.8,6.2,0.0,0.806,red_sea
+north_europe__east_africa,North Europe,East Africa,17.8,22.0,4.2,0.0,0.809,red_sea
+north_america_east__south_america_west,North America East,South America West,9.5,11.7,2.2,0.0,0.815,panama
+baltic__east_africa,Baltic,East Africa,20.2,24.4,4.2,0.0,0.828,red_sea
+east_asia__north_europe,East Asia,North Europe,29.2,35.0,5.8,0.0,0.833,red_sea
+north_america_east__north_america_west,North America East,North America West,13.9,16.6,2.7,0.0,0.836,panama
+northeast_asia__north_europe,Northeast Asia,North Europe,30.3,36.1,5.8,0.0,0.838,red_sea
+east_asia__baltic,East Asia,Baltic,31.6,37.4,5.8,0.0,0.844,red_sea
+northeast_asia__baltic,Northeast Asia,Baltic,32.7,38.5,5.8,0.0,0.848,red_sea
+south_asia__us_gulf,South Asia,US Gulf,27.1,31.3,4.2,0.0,0.866,red_sea
+southeast_asia__north_america_east,Southeast Asia,North America East,28.3,32.4,4.1,0.0,0.874,red_sea
+south_asia__caribbean,South Asia,Caribbean,24.9,28.3,3.4,0.0,0.879,red_sea
+west_mediterranean__oceania,West Mediterranean,Oceania,27.9,31.3,3.4,0.0,0.891,red_sea
+east_africa__north_america_east,East Africa,North America East,22.8,24.9,2.1,0.0,0.916,red_sea
+north_europe__north_america_west,North Europe,North America West,21.7,23.6,1.9,0.0,0.92,panama
+baltic__north_america_west,Baltic,North America West,23.7,25.6,1.9,0.0,0.924,panama
+west_mediterranean__north_america_west,West Mediterranean,North America West,21.5,23.2,1.7,0.0,0.926,panama
+north_europe__south_america_west,North Europe,South America West,17.4,18.7,1.3,0.0,0.928,panama
+southeast_asia__us_gulf,Southeast Asia,US Gulf,32.6,35.1,2.5,0.0,0.929,red_sea
+baltic__south_america_west,Baltic,South America West,19.4,20.8,1.4,0.0,0.933,panama
+west_mediterranean__south_america_west,West Mediterranean,South America West,17.2,18.4,1.2,0.0,0.937,panama
+east_mediterranean__north_america_west,East Mediterranean,North America West,24.4,26.0,1.6,0.0,0.938,panama
+northeast_asia__caribbean,Northeast Asia,Caribbean,24.5,26.1,1.6,0.0,0.938,panama
+northeast_asia__us_gulf,Northeast Asia,US Gulf,27.0,28.6,1.6,0.0,0.945,panama
+east_mediterranean__south_america_west,East Mediterranean,South America West,20.1,21.3,1.2,0.0,0.946,panama
+southeast_asia__caribbean,Southeast Asia,Caribbean,30.5,32.2,1.7,0.0,0.947,red_sea
+north_europe__oceania,North Europe,Oceania,32.4,34.2,1.8,0.0,0.948,red_sea
+caribbean__oceania,Caribbean,Oceania,23.5,24.7,1.2,0.0,0.95,panama
+us_gulf__oceania,US Gulf,Oceania,26.0,27.4,1.4,0.0,0.951,panama
+baltic__oceania,Baltic,Oceania,34.8,36.6,1.8,0.0,0.951,red_sea
+east_asia__caribbean,East Asia,Caribbean,25.8,27.1,1.3,0.0,0.951,panama
+east_asia__us_gulf,East Asia,US Gulf,28.3,29.6,1.3,0.0,0.957,panama
+west_africa__north_america_west,West Africa,North America West,22.9,23.9,1.0,0.0,0.957,panama
+north_america_east__oceania,North America East,Oceania,27.4,28.4,1.0,0.0,0.965,panama
+south_asia__south_america_west,South Asia,South America West,30.0,31.0,1.0,0.0,0.968,red_sea
+northeast_asia__north_america_east,Northeast Asia,North America East,28.4,29.3,0.9,0.0,0.97,panama
+west_africa__south_america_west,West Africa,South America West,18.6,19.1,0.5,0.0,0.975,panama
+east_asia__north_america_east,East Asia,North America East,29.6,30.2,0.6,0.0,0.981,panama
+east_africa__us_gulf,East Africa,US Gulf,27.1,27.6,0.5,0.0,0.982,red_sea
+north_america_west__south_america_east,North America West,South America East,21.0,21.2,0.2,0.0,0.992,panama
+southern_africa__north_america_west,Southern Africa,North America West,28.6,28.7,0.1,0.0,0.996,panama
+west_mediterranean__southern_africa,West Mediterranean,Southern Africa,17.6,17.7,0.1,0.0,0.996,red_sea
+south_america_east__south_america_west,South America East,South America West,13.6,13.6,0.0,0.0,1.0,
+southern_africa__caribbean,Southern Africa,Caribbean,19.7,19.7,0.0,0.0,1.0,
+southern_africa__south_america_east,Southern Africa,South America East,11.8,11.8,0.0,0.0,1.0,
+southern_africa__south_america_west,Southern Africa,South America West,20.7,20.7,0.0,0.0,1.0,
+baltic__west_africa,Baltic,West Africa,14.2,14.2,0.0,0.0,1.0,
+baltic__north_america_east,Baltic,North America East,10.6,10.6,0.0,0.0,1.0,
+southern_africa__oceania,Southern Africa,Oceania,17.1,17.1,0.0,0.0,1.0,
+baltic__us_gulf,Baltic,US Gulf,15.4,15.4,0.0,0.0,1.0,
+baltic__southern_africa,Baltic,Southern Africa,21.9,21.9,0.0,0.0,1.0,
+east_africa__south_america_east,East Africa,South America East,16.6,16.6,0.0,0.0,1.0,
+baltic__south_america_east,Baltic,South America East,17.6,17.6,0.0,0.0,1.0,
+east_africa__caribbean,East Africa,Caribbean,24.6,24.6,0.0,0.0,1.0,
+east_africa__north_america_west,East Africa,North America West,33.1,33.1,0.0,0.0,1.0,
+us_gulf__caribbean,US Gulf,Caribbean,3.5,3.5,0.0,0.0,1.0,
+east_africa__oceania,East Africa,Oceania,19.0,19.0,0.0,0.0,1.0,
+us_gulf__south_america_east,US Gulf,South America East,15.5,15.5,0.0,0.0,1.0,
+north_america_west__south_america_west,North America West,South America West,10.2,10.2,0.0,0.0,1.0,
+north_america_west__oceania,North America West,Oceania,18.4,18.4,0.0,0.0,1.0,
+caribbean__south_america_east,Caribbean,South America East,12.2,12.2,0.0,0.0,1.0,
+north_america_east__us_gulf,North America East,US Gulf,5.2,5.2,0.0,0.0,1.0,
+north_america_east__south_america_east,North America East,South America East,14.0,14.0,0.0,0.0,1.0,
+east_africa__southern_africa,East Africa,Southern Africa,4.9,4.9,0.0,0.0,1.0,
+north_america_east__caribbean,North America East,Caribbean,4.2,4.2,0.0,0.0,1.0,
+west_africa__oceania,West Africa,Oceania,25.3,25.3,0.0,0.0,1.0,
+east_africa__south_america_west,East Africa,South America West,25.6,25.6,0.0,0.0,1.0,
+southern_africa__north_america_east,Southern Africa,North America East,21.3,21.3,0.0,0.0,1.0,
+west_africa__caribbean,West Africa,Caribbean,14.0,14.0,0.0,0.0,1.0,
+west_africa__us_gulf,West Africa,US Gulf,16.9,16.9,0.0,0.0,1.0,
+west_africa__north_america_east,West Africa,North America East,14.1,14.1,0.0,0.0,1.0,
+southern_africa__us_gulf,Southern Africa,US Gulf,23.1,23.1,0.0,0.0,1.0,
+west_africa__southern_africa,West Africa,Southern Africa,9.6,9.6,0.0,0.0,1.0,
+west_africa__east_africa,West Africa,East Africa,14.5,14.5,0.0,0.0,1.0,
+baltic__caribbean,Baltic,Caribbean,14.0,14.0,0.0,0.0,1.0,
+west_africa__south_america_east,West Africa,South America East,10.5,10.5,0.0,0.0,1.0,
+east_asia__northeast_asia,East Asia,Northeast Asia,1.3,1.3,0.0,0.0,1.0,
+north_europe__caribbean,North Europe,Caribbean,12.3,12.3,0.0,0.0,1.0,
+southeast_asia__south_america_east,Southeast Asia,South America East,25.2,25.2,0.0,0.0,1.0,
+southeast_asia__north_america_west,Southeast Asia,North America West,21.7,21.7,0.0,0.0,1.0,
+southeast_asia__southern_africa,Southeast Asia,Southern Africa,13.8,13.8,0.0,0.0,1.0,
+southeast_asia__east_africa,Southeast Asia,East Africa,11.5,11.5,0.0,0.0,1.0,
+southeast_asia__west_africa,Southeast Asia,West Africa,23.1,23.1,0.0,0.0,1.0,
+southeast_asia__south_asia,Southeast Asia,South Asia,7.0,7.0,0.0,0.0,1.0,
+northeast_asia__oceania,Northeast Asia,Oceania,13.0,13.0,0.0,0.0,1.0,
+northeast_asia__south_america_west,Northeast Asia,South America West,24.7,24.7,0.0,0.0,1.0,
+northeast_asia__south_america_east,Northeast Asia,South America East,31.8,31.8,0.0,0.0,1.0,
+northeast_asia__north_america_west,Northeast Asia,North America West,14.7,14.7,0.0,0.0,1.0,
+northeast_asia__southern_africa,Northeast Asia,Southern Africa,20.5,20.5,0.0,0.0,1.0,
+southeast_asia__south_america_west,Southeast Asia,South America West,30.2,30.2,0.0,0.0,1.0,
+northeast_asia__east_africa,Northeast Asia,East Africa,18.5,18.5,0.0,0.0,1.0,
+northeast_asia__south_asia,Northeast Asia,South Asia,14.1,14.1,0.0,0.0,1.0,
+northeast_asia__southeast_asia,Northeast Asia,Southeast Asia,7.1,7.1,0.0,0.0,1.0,
+east_asia__oceania,East Asia,Oceania,12.8,12.8,0.0,0.0,1.0,
+east_asia__south_america_west,East Asia,South America West,26.0,26.0,0.0,0.0,1.0,
+east_asia__south_america_east,East Asia,South America East,30.7,30.7,0.0,0.0,1.0,
+east_asia__north_america_west,East Asia,North America West,16.0,16.0,0.0,0.0,1.0,
+east_asia__southern_africa,East Asia,Southern Africa,19.4,19.4,0.0,0.0,1.0,
+east_asia__east_africa,East Asia,East Africa,17.5,17.5,0.0,0.0,1.0,
+east_asia__west_africa,East Asia,West Africa,28.6,28.6,0.0,0.0,1.0,
+east_asia__south_asia,East Asia,South Asia,13.0,13.0,0.0,0.0,1.0,
+east_asia__southeast_asia,East Asia,Southeast Asia,6.0,6.0,0.0,0.0,1.0,
+northeast_asia__west_africa,Northeast Asia,West Africa,29.7,29.7,0.0,0.0,1.0,
+southeast_asia__oceania,Southeast Asia,Oceania,11.7,11.7,0.0,0.0,1.0,
+south_asia__west_africa,South Asia,West Africa,20.2,20.2,0.0,0.0,1.0,
+south_asia__east_africa,South Asia,East Africa,6.9,6.9,0.0,0.0,1.0,
+north_europe__us_gulf,North Europe,US Gulf,13.9,13.9,0.0,0.0,1.0,
+north_europe__north_america_east,North Europe,North America East,9.2,9.2,0.0,0.0,1.0,
+north_europe__southern_africa,North Europe,Southern Africa,19.5,19.5,0.0,0.0,1.0,
+north_europe__west_africa,North Europe,West Africa,11.8,11.8,0.0,0.0,1.0,
+north_europe__baltic,North Europe,Baltic,2.5,2.5,0.0,0.0,1.0,
+west_mediterranean__south_america_east,West Mediterranean,South America East,13.5,13.5,0.0,0.0,1.0,
+west_mediterranean__caribbean,West Mediterranean,Caribbean,12.2,12.2,0.0,0.0,1.0,
+west_mediterranean__us_gulf,West Mediterranean,US Gulf,14.3,14.3,0.0,0.0,1.0,
+west_mediterranean__north_america_east,West Mediterranean,North America East,10.0,10.0,0.0,0.0,1.0,
+west_mediterranean__west_africa,West Mediterranean,West Africa,9.9,9.9,0.0,0.0,1.0,
+west_mediterranean__baltic,West Mediterranean,Baltic,7.3,7.3,0.0,0.0,1.0,
+west_mediterranean__north_europe,West Mediterranean,North Europe,4.9,4.9,0.0,0.0,1.0,
+east_mediterranean__south_america_east,East Mediterranean,South America East,16.4,16.4,0.0,0.0,1.0,
+east_mediterranean__caribbean,East Mediterranean,Caribbean,15.1,15.1,0.0,0.0,1.0,
+east_mediterranean__us_gulf,East Mediterranean,US Gulf,17.2,17.2,0.0,0.0,1.0,
+east_mediterranean__north_america_east,East Mediterranean,North America East,12.9,12.9,0.0,0.0,1.0,
+east_mediterranean__west_africa,East Mediterranean,West Africa,12.8,12.8,0.0,0.0,1.0,
+east_mediterranean__baltic,East Mediterranean,Baltic,10.2,10.2,0.0,0.0,1.0,
+east_mediterranean__north_europe,East Mediterranean,North Europe,7.8,7.8,0.0,0.0,1.0,
+east_mediterranean__west_mediterranean,East Mediterranean,West Mediterranean,3.3,3.3,0.0,0.0,1.0,
+south_america_east__oceania,South America East,Oceania,22.0,22.0,0.0,0.0,1.0,
+south_asia__oceania,South Asia,Oceania,17.5,17.5,0.0,0.0,1.0,
+south_asia__south_america_east,South Asia,South America East,22.4,22.4,0.0,0.0,1.0,
+south_asia__north_america_west,South Asia,North America West,28.6,28.6,0.0,0.0,1.0,
+south_asia__southern_africa,South Asia,Southern Africa,10.6,10.6,0.0,0.0,1.0,
+north_europe__south_america_east,North Europe,South America East,15.2,15.2,0.0,0.0,1.0,
+south_america_west__oceania,South America West,Oceania,20.3,20.3,0.0,0.0,1.0,

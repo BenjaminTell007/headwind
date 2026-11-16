@@ -1,0 +1,1735 @@
+[
+ {
+  "date": "2018-12-21",
+  "end": "2019-08-26",
+  "kind": "drought",
+  "title": "Drought in India, Sri Lanka",
+  "where": [
+   "Tuticorin",
+   "Trincomalee"
+  ],
+  "country": "India; Sri Lanka",
+  "lat": 8.828,
+  "lon": 79.198,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-02-21",
+  "end": "2019-07-02",
+  "kind": "drought",
+  "title": "Drought in India",
+  "where": [
+   "Mumbai-Jawaharlal Nehru (Nhava Sheva)"
+  ],
+  "country": "India",
+  "lat": 19.833,
+  "lon": 76.244,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-03-09",
+  "end": "2019-03-15",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone IDAI-19",
+  "where": [
+   "Beira"
+  ],
+  "country": "Mozambique",
+  "lat": -19.6,
+  "lon": 34.8,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-03-09",
+  "end": "2019-03-29",
+  "kind": "flood",
+  "title": "Flood in Mozambique",
+  "where": [
+   "Beira",
+   "Nacala",
+   "Pemba"
+  ],
+  "country": "Mozambique",
+  "lat": -15.178,
+  "lon": 36.432,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-04-23",
+  "end": "2019-04-25",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone KENNETH-19",
+  "where": [
+   "Pemba",
+   "Moroni"
+  ],
+  "country": "Mozambique; Comoros",
+  "lat": -12.3,
+  "lon": 40.1,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-04-27",
+  "end": "2019-05-03",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone FANI-19",
+  "where": [
+   "Dhamra Port",
+   "Paradip"
+  ],
+  "country": "India",
+  "lat": 21.3,
+  "lon": 86.2,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-05-06",
+  "end": "2019-05-06",
+  "kind": "earthquake",
+  "title": "Earthquake in Eastern New Guinea Reg., P.N.G.",
+  "where": [
+   "Lae"
+  ],
+  "country": "Papua New Guinea",
+  "lat": -6.9767,
+  "lon": 146.44,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-08-04",
+  "end": "2019-08-11",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone LEKIMA-19",
+  "where": [
+   "Suzhou (Changshu)",
+   "Changzhou",
+   "Fuzhou",
+   "Gaogang",
+   "Haimen",
+   "Jiangyin",
+   "Nantong",
+   "Ningbo",
+   "Qiwei",
+   "Shanghai",
+   "Suzhou (Taicang)",
+   "Wenzhou",
+   "Xiagong",
+   "Suzhou (Zhangjiagang)",
+   "Zhapu",
+   "Zhoushan",
+   "Keelung",
+   "Taipei"
+  ],
+  "country": "China; Taiwan Province of China",
+  "lat": 36.0,
+  "lon": 119.5,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-08-28",
+  "end": "2019-08-28",
+  "kind": "flood",
+  "title": "Flood in British Virgin Islands, The Bahamas",
+  "where": [
+   "Clifton Pier",
+   "Freeport",
+   "Georgetown",
+   "Matthew Town",
+   "Nassau",
+   "Nicholls Town"
+  ],
+  "country": "The Bahamas",
+  "lat": 26.70673,
+  "lon": -78.87209,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-09-02",
+  "end": "2019-09-07",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone LINGLING-19",
+  "where": [
+   "Dandong",
+   "Longyan Port",
+   "Daesan",
+   "Incheon",
+   "Gunsan",
+   "Pyeongtaek"
+  ],
+  "country": "China; Korea",
+  "lat": 37.9,
+  "lon": 125.3,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-10-29",
+  "end": "2019-11-10",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone MATMO-19/BULBUL-19",
+  "where": [
+   "Dhamra Port",
+   "Haldia",
+   "Paradip",
+   "Quy Nhon",
+   "Mongla",
+   "Payra"
+  ],
+  "country": "Bangladesh; Vietnam; India",
+  "lat": 23.0,
+  "lon": 90.8,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-11-09",
+  "end": "2019-11-12",
+  "kind": "flood",
+  "title": "Flood in Bangladesh, India",
+  "where": [
+   "Kolkata (Syama Prasad Mookerje Port)",
+   "Dhamra Port",
+   "Haldia",
+   "Paradip",
+   "Chittagong",
+   "Dhaka",
+   "Mongla",
+   "Payra"
+  ],
+  "country": "Bangladesh; India",
+  "lat": 22.70099,
+  "lon": 90.35384,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2019-11-25",
+  "end": "2019-12-05",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone KAMMURI-19",
+  "where": [
+   "Batangas City",
+   "Manila",
+   "Ormoc",
+   "Subic Bay"
+  ],
+  "country": "Philippines",
+  "lat": 12.2,
+  "lon": 113.5,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-04-02",
+  "end": "2020-04-09",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone HAROLD-20",
+  "where": [
+   "Lautoka",
+   "Levuka",
+   "Suva",
+   "Luganville",
+   "Nuku'alofa"
+  ],
+  "country": "Fiji; Vanuatu; Tonga",
+  "lat": -24.6,
+  "lon": -170.7,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-05-16",
+  "end": "2020-05-20",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone AMPHAN-20",
+  "where": [
+   "Kolkata (Syama Prasad Mookerje Port)",
+   "Dhamra Port",
+   "Haldia",
+   "Paradip"
+  ],
+  "country": "India",
+  "lat": 22.2,
+  "lon": 88.3,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-06-02",
+  "end": "2020-06-03",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone NISARGA-20",
+  "where": [
+   "Jaigad Port",
+   "Mumbai-Jawaharlal Nehru (Nhava Sheva)"
+  ],
+  "country": "India",
+  "lat": 19.1,
+  "lon": 73.7,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-08-21",
+  "end": "2020-08-27",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone BAVI-20",
+  "where": [
+   "Dandong",
+   "Longyan Port"
+  ],
+  "country": "China",
+  "lat": 41.6,
+  "lon": 125.8,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-08-28",
+  "end": "2020-09-02",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone MAYSAK-20",
+  "where": [
+   "Karatsu",
+   "Nagasaki",
+   "Gwangyang (Kwangyang)",
+   "Masan",
+   "Pohang",
+   "Busan",
+   "Donghae",
+   "Ulsan"
+  ],
+  "country": "Japan; Korea",
+  "lat": 35.5,
+  "lon": 129.0,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-08-31",
+  "end": "2020-09-07",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone HAISHEN-20",
+  "where": [
+   "Hakata",
+   "Hamada",
+   "Hofu",
+   "Hososhima",
+   "Kagoshima",
+   "Kanda",
+   "Karatsu",
+   "Kiire",
+   "Kudamatsu",
+   "Nagasaki",
+   "Oita",
+   "Onoda",
+   "Saganoseki",
+   "Shibushi",
+   "Tokuyama",
+   "Tsukumi",
+   "Ube",
+   "Kitakyushu (Wakamatsu)",
+   "Yatsushiro",
+   "Daesan",
+   "Gwangyang (Kwangyang)",
+   "Incheon",
+   "Gunsan",
+   "Masan",
+   "Pohang",
+   "Busan",
+   "Pyeongtaek",
+   "Donghae",
+   "Ulsan"
+  ],
+  "country": "Japan; Korea",
+  "lat": 40.7,
+  "lon": 128.9,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-10-04",
+  "end": "2020-10-10",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone DELTA-20",
+  "where": [
+   "Lake Charles",
+   "Port Arthur",
+   "San Miguel De Cozumel"
+  ],
+  "country": "Mexico; United States",
+  "lat": 33.1,
+  "lon": -90.8,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-10-24",
+  "end": "2020-10-28",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone MOLAVE-20",
+  "where": [
+   "Batangas City",
+   "Manila",
+   "Dung Quat",
+   "Da Nang",
+   "Quy Nhon"
+  ],
+  "country": "Philippines; Vietnam",
+  "lat": 15.4,
+  "lon": 108.5,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-10-28",
+  "end": "2020-11-06",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone GONI-20",
+  "where": [
+   "Batangas City",
+   "Manila",
+   "Subic Bay"
+  ],
+  "country": "Philippines",
+  "lat": 13.9,
+  "lon": 109.2,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-10-31",
+  "end": "2020-11-13",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone ETA-20",
+  "where": [
+   "Puerto Cabezas"
+  ],
+  "country": "Nicaragua",
+  "lat": 33.3,
+  "lon": -76.8,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-11-09",
+  "end": "2020-11-15",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone VAMCO-20",
+  "where": [
+   "Batangas City",
+   "Manila",
+   "Subic Bay",
+   "Dung Quat",
+   "Da Nang"
+  ],
+  "country": "Philippines; Vietnam",
+  "lat": 17.7,
+  "lon": 106.5,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-11-13",
+  "end": "2020-11-18",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone IOTA-20",
+  "where": [
+   "Puerto Cabezas"
+  ],
+  "country": "Nicaragua",
+  "lat": 13.8,
+  "lon": -89.5,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2020-12-12",
+  "end": "2020-12-20",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone YASA-20",
+  "where": [
+   "Lautoka",
+   "Levuka",
+   "Malau",
+   "Suva"
+  ],
+  "country": "Fiji",
+  "lat": -23.3,
+  "lon": -178.1,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2021-03-01",
+  "end": "2021-03-07",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone NIRAN-21",
+  "where": [
+   "Baie De Kouaoua",
+   "Baie Ugu\u00e9",
+   "Gomen",
+   "N\u00e9poui",
+   "Noumea",
+   "Paagoum\u00e8ne",
+   "Voh"
+  ],
+  "country": "New Caledonia",
+  "lat": -27.3,
+  "lon": 175.7,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2021-03-23",
+  "end": "2021-03-29",
+  "kind": "blockage",
+  "title": "Ever Given blocks the Suez Canal",
+  "where": [
+   "Suez Canal"
+  ],
+  "source": "widely reported; visible in PortWatch Suez counts",
+  "origin": "hand-entered",
+  "data_check": {
+   "chokepoint": "Suez Canal",
+   "per_day_before": 54.5,
+   "per_day_after": 8.8,
+   "windows": [
+    "2021-03-10",
+    "2021-03-22",
+    "2021-03-24",
+    "2021-03-28"
+   ]
+  }
+ },
+ {
+  "date": "2021-05-14",
+  "end": "2021-05-17",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone TAUKTAE-21",
+  "where": [
+   "Dahej",
+   "Jaigad Port",
+   "Magdalla",
+   "Mormugao",
+   "Mumbai-Jawaharlal Nehru (Nhava Sheva)",
+   "Pipavav Port"
+  ],
+  "country": "India",
+  "lat": 20.8,
+  "lon": 71.3,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2021-05-24",
+  "end": "2021-05-26",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone YAAS-21",
+  "where": [
+   "Dhamra Port",
+   "Haldia",
+   "Paradip"
+  ],
+  "country": "India",
+  "lat": 21.6,
+  "lon": 87.0,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2021-05-24",
+  "end": "2021-05-31",
+  "kind": "flood",
+  "title": "Flood in Bangladesh, India",
+  "where": [
+   "Kolkata (Syama Prasad Mookerje Port)",
+   "Chennai (Madras)",
+   "Dhamra Port",
+   "Haldia",
+   "Kamarajar Port",
+   "Karaikal",
+   "Paradip",
+   "Tuticorin"
+  ],
+  "country": "India",
+  "lat": 23.45598,
+  "lon": 85.25573,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2021-08-13",
+  "end": "2021-08-21",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone GRACE-21",
+  "where": [
+   "San Miguel De Cozumel",
+   "Tuxpan",
+   "Georgetown"
+  ],
+  "country": "Mexico; Cayman Islands",
+  "lat": 19.6,
+  "lon": -100.1,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2021-08-26",
+  "end": "2021-08-30",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone IDA-21",
+  "where": [
+   "Baton Rouge",
+   "Fourchon",
+   "New Orleans",
+   "South Louisiana"
+  ],
+  "country": "United States",
+  "lat": 32.6,
+  "lon": -90.3,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2021-09-06",
+  "end": "2021-09-18",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone CHANTHU-21",
+  "where": [
+   "Keelung",
+   "Hualien",
+   "Taipei"
+  ],
+  "country": "Taiwan Province of China",
+  "lat": 34.1,
+  "lon": 136.6,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2021-12-13",
+  "end": "2021-12-20",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone RAI-21",
+  "where": [
+   "Buco",
+   "Butuan City",
+   "Cebu",
+   "Masao",
+   "Nasipit Port",
+   "Ormoc",
+   "Puerto Princesa",
+   "Surigao City",
+   "Villanueva"
+  ],
+  "country": "Philippines",
+  "lat": 19.8,
+  "lon": 113.0,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2021-12-20",
+  "end": "2022-01-18",
+  "kind": "volcano",
+  "title": "Eruption  Hunga Tonga-Hunga Ha apai",
+  "where": [
+   "Nuku'alofa"
+  ],
+  "country": "Tonga",
+  "lat": -20.536,
+  "lon": -175.382,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2022-01-24",
+  "end": "2022-01-24",
+  "kind": "earthquake",
+  "title": "Earthquake in Haiti",
+  "where": [
+   "Port Au Prince",
+   "Saint-Marc"
+  ],
+  "country": "Haiti",
+  "lat": 18.4723,
+  "lon": -73.3346,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2022-01-27",
+  "end": "2022-02-08",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone BATSIRAI-22",
+  "where": [
+   "Tulear (Toliara)",
+   "Port Louis"
+  ],
+  "country": "Madagascar; Mauritius",
+  "lat": -28.3,
+  "lon": 41.8,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2022-02-16",
+  "end": "2022-02-24",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone EMNATI-22",
+  "where": [
+   "Ehoala",
+   "Toamasina",
+   "Tulear (Toliara)"
+  ],
+  "country": "Madagascar",
+  "lat": -28.7,
+  "lon": 41.8,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2022-09-10",
+  "end": "2022-09-10",
+  "kind": "earthquake",
+  "title": "Earthquake in Papua New Guinea",
+  "where": [
+   "Lae"
+  ],
+  "country": "Papua New Guinea",
+  "lat": -6.2557,
+  "lon": 146.4692,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2022-09-10",
+  "end": "2022-10-26",
+  "kind": "flood",
+  "title": "Flood in Nigeria",
+  "where": [
+   "Calabar",
+   "Koko",
+   "Sapele",
+   "Warri"
+  ],
+  "country": "Nigeria",
+  "lat": 4.762979,
+  "lon": 6.028898,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2022-09-14",
+  "end": "2022-09-16",
+  "kind": "flood",
+  "title": "Flood in China, Taiwan",
+  "where": [
+   "Haimen",
+   "Ningbo",
+   "Shanghai",
+   "Wenzhou",
+   "Zhapu",
+   "Zhoushan"
+  ],
+  "country": "China",
+  "lat": 31.23228,
+  "lon": 121.4692,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2022-09-14",
+  "end": "2022-09-24",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone FIONA-22",
+  "where": [
+   "Sydney",
+   "Canaport (St. John)",
+   "Halifax",
+   "Channel-Port aux Basques",
+   "Saint John",
+   "Caucedo",
+   "Puerto Plata",
+   "San Pedro De Macoris",
+   "Basseterre",
+   "Charlestown",
+   "Brades",
+   "Plymouth",
+   "Grand Turk",
+   "Providenciales",
+   "Guayanilla",
+   "Pointe A Pitre",
+   "Port of Saint John's"
+  ],
+  "country": "Montserrat; Canada; Antigua and Barbuda; Guadeloupe; St. Kitts and Nevis; United States; Dominican Republic; Turks and Caicos Islands; Puerto Rico",
+  "lat": 48.4,
+  "lon": -60.5,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2022-09-22",
+  "end": "2022-09-28",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone NORU-22",
+  "where": [
+   "Manila",
+   "Subic Bay",
+   "Dung Quat",
+   "Da Nang"
+  ],
+  "country": "Philippines; Vietnam",
+  "lat": 16.0,
+  "lon": 107.8,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2022-09-23",
+  "end": "2022-10-02",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone IAN-22",
+  "where": [
+   "Canaveral Harbor",
+   "Charleston",
+   "Jacksonville",
+   "Port Manatee",
+   "Tampa Port",
+   "Wilmington, NC",
+   "La Habana",
+   "Mariel"
+  ],
+  "country": "United States; Cuba",
+  "lat": 37.3,
+  "lon": -78.2,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2022-11-21",
+  "end": "2022-11-21",
+  "kind": "earthquake",
+  "title": "Earthquake in Indonesia",
+  "where": [
+   "Tanjung Priok",
+   "PelabuhanRatuCoalPowerPlant"
+  ],
+  "country": "Indonesia",
+  "lat": -6.8531,
+  "lon": 107.0946,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-02-06",
+  "end": "2023-02-06",
+  "kind": "earthquake",
+  "title": "Earthquake in T\u00fcrkiye",
+  "where": [
+   "Delta Terminal",
+   "Iskenderun",
+   "Toros Gubre",
+   "Yakacik"
+  ],
+  "country": "T\u00fcrkiye",
+  "lat": 37.1736,
+  "lon": 37.032,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-02-27",
+  "end": "2023-03-03",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone JUDY-23",
+  "where": [
+   "Port Vila"
+  ],
+  "country": "Vanuatu",
+  "lat": -26.1,
+  "lon": 179.8,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-03-01",
+  "end": "2023-03-05",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone KEVIN-23",
+  "where": [
+   "Luganville",
+   "Port Vila"
+  ],
+  "country": "Vanuatu",
+  "lat": -27.2,
+  "lon": -174.5,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-03-18",
+  "end": "2023-03-18",
+  "kind": "earthquake",
+  "title": "Earthquake in Ecuador",
+  "where": [
+   "Guayaquil",
+   "Puerto Bolivar"
+  ],
+  "country": "Ecuador",
+  "lat": -2.8273,
+  "lon": -79.8628,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-05-11",
+  "end": "2023-05-14",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone MOCHA-23",
+  "where": [
+   "Kyaukpyu"
+  ],
+  "country": "Myanmar",
+  "lat": 20.8,
+  "lon": 93.1,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-05-20",
+  "end": "2023-06-03",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone MAWAR-23",
+  "where": [
+   "Apra Harbor",
+   "Rota"
+  ],
+  "country": "Guam; Northern Mariana Islands",
+  "lat": 30.7,
+  "lon": 138.1,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-07-21",
+  "end": "2023-07-28",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone DOKSURI-23",
+  "where": [
+   "Fuzhou",
+   "Quanzhou",
+   "Shijing Longxiang",
+   "Xiamen",
+   "Xiuyu",
+   "Kaohsiung"
+  ],
+  "country": "China; Taiwan Province of China",
+  "lat": 25.7,
+  "lon": 118.4,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-08-23",
+  "end": "2023-09-03",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone SAOLA-23",
+  "where": [
+   "Guangdong Yangjiang Port",
+   "Guangzhou (Nansha)",
+   "Haifeng power",
+   "Huizhou",
+   "Shekou (Shenzhen)",
+   "Shui Dong",
+   "Yantian",
+   "Hong Kong",
+   "Macau"
+  ],
+  "country": "Hong Kong Special Administrative Region; China; Macao Special Administrative Region",
+  "lat": 20.7,
+  "lon": 109.0,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-08-28",
+  "end": "2023-09-04",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone HAIKUI-23",
+  "where": [
+   "Shijing Longxiang",
+   "Xiamen",
+   "Kaohsiung",
+   "Mailiao"
+  ],
+  "country": "China; Taiwan Province of China",
+  "lat": 23.7,
+  "lon": 117.3,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-09-29",
+  "end": "2023-10-10",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone KOINU-23",
+  "where": [
+   "Hualien",
+   "Kaohsiung",
+   "Mailiao",
+   "Hong Kong",
+   "Macau"
+  ],
+  "country": "Hong Kong Special Administrative Region; Taiwan Province of China; Macao Special Administrative Region",
+  "lat": 20.8,
+  "lon": 110.3,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-10-17",
+  "end": "2023-10-23",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone NORMA-23",
+  "where": [
+   "Pichilingue",
+   "Topolobampo"
+  ],
+  "country": "Mexico",
+  "lat": 24.9,
+  "lon": -107.7,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-10-21",
+  "end": "2023-10-26",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone LOLA-23",
+  "where": [
+   "Luganville"
+  ],
+  "country": "Vanuatu",
+  "lat": -17.5,
+  "lon": 165.6,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-10-22",
+  "end": "2023-10-25",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone OTIS-23",
+  "where": [
+   "Acapulco"
+  ],
+  "country": "Mexico",
+  "lat": 19.1,
+  "lon": -100.8,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-10-23",
+  "end": "2023-10-24",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone HAMOON-23",
+  "where": [
+   "Chittagong"
+  ],
+  "country": "Bangladesh",
+  "lat": 21.6,
+  "lon": 92.1,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-11-03",
+  "end": "2024-08-05",
+  "kind": "trade disruption",
+  "title": "Shipping restrictions to Panama Canal",
+  "where": [
+   "Panama Canal"
+  ],
+  "country": null,
+  "lat": 9.120512,
+  "lon": -79.76723,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2023-11-19",
+  "end": null,
+  "kind": "conflict",
+  "title": "Houthis seize the Galaxy Leader, Red Sea attacks begin",
+  "where": [
+   "Bab el-Mandeb Strait",
+   "Suez Canal",
+   "Cape of Good Hope"
+  ],
+  "source": "widely reported; PortWatch dates its Red Sea disruption from 2023-12-16",
+  "origin": "hand-entered",
+  "data_check": {
+   "chokepoint": "Bab el-Mandeb Strait",
+   "per_day_before": 78.2,
+   "per_day_after": 34.5,
+   "windows": [
+    "2023-10-01",
+    "2023-11-18",
+    "2024-01-15",
+    "2024-02-15"
+   ]
+  }
+ },
+ {
+  "date": "2023-12-16",
+  "end": null,
+  "kind": "trade disruption",
+  "title": "Trade Disruptions in the Red Sea",
+  "where": [
+   "Bab el-Mandeb Strait",
+   "Suez Canal",
+   "Cape of Good Hope"
+  ],
+  "country": null,
+  "lat": 20.31573,
+  "lon": 38.73504,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-03-26",
+  "end": "2024-06-12",
+  "kind": "trade disruption",
+  "title": "Baltimore: Collapse of Francis Scott Key Bridge",
+  "where": [
+   "Baltimore"
+  ],
+  "country": "United States",
+  "lat": 39.21934,
+  "lon": -76.52521,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-06-28",
+  "end": "2024-07-09",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone BERYL-24",
+  "where": [
+   "Freeport (US-FL)",
+   "Galveston",
+   "Houston (US-TX)",
+   "Port Lavaca",
+   "Texas City",
+   "Progreso",
+   "San Miguel De Cozumel",
+   "Kingstown",
+   "Falmouth",
+   "Kingston",
+   "Montego Bay",
+   "Ocho Rios",
+   "Port Esquivel",
+   "Rio Bueno",
+   "Georgetown",
+   "Saint George's"
+  ],
+  "country": "St. Vincent and the Grenadines; Grenada; Cayman Islands; Mexico; Jamaica; United States",
+  "lat": 33.9,
+  "lon": -93.7,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-07-19",
+  "end": "2024-07-25",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone GAEMI-24",
+  "where": [
+   "Fuzhou",
+   "Quanzhou",
+   "Shijing Longxiang",
+   "Xiagong",
+   "Xiuyu",
+   "Keelung",
+   "Hualien",
+   "Kaohsiung",
+   "Mailiao",
+   "Taichung",
+   "Taipei"
+  ],
+  "country": "China; Taiwan Province of China",
+  "lat": 25.6,
+  "lon": 119.4,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-09-01",
+  "end": "2024-09-07",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone YAGI-24",
+  "where": [
+   "Basuo",
+   "Beihai",
+   "Chiwan",
+   "Fangcheng",
+   "Guangxi Beibu Gulf Port",
+   "Haikou",
+   "Qinzhou",
+   "Shui Dong",
+   "Yangpu",
+   "Zhanjiang",
+   "Hai Phong",
+   "Hon Gai"
+  ],
+  "country": "Vietnam; China",
+  "lat": 21.0,
+  "lon": 106.9,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-09-23",
+  "end": "2024-09-27",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone HELENE-24",
+  "where": [
+   "Panama City",
+   "San Miguel De Cozumel"
+  ],
+  "country": "Mexico; United States",
+  "lat": 37.5,
+  "lon": -85.5,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-10-01",
+  "end": "2024-10-02",
+  "kind": "trade disruption",
+  "title": "US Ports Strike",
+  "where": [
+   "New Orleans",
+   "New York-New Jersey",
+   "Norfolk",
+   "Baltimore",
+   "Philadelphia",
+   "Boston",
+   "Jacksonville",
+   "Miami",
+   "Mobile",
+   "Savannah",
+   "Tampa Port",
+   "Wilmington, DE",
+   "Charleston",
+   "Houston (US-TX)",
+   "Montreal",
+   "Port of Virginia",
+   "Port Everglades"
+  ],
+  "country": null,
+  "lat": 29.77081,
+  "lon": -95.35517,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-10-05",
+  "end": "2024-10-09",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone MILTON-24",
+  "where": [
+   "Canaveral Harbor",
+   "Palm Beach",
+   "Port Manatee",
+   "Tampa Port",
+   "Progreso"
+  ],
+  "country": "Mexico; United States",
+  "lat": 24.5,
+  "lon": -85.4,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-10-20",
+  "end": "2024-10-26",
+  "kind": "flood",
+  "title": "Flood in India",
+  "where": [
+   "Paradip",
+   "Haldia",
+   "Kolkata (Syama Prasad Mookerje Port)",
+   "Dhamra Port"
+  ],
+  "country": "India",
+  "lat": 20.54312,
+  "lon": 84.68974,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-10-23",
+  "end": "2024-10-25",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone DANA-24",
+  "where": [
+   "Paradip",
+   "Dhamra Port"
+  ],
+  "country": "India",
+  "lat": 20.8,
+  "lon": 86.9,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-10-25",
+  "end": "2024-11-01",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone KONG-REY-24",
+  "where": [
+   "Keelung",
+   "Ningbo",
+   "Mailiao",
+   "Suao",
+   "Wenzhou",
+   "Anping",
+   "Kaohsiung",
+   "Quanzhou",
+   "Haimen",
+   "Hualien",
+   "Xiuyu",
+   "Taipei",
+   "Shijing Longxiang",
+   "Fuzhou",
+   "Taichung",
+   "Xiamen",
+   "Xiagong"
+  ],
+  "country": "Taiwan Province of China; China",
+  "lat": 32.2,
+  "lon": 126.1,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-12-09",
+  "end": "2024-12-16",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone CHIDO-25",
+  "where": [
+   "Port de Longoni",
+   "Pemba"
+  ],
+  "country": "Mozambique; Mayotte",
+  "lat": -16.55,
+  "lon": 33.77,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2024-12-17",
+  "end": "2024-12-17",
+  "kind": "earthquake",
+  "title": "Earthquake in Vanuatu",
+  "where": [
+   "Port Vila"
+  ],
+  "country": "Vanuatu",
+  "lat": -17.6859,
+  "lon": 168.0338,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-02-25",
+  "end": "2025-03-02",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone GARANCE-25",
+  "where": [
+   "Port Est"
+  ],
+  "country": "R\u00e9union",
+  "lat": -32.41,
+  "lon": 56.82,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-03-08",
+  "end": "2025-03-16",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone JUDE-25",
+  "where": [
+   "Tulear (Toliara)",
+   "Nacala",
+   "Ehoala"
+  ],
+  "country": "Madagascar; Mozambique",
+  "lat": -26.04,
+  "lon": 51.93,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-04-02",
+  "end": null,
+  "kind": "tariff",
+  "title": "US announces 'Liberation Day' reciprocal tariffs",
+  "where": [],
+  "source": "widely reported",
+  "origin": "hand-entered"
+ },
+ {
+  "date": "2025-08-01",
+  "end": null,
+  "kind": "tariff",
+  "title": "US sets a 39% tariff on Swiss goods (in force a week later)",
+  "where": [],
+  "source": "JCK, Swissinfo, Bloomberg",
+  "origin": "hand-entered"
+ },
+ {
+  "date": "2025-08-22",
+  "end": "2025-08-25",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone KAJIKI-25",
+  "where": [
+   "Nghe Tinh",
+   "Basuo",
+   "Nghi Son"
+  ],
+  "country": "China; Vietnam",
+  "lat": 18.6,
+  "lon": 105.7,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-09-18",
+  "end": "2025-09-24",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone RAGASA-25",
+  "where": [
+   "Dongguan",
+   "Haifeng power",
+   "Fangcheng",
+   "Mawan",
+   "Beihai",
+   "Qinzhou",
+   "Yantian",
+   "Zhuhai",
+   "Huizhou",
+   "Shekou (Shenzhen)",
+   "Shui Dong",
+   "Dachan Bay",
+   "Zhongshan",
+   "Guangxi Beibu Gulf Port",
+   "Macau",
+   "Hong Kong",
+   "Guangdong Yangjiang Port",
+   "Guangdong Dapeng LNG Terminal",
+   "Zhanjiang",
+   "Qianhai Bay"
+  ],
+  "country": "China; Macao SAR; Hong Kong SAR",
+  "lat": 21.8,
+  "lon": 111.1,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-09-23",
+  "end": "2025-09-25",
+  "kind": "flood",
+  "title": "Flood in China",
+  "where": [
+   "Hong Kong"
+  ],
+  "country": "Hong Kong SAR",
+  "lat": 22.35063,
+  "lon": 114.1849,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-09-23",
+  "end": "2025-09-28",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone BUALOI-25",
+  "where": [
+   "Da Nang",
+   "Nghe Tinh",
+   "Nghi Son"
+  ],
+  "country": "Vietnam",
+  "lat": 18.2,
+  "lon": 106.2,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-09-30",
+  "end": "2025-09-30",
+  "kind": "earthquake",
+  "title": "Earthquake in Philippines",
+  "where": [
+   "Isabel",
+   "Cebu",
+   "Ormoc"
+  ],
+  "country": "Philippines",
+  "lat": 11.1514,
+  "lon": 124.1376,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-10-01",
+  "end": "2025-10-05",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone MATMO-25",
+  "where": [
+   "Haikou",
+   "Fangcheng",
+   "Beihai",
+   "Qinzhou",
+   "Shui Dong",
+   "Guangxi Beibu Gulf Port",
+   "Chiwan",
+   "Zhanjiang"
+  ],
+  "country": "China",
+  "lat": 21.9,
+  "lon": 108.5,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-10-21",
+  "end": "2025-10-31",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone MELISSA-25",
+  "where": [
+   "Saint John's",
+   "Whiffen Head",
+   "Rio Bueno",
+   "Nuevitas Bay",
+   "Port Kaiser",
+   "Falmouth",
+   "Georgetown",
+   "Rocky Point",
+   "Argentia",
+   "Port Esquivel",
+   "Port Rhoades",
+   "Santiago De Cuba",
+   "Ocho Rios",
+   "Moa",
+   "Montego Bay",
+   "Holyrood",
+   "Kingston"
+  ],
+  "country": "Jamaica; Cuba; The Bahamas; Canada",
+  "lat": 39.0,
+  "lon": -60.5,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-11-01",
+  "end": "2025-11-06",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone KALMAEGI-25",
+  "where": [
+   "Isabel",
+   "Van Phong",
+   "Quy Nhon",
+   "Cebu",
+   "Bacolod",
+   "Iloilo",
+   "Ormoc"
+  ],
+  "country": "Philippines; Vietnam",
+  "lat": 13.6,
+  "lon": 109.1,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-11-04",
+  "end": "2025-11-11",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone FUNG-WONG-25",
+  "where": [
+   "Pagbilao LNG Terminal",
+   "Subic Bay",
+   "Manila"
+  ],
+  "country": "Philippines",
+  "lat": 20.1,
+  "lon": 118.6,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2025-11-14",
+  "end": null,
+  "kind": "tariff",
+  "title": "US and Switzerland agree a framework cutting the tariff to 15%",
+  "where": [],
+  "source": "Bloomberg, Swissinfo, 2025-11-14",
+  "origin": "hand-entered"
+ },
+ {
+  "date": "2026-02-28",
+  "end": null,
+  "kind": "conflict",
+  "title": "US and Israeli strikes on Iran begin, Hormuz traffic collapses",
+  "where": [
+   "Strait of Hormuz"
+  ],
+  "source": "Al Jazeera, MDPI study; PortWatch dates its Hormuz disruption from 2026-03-01",
+  "origin": "hand-entered",
+  "data_check": {
+   "chokepoint": "Strait of Hormuz",
+   "per_day_before": 79.1,
+   "per_day_after": 2.6,
+   "windows": [
+    "2026-02-01",
+    "2026-02-27",
+    "2026-03-03",
+    "2026-03-31"
+   ]
+  }
+ },
+ {
+  "date": "2026-03-01",
+  "end": null,
+  "kind": "trade disruption",
+  "title": "Trade Disruptions in the Strait of Hormuz",
+  "where": [
+   "Strait of Hormuz"
+  ],
+  "country": null,
+  "lat": 26.29685,
+  "lon": 56.85985,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2026-06-17",
+  "end": null,
+  "kind": "conflict",
+  "title": "Preliminary US-Iran agreement, Hormuz partly reopens",
+  "where": [
+   "Strait of Hormuz"
+  ],
+  "source": "Al Jazeera, 2026-07-09",
+  "origin": "hand-entered",
+  "data_check": {
+   "chokepoint": "Strait of Hormuz",
+   "per_day_before": 4.3,
+   "per_day_after": 24.2,
+   "windows": [
+    "2026-06-01",
+    "2026-06-17",
+    "2026-06-18",
+    "2026-07-05"
+   ]
+  }
+ },
+ {
+  "date": "2026-06-24",
+  "end": "2026-06-24",
+  "kind": "earthquake",
+  "title": "Earthquake in Venezuela",
+  "where": [
+   "Puerto Cabello",
+   "El Palito",
+   "Catia La Mar",
+   "La Guaira"
+  ],
+  "country": "Venezuela",
+  "lat": 10.453,
+  "lon": -68.5139,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2026-07-01",
+  "end": "2026-07-11",
+  "kind": "cyclone",
+  "title": "Tropical Cyclone BAVI-26",
+  "where": [
+   "Kinwan",
+   "Henza Island",
+   "Zhapu",
+   "Taizhou (Damaiyu)",
+   "Hualien",
+   "Toumen",
+   "Nakagusukuwan",
+   "Huangdun",
+   "Tinian",
+   "Apra Harbor",
+   "Naha",
+   "Wenzhou Huagang",
+   "Taizhou (Jiantiao)",
+   "Ningbo",
+   "Suao",
+   "Gushan",
+   "Wenzhou LNG Terminal",
+   "Jiaxing",
+   "Keelung",
+   "Fuzhou",
+   "Haiyan",
+   "Zhoushan",
+   "Ishigaki",
+   "Wenzhou",
+   "Rota",
+   "Taoyuan LNG Terminal",
+   "Shanghai (Yangshan)",
+   "Taizhou (Wenling)",
+   "Qushan Island",
+   "Liuheng LNG Terminal",
+   "Nakagusuku LNG Terminal",
+   "Saipan",
+   "Yueqing",
+   "Taipei",
+   "Haimen",
+   "Xiagong",
+   "Hirara"
+  ],
+  "country": "Guam; Taiwan Province of China; Northern Mariana Islands; Japan; China",
+  "lat": 28.7,
+  "lon": 120.4,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ },
+ {
+  "date": "2026-08-14",
+  "end": "2026-08-14",
+  "kind": "earthquake",
+  "title": "Earthquake in Indonesia",
+  "where": [
+   "Ende"
+  ],
+  "country": "Indonesia",
+  "lat": -8.3101,
+  "lon": 121.3517,
+  "source": "IMF PortWatch disruptions database",
+  "origin": "portwatch"
+ }
+]

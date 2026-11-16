@@ -1,0 +1,1336 @@
+{
+  "malacca": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "singapore": {
+    "hours_with_data": 10.7,
+    "crossings": 230,
+    "ships_per_hour": 21.6,
+    "per_10min": {
+      "mean": 3.6,
+      "median": 4.0,
+      "p25": 2.0,
+      "p75": 5.0
+    },
+    "per_15min": {
+      "mean": 3.6,
+      "median": 4.0,
+      "p25": 2.0,
+      "p75": 5.0
+    },
+    "per_30min": {
+      "mean": 11.0,
+      "median": 11.0,
+      "p25": 9.0,
+      "p75": 14.0
+    },
+    "per_60min": {
+      "mean": 22.2,
+      "median": 23.0,
+      "p25": 20.0,
+      "p75": 26.5
+    },
+    "recommended_market": {
+      "minutes": 30,
+      "threshold": 11,
+      "historical_yes_share": 0.57
+    },
+    "usable_for_live_market": true
+  },
+  "dover": {
+    "hours_with_data": 10.7,
+    "crossings": 56,
+    "ships_per_hour": 5.2,
+    "per_10min": {
+      "mean": 0.9,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_15min": {
+      "mean": 0.9,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_30min": {
+      "mean": 2.7,
+      "median": 3.0,
+      "p25": 1.0,
+      "p75": 3.0
+    },
+    "per_60min": {
+      "mean": 5.5,
+      "median": 6.0,
+      "p25": 4.25,
+      "p75": 6.75
+    },
+    "recommended_market": {
+      "minutes": 60,
+      "threshold": 6,
+      "historical_yes_share": 0.6
+    },
+    "usable_for_live_market": false
+  },
+  "gibraltar": {
+    "hours_with_data": 10.7,
+    "crossings": 70,
+    "ships_per_hour": 6.6,
+    "per_10min": {
+      "mean": 1.1,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_15min": {
+      "mean": 1.1,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_30min": {
+      "mean": 3.3,
+      "median": 3.0,
+      "p25": 2.0,
+      "p75": 5.0
+    },
+    "per_60min": {
+      "mean": 7.0,
+      "median": 7.0,
+      "p25": 5.0,
+      "p75": 8.0
+    },
+    "recommended_market": {
+      "minutes": 60,
+      "threshold": 7,
+      "historical_yes_share": 0.5
+    },
+    "usable_for_live_market": true
+  },
+  "bosporus": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "hormuz": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "bab_el_mandeb": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "suez_south": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "panama_pac": {
+    "hours_with_data": 10.7,
+    "crossings": 4,
+    "ships_per_hour": 0.4,
+    "per_10min": {
+      "mean": 0.1,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.1,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.2,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.4,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "taiwan": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "scheldt": {
+    "hours_with_data": 10.7,
+    "crossings": 93,
+    "ships_per_hour": 8.7,
+    "per_10min": {
+      "mean": 1.5,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_15min": {
+      "mean": 1.5,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_30min": {
+      "mean": 4.4,
+      "median": 4.0,
+      "p25": 3.0,
+      "p75": 6.0
+    },
+    "per_60min": {
+      "mean": 9.3,
+      "median": 9.0,
+      "p25": 6.25,
+      "p75": 11.5
+    },
+    "recommended_market": {
+      "minutes": 30,
+      "threshold": 4,
+      "historical_yes_share": 0.52
+    },
+    "usable_for_live_market": true
+  },
+  "elbe": {
+    "hours_with_data": 10.7,
+    "crossings": 32,
+    "ships_per_hour": 3.0,
+    "per_10min": {
+      "mean": 0.5,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_15min": {
+      "mean": 0.5,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_30min": {
+      "mean": 1.5,
+      "median": 1.0,
+      "p25": 1.0,
+      "p75": 2.0
+    },
+    "per_60min": {
+      "mean": 3.1,
+      "median": 3.0,
+      "p25": 2.0,
+      "p75": 3.75
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "oresund": {
+    "hours_with_data": 10.7,
+    "crossings": 25,
+    "ships_per_hour": 2.3,
+    "per_10min": {
+      "mean": 0.4,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_15min": {
+      "mean": 0.4,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_30min": {
+      "mean": 1.1,
+      "median": 1.0,
+      "p25": 1.0,
+      "p75": 2.0
+    },
+    "per_60min": {
+      "mean": 2.3,
+      "median": 2.0,
+      "p25": 2.0,
+      "p75": 3.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "juan_de_fuca": {
+    "hours_with_data": 10.7,
+    "crossings": 6,
+    "ships_per_hour": 0.6,
+    "per_10min": {
+      "mean": 0.1,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.1,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.3,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_60min": {
+      "mean": 0.6,
+      "median": 0.5,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "tokyo_bay": {
+    "hours_with_data": 10.7,
+    "crossings": 57,
+    "ships_per_hour": 5.3,
+    "per_10min": {
+      "mean": 0.9,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_15min": {
+      "mean": 0.9,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_30min": {
+      "mean": 2.7,
+      "median": 2.0,
+      "p25": 2.0,
+      "p75": 3.0
+    },
+    "per_60min": {
+      "mean": 5.3,
+      "median": 5.0,
+      "p25": 3.5,
+      "p75": 6.75
+    },
+    "recommended_market": {
+      "minutes": 60,
+      "threshold": 5,
+      "historical_yes_share": 0.7
+    },
+    "usable_for_live_market": false
+  },
+  "rotterdam": {
+    "hours_with_data": 10.7,
+    "crossings": 76,
+    "ships_per_hour": 7.1,
+    "per_10min": {
+      "mean": 1.2,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_15min": {
+      "mean": 1.2,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_30min": {
+      "mean": 3.6,
+      "median": 3.0,
+      "p25": 2.0,
+      "p75": 5.0
+    },
+    "per_60min": {
+      "mean": 7.4,
+      "median": 7.0,
+      "p25": 5.25,
+      "p75": 9.75
+    },
+    "recommended_market": {
+      "minutes": 60,
+      "threshold": 7,
+      "historical_yes_share": 0.5
+    },
+    "usable_for_live_market": true
+  },
+  "singapore_port": {
+    "hours_with_data": 10.7,
+    "crossings": 69,
+    "ships_per_hour": 6.5,
+    "per_10min": {
+      "mean": 1.1,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_15min": {
+      "mean": 1.1,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_30min": {
+      "mean": 3.2,
+      "median": 3.0,
+      "p25": 2.0,
+      "p75": 4.0
+    },
+    "per_60min": {
+      "mean": 6.6,
+      "median": 5.0,
+      "p25": 4.25,
+      "p75": 9.0
+    },
+    "recommended_market": {
+      "minutes": 60,
+      "threshold": 5,
+      "historical_yes_share": 0.7
+    },
+    "usable_for_live_market": true
+  },
+  "shanghai": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "la_lb": {
+    "hours_with_data": 10.7,
+    "crossings": 5,
+    "ships_per_hour": 0.5,
+    "per_10min": {
+      "mean": 0.1,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.1,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.2,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.5,
+      "median": 0.5,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "busan": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "hong_kong": {
+    "hours_with_data": 10.7,
+    "crossings": 30,
+    "ships_per_hour": 2.8,
+    "per_10min": {
+      "mean": 0.5,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_15min": {
+      "mean": 0.5,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_30min": {
+      "mean": 1.4,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_60min": {
+      "mean": 3.0,
+      "median": 2.5,
+      "p25": 1.25,
+      "p75": 3.75
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "houston": {
+    "hours_with_data": 10.7,
+    "crossings": 12,
+    "ships_per_hour": 1.1,
+    "per_10min": {
+      "mean": 0.2,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.2,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.6,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_60min": {
+      "mean": 1.2,
+      "median": 1.0,
+      "p25": 0.25,
+      "p75": 1.75
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "new_york": {
+    "hours_with_data": 10.7,
+    "crossings": 14,
+    "ships_per_hour": 1.3,
+    "per_10min": {
+      "mean": 0.2,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.2,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.7,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 1.0
+    },
+    "per_60min": {
+      "mean": 1.4,
+      "median": 1.0,
+      "p25": 0.25,
+      "p75": 2.75
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "antwerp": {
+    "hours_with_data": 10.7,
+    "crossings": 77,
+    "ships_per_hour": 7.2,
+    "per_10min": {
+      "mean": 1.2,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_15min": {
+      "mean": 1.2,
+      "median": 1.0,
+      "p25": 0.0,
+      "p75": 2.0
+    },
+    "per_30min": {
+      "mean": 3.7,
+      "median": 3.0,
+      "p25": 2.0,
+      "p75": 4.0
+    },
+    "per_60min": {
+      "mean": 7.2,
+      "median": 6.5,
+      "p25": 4.5,
+      "p75": 9.0
+    },
+    "recommended_market": {
+      "minutes": 60,
+      "threshold": 6,
+      "historical_yes_share": 0.7
+    },
+    "usable_for_live_market": true
+  },
+  "cp_cape_of_good_hope": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_korea_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_tsugaru_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_luzon_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_lombok_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_ombai_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_bohai_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_torres_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_sunda_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_makassar_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_magellan_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_yucatan_channel": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_windward_passage": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_mona_passage": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_balabac_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_bering_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_mindoro_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  },
+  "cp_kerch_strait": {
+    "hours_with_data": 10.7,
+    "crossings": 0,
+    "ships_per_hour": 0.0,
+    "per_10min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_15min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_30min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "per_60min": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p25": 0.0,
+      "p75": 0.0
+    },
+    "recommended_market": null,
+    "usable_for_live_market": false
+  }
+}

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Headway</title>
+<meta name="description" content="Forecast and hedge trade disruptions: every shipping route and strait, live ships, and markets that settle onchain on Monad.">
+<script>
+/* Self-update: GitHub Pages lets browsers reuse this page for 10 minutes. On open and
+   whenever you come back to the tab, check the published version (never cached) and,
+   if it's newer than this copy, reload once onto it. web/tools/stamp.sh sets both. */
+(function () {
+  var SITE_VERSION = '20261116T0014', URL_ = 'version.json';
+  function check() {
+    fetch(URL_ + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.v || d.v === SITE_VERSION) return;
+      var key = 'hw-updated-' + d.v;
+      try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) {}
+      var q = new URLSearchParams(location.search); q.set('v', d.v);
+      location.replace(location.pathname + '?' + q.toString() + location.hash);
+    }).catch(function () {});
+  }
+  check();
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+})();
+</script>
+<link rel="stylesheet" href="app.css?v=20261116T0014">
+</head>
+<body>
+
+<div id="intro">
+  <canvas id="introcv" width="1360" height="320"></canvas>
+  <div class="tag" id="introtag">SYS.ROUTES: 210 · STRAITS: 28 · LOADING</div>
+</div>
+
+<div id="app">
+  <canvas id="globe"></canvas>
+
+  <header>
+    <a class="brand" href="../" title="Headway"><span class="word">HEADWAY</span></a>
+    <nav class="nav" aria-label="Pages"><a class="on" aria-current="page" href="./"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><ellipse cx="8" cy="8" rx="2.7" ry="6.3"/><path d="M1.7 8h12.6"/></svg>GLOBE</a><a href="markets.html"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.8 12.2l3.6-4 2.8 2.4 5.6-6.4"/><path d="M10.2 4.2h3.6v3.6"/></svg>MARKETS</a><a href="forecasts.html"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.6 11.2l3-2.6 2.6 1.4"/><path d="M7.2 10l2.8-3.6 4.4-2" stroke-dasharray="1.6 2.2"/><path d="M1.6 14h12.8"/></svg>FORECASTS</a></nav>
+    <span class="live off tag" id="sysLive"><b id="sysShips">—</b> SHIPS UNDERWAY</span>
+    <form class="search" id="search" autocomplete="off">
+      <input id="q" placeholder="Find a ship: name, IMO or MMSI" aria-label="Find a ship">
+      <span class="err" id="qerr"></span>
+    </form>
+    <button class="pill" id="wxBtn" title="Show live weather over the globe (W)">WEATHER</button>
+    <button class="pill icon" id="theme" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
+  </header>
+
+  <!-- Key numbers moved to the forecasts page (js/keystats.js); main.js still fills this, hidden. -->
+  <section class="overview" id="overview" style="display:none"></section>
+
+  <aside class="panel" id="panel"><button class="x" id="px" aria-label="Close">✕</button><div id="pbody"></div></aside>
+
+  <nav class="ctl" id="ctl" aria-label="Globe controls">
+    <div class="grp">
+      <button data-a="zin" title="Zoom in (+)" aria-label="Zoom in">+</button>
+      <button data-a="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
+    </div>
+    <div class="grp pad">
+      <button data-a="up" title="Tilt up (↑)" aria-label="Tilt up">▲</button>
+      <div class="mid">
+        <button data-a="left" title="Turn left (←)" aria-label="Turn left">◀</button>
+        <button data-a="north" class="n" title="North up (N)" aria-label="North up">N</button>
+        <button data-a="right" title="Turn right (→)" aria-label="Turn right">▶</button>
+      </div>
+      <button data-a="down" title="Tilt down (↓)" aria-label="Tilt down">▼</button>
+    </div>
+    <div class="grp">
+      <button data-a="rollL" title="Rotate the picture left ([)" aria-label="Rotate left">↺</button>
+      <button data-a="rollR" title="Rotate the picture right (])" aria-label="Rotate right">↻</button>
+      <button data-a="flip" title="Flip upside down (F)" aria-label="Flip upside down">⇅</button>
+    </div>
+    <div class="grp">
+      <button data-a="spin" title="Spin slowly (space)" aria-label="Auto spin">⟳</button>
+      <button data-a="home" title="Reset view (R)" aria-label="Reset view">⌂</button>
+    </div>
+    <select id="goto" aria-label="Go to a strait"><option value="">GO TO…</option></select>
+  </nav>
+
+  <div class="legend">
+    <span><i style="background:var(--container)"></i>CARGO / CONTAINER</span>
+    <span><i style="background:var(--tanker)"></i>TANKER</span>
+    <span><i class="ln"></i>SHIPPING ROUTE (GLOWS = MORE SHIPS)</span>
+    <span><i class="ring"></i>STRAIT · GAP = TRAFFIC VS 2023</span>
+  </div>
+</div>
+
+<div id="dive">
+  <canvas id="shipcv"></canvas>
+  <div class="hud">
+    <button class="back" id="back">← GLOBE</button>
+    <div class="scale tag" id="hudScale"></div>
+    <svg class="compass" id="compass" viewBox="0 0 62 62"></svg>
+    <svg class="cross" id="cross" viewBox="0 0 54 54"><path d="M0 10V0h10M44 0h10v10M54 44v10H44M10 54H0V44" fill="none" stroke="#ececec" stroke-width="1"/></svg>
+    <div class="card ident" id="ident"></div>
+    <div class="card wx" id="wx"></div>
+    <div class="strip" id="strip"></div>
+    <div class="clock tag" id="hudClock"></div>
+  </div>
+</div>
+
+<script src="js/util.js?v=20261116T0014"></script>
+<script src="js/data.js?v=20261116T0014"></script>
+<script src="js/logo.js?v=20261116T0014"></script>
+<script src="js/brand.js?v=20261116T0014"></script>
+<script src="js/sky.js?v=20261116T0014"></script>
+<script src="js/wxlayer.js?v=20261116T0014"></script>
+<script src="js/ports.js?v=20261116T0014"></script>
+<script src="js/globefx.js?v=20261116T0014"></script>
+<script src="js/globe.js?v=20261116T0014"></script>
+<script src="js/shipvideo.js?v=20261116T0014"></script>
+<script type="module" src="js/main.js?v=20261116T0014"></script>
+<script type="module" src="js/story.js?v=20261116T0014"></script>
+</body>
+</html>

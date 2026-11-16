@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Headway logo</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  body { margin: 0; background: var(--bg, #222222); color: var(--fg, #ececec); font: 13px/1.5 var(--mono, ui-monospace, "SF Mono", Menlo, monospace); }
+  .logo { max-width: 1100px; margin: 60px auto; padding: 0 16px; }
+  canvas { width: 100%; display: block; }
+  .tags { display: flex; justify-content: space-between; color: var(--dim, #8c8c8c); font-size: 11px; letter-spacing: 0.18em; padding: 0 12px; }
+</style>
+</head>
+<body>
+<div class="logo">
+  <canvas id="headway-logo" width="1360" height="320"></canvas>
+  <div class="tags"><span>SYS.ROUTES: 210 · STRAITS: 28</span><span>SYS.STATE: ACTIVE</span></div>
+</div>
+<script>
+// HEADWAY drawn as a grid of glyphs. Each cell inside the letters gets a glyph
+// (square, circle, ring, plus, diamond, small dot, striped square, ring with a
+// dot, square in a square). Smooth wave fields pick each cell's glyph, colour
+// and size, and drift slowly, so patches change in place. Nothing leaves the letters.
+// To use elsewhere: copy this script and point it at any canvas with id headway-logo.
+
+const canvas = document.getElementById("headway-logo");
+const ctx = canvas.getContext("2d");
+const W = canvas.width;
+const H = canvas.height;
+const STEP = 12;  // grid cell size in canvas pixels
+
+const css = getComputedStyle(document.documentElement);
+const v = (name) => css.getPropertyValue(name).trim();
+const BG = v("--bg") || "#222222";
+// Colours come from tokens.css; the hex after each name is the fallback if
+// the stylesheet isn't loaded, so this file also works on its own.
+const COLOURS = [
+  ["--container", "#46b36f"], ["--container-deep", "#1f7a45"],
+  ["--tanker", "#f08a3c"], ["--tanker-deep", "#f26b1d"],
+  ["--dry-bulk", "#8f82f2"], ["--dry-bulk-deep", "#6f62d8"],
+  ["--general", "#ea86b5"], ["--roro", "#e9c84b"], ["--roro-deep", "#b39a2a"],
+  ["--peach", "#f3d0b4"], ["--mint", "#e6f4ec"],
+].map(([name, fallback]) => v(name) || fallback);
+
+let cells = [];
+
+// Render the word once off-screen and keep the grid cells that land inside it.
+function buildCells() {
+  const off = document.createElement("canvas");
+  off.width = W;
+  off.height = H;
+  const c = off.getContext("2d");
+  c.fillStyle = "#fff";
+  c.font = '700 196px "SF Mono", Menlo, Consolas, monospace';
+  c.textAlign = "center";
+  c.textBaseline = "middle";
+  c.letterSpacing = "22px";
+  c.fillText("HEADWAY", W / 2 + 11, H / 2 + 8);
+  const pixels = c.getImageData(0, 0, W, H).data;
+
+  cells = [];
+  for (let y = STEP / 2; y < H; y += STEP) {
+    for (let x = STEP / 2; x < W; x += STEP) {
+      const alpha = pixels[(Math.round(y) * W + Math.round(x)) * 4 + 3];
+      if (alpha > 90) {
+        cells.push({ x: x, y: y, coverage: alpha / 255, r: Math.random() });
+      }
+    }
+  }
+}
+
+// A smooth field from summed sine waves, roughly between -4 and 4.
+function wave(x, y, t, freq, speed) {
+  return Math.sin(x * freq + t * speed)
+       + Math.sin(y * freq * 1.3 - t * speed * 0.8)
+       + Math.sin((x + y) * freq * 0.7 + t * speed * 0.6)
+       + Math.sin((x - y) * freq * 0.9 - t * speed * 0.5);
+}
+
+function drawGlyph(kind, x, y, size, colour) {
+  ctx.fillStyle = colour;
+  ctx.strokeStyle = colour;
+  const h = size / 2;
+  if (kind === 0) {                       // filled square
+    ctx.fillRect(x - h, y - h, size, size);
+  } else if (kind === 1) {                // filled circle
+    ctx.beginPath(); ctx.arc(x, y, h, 0, Math.PI * 2); ctx.fill();
+  } else if (kind === 2) {                // ring
+    ctx.lineWidth = Math.max(1.6, size * 0.2);
+    ctx.beginPath(); ctx.arc(x, y, h * 0.78, 0, Math.PI * 2); ctx.stroke();
+  } else if (kind === 3) {                // plus
+    const w = Math.max(2, size * 0.3);
+    ctx.fillRect(x - h, y - w / 2, size, w);
+    ctx.fillRect(x - w / 2, y - h, w, size);
+  } else if (kind === 4) {                // diamond
+    ctx.beginPath();
+    ctx.moveTo(x, y - h); ctx.lineTo(x + h, y); ctx.lineTo(x, y + h); ctx.lineTo(x - h, y);
+    ctx.closePath(); ctx.fill();
+  } else if (kind === 5) {                // small dot
+    ctx.beginPath(); ctx.arc(x, y, h * 0.42, 0, Math.PI * 2); ctx.fill();
+  } else if (kind === 6) {                // striped square
+    const lh = Math.max(1.4, size * 0.16);
+    for (let i = 0; i < 3; i++) ctx.fillRect(x - h, y - h + i * (size - lh) / 2, size, lh);
+  } else if (kind === 7) {                // ring with a centre dot
+    ctx.lineWidth = Math.max(1.5, size * 0.16);
+    ctx.beginPath(); ctx.arc(x, y, h * 0.8, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = "#f2f2f2";
+    ctx.beginPath(); ctx.arc(x, y, h * 0.32, 0, Math.PI * 2); ctx.fill();
+  } else {                                // square inside a square
+    ctx.lineWidth = Math.max(1.5, size * 0.16);
+    ctx.strokeRect(x - h * 0.85, y - h * 0.85, size * 0.85, size * 0.85);
+    ctx.fillRect(x - h * 0.35, y - h * 0.35, size * 0.35, size * 0.35);
+  }
+}
+
+function frame(now) {
+  const t = now / 1000;
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, H);
+
+  for (const cell of cells) {
+    const g = wave(cell.x, cell.y, t, 0.011, 0.32);
+    const kind = Math.floor(((g + 4) / 8) * 9.999 + cell.r * 0.6) % 9;
+
+    const cw = wave(cell.x + 400, cell.y - 200, t, 0.008, 0.22);
+    let ci = Math.floor(((cw + 4) / 8) * COLOURS.length * 0.999);
+    ci = Math.min(COLOURS.length - 1, Math.max(0, ci));
+
+    const sw = wave(cell.x - 300, cell.y + 100, t, 0.02, 0.5);
+    const size = STEP * (0.5 + 0.32 * ((sw + 4) / 8)) * (0.75 + 0.25 * cell.coverage);
+
+    const flash = Math.sin(t * 2.1 + cell.r * 40) > 0.985;
+    drawGlyph(kind, cell.x, cell.y, size, flash ? "#ffffff" : COLOURS[ci]);
+  }
+  requestAnimationFrame(frame);
+}
+
+ctx.fillStyle = BG;
+ctx.fillRect(0, 0, W, H);
+document.fonts.ready.then(() => {
+  buildCells();
+  requestAnimationFrame(frame);
+});
+</script>
+</body>
+</html>

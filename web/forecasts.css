@@ -1,0 +1,7 @@
+/* The forecasts page: Kimball's forecasts screen (stats.css, js/stats.js) shown as a page of its
+   own under the shared top bar, instead of sliding up from under the globe. */
+body.fc { overflow:hidden; }
+body.fc .topbar { position:fixed; left:0; right:0; top:0; z-index:40; }
+body.fc #stats { top:71px; transform:none; transition:none; z-index:4; }
+body.fc #stats .back, body.fc .statsBtn { display:none; }
+body.fc #stats section:first-of-type { padding-top:36px; }
