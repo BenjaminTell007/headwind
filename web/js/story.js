@@ -55,6 +55,10 @@ css.textContent = `
   .hedgecard button.buy:disabled { opacity:.6; cursor:default; }
   .hedgecard .msg { margin-top:10px; font:400 12px/1.45 var(--sans); color:#cfcfcf; }
   .hedgecard .msg a { color:var(--accent); }
+  .hedgecard .try { display:flex; gap:8px; margin-top:12px; }
+  .hedgecard .try input { flex:1; min-width:0; background:rgba(236,236,236,.07); border:1px solid rgba(236,236,236,.16); border-radius:9px; padding:9px 10px; color:#f2f2f0; font:400 13px/1.2 var(--sans); outline:none; }
+  .hedgecard .try input:focus { border-color:var(--accent); }
+  .hedgecard .try button { background:var(--accent); color:#fff; border:0; border-radius:9px; padding:0 14px; font:500 11px/1 var(--mono); letter-spacing:.14em; cursor:pointer; }
   .hedgecard .ok { color:#35c97b; font:500 11px/1.3 var(--mono); letter-spacing:.16em; }
   @media (max-width: 1180px) { .hud .hedgecard { top:auto; bottom:24px; right:24px; } .hud:has(.hedgecard) .wx { display:none; } }
   @media (max-width: 820px) { .hud .hedgecard { left:16px; right:16px; width:auto; bottom:auto; top:150px; } }`;
@@ -126,7 +130,12 @@ const paintHedge = () => {
   if (!card || !hs) return;
   const s = hs, q = s.q;
   const head = `<div class="tag">HEDGE THIS SHIP · LIVE PRICE ON MONAD</div>`;
-  if (s.state === 'none') { card.innerHTML = `${head}<div class="msg">${esc(s.msg || 'This ship reports no destination, so there is no arrival to price.')}</div><a class="buy" href="${marketsLink(s)}">PRICE IT ON THE MARKETS PAGE →</a>`; return; }
+  if (s.state === 'none') {   // no price: say why, and let them name a port the model does know
+    card.innerHTML = `${head}<div class="msg">${esc(s.msg || 'This ship reports no destination, so there is no arrival to price.')}</div>
+      <div class="try"><input id="hcPort" placeholder="Try a port, like Rotterdam" autocomplete="off"><button id="hcTry">PRICE</button></div>
+      <div class="msg" style="color:#8a8a8a">Arrival prices use the 2,000 or so ports IMF PortWatch tracks. Small harbours and river ports are not in it.</div>`;
+    return;
+  }
   if (s.state === 'pricing' || !q) { card.innerHTML = `${head}<h4>Pricing a late arrival…</h4><div class="bar"><i style="width:35%"></i></div><div class="msg">Distance, speed, weather on the way and the wait at the port.</div>`; return; }
   const p = openPrice(q), md = q.model || {}, inp = md.inputs || {}, hg = q.hedge || {}, stake = stakeOf(q), fee = Number(q.quote.creationFee) / 1e18;
   const body = `${head}<h4>${esc(q.quote.question)}</h4>
@@ -174,9 +183,11 @@ const buy = async () => {
   }
   if (hs === s) paintHedge();
 };
+const tryPort = () => { const el = document.getElementById('hcPort'), v = el && el.value.trim(); if (v && hs) showHedge({ ...hs.ship, destination: v }); };
 const showHedge = async ship => {
   const hud = document.querySelector('#dive .hud'); if (!hud) return;
-  if (!card) { card = document.createElement('div'); card.className = 'card hedgecard'; hud.appendChild(card); card.addEventListener('click', e => { if (e.target.closest('#hcBuy')) buy(); }); }
+  if (!card) { card = document.createElement('div'); card.className = 'card hedgecard'; hud.appendChild(card); card.addEventListener('click', e => { if (e.target.closest('#hcBuy')) buy(); if (e.target.closest('#hcTry')) tryPort(); });
+    card.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'hcPort') tryPort(); });   /* typing here must not trigger the page's shortcut keys */ }
   const port = String(ship.destination || '').trim(), key = (ship.mmsi || ship.name) + '|' + port;
   const s = hs = { ship, port, key, q: null, state: 'pricing', msg: '', done: null };
   if (!port) { s.state = 'none'; return paintHedge(); }
@@ -184,7 +195,7 @@ const showHedge = async ship => {
   if (had && Number(had.quote.expiry) * 1000 > Date.now() + 30e3) { s.q = had; s.state = 'quoted'; return paintHedge(); }
   paintHedge();
   try { s.q = await priceShip(ship, port); quoteCache.set(key, s.q); s.state = 'quoted'; }
-  catch (e) { const m = serverSays(e); s.state = 'none'; s.msg = /unknown port/i.test(m) ? `The pricing model doesn't cover ${port} yet. Pick the port yourself on the markets page.` : m; }
+  catch (e) { const m = serverSays(e); s.state = 'none'; s.msg = /unknown port/i.test(m) ? `The pricing model doesn't know the port this ship reports (${port}).` : m; }
   if (hs === s) paintHedge();
 };
 window.addEventListener('headway:dive', e => showHedge(e.detail));
