@@ -171,9 +171,17 @@ const dive = async ship => {
   window.dispatchEvent(new CustomEvent('headway:dive', { detail: ship }));   // js/story.js prices a hedge for it
   renderHUD(ship, null);
   const w = await wxP;
-  if (w) { scene.setWeather(w); renderHUD(ship, w); }
+  if (w) { scene.setWeather(w); renderHUD(ship, w); } else renderHUD(ship, false);
   setTimeout(() => $('cross').classList.add('on'), 2400);
+  // keep it live: ask again every 3 minutes while this ship's view is open (and sooner if the first try failed)
+  clearInterval(wxTimer);
+  wxTimer = setInterval(async () => {
+    if (!scene.S.on || hudShip !== ship) return clearInterval(wxTimer);
+    const again = await HW.weatherAt(lat, lon).catch(() => null);
+    if (again && scene.S.on && hudShip === ship) { scene.setWeather(again); renderHUD(ship, again); }
+  }, w ? 180000 : 20000);
 };
+let wxTimer = null;
 const renderHUD = (s, w) => {
   const g = s.g || s.type_group || HW.vesselGroup(s.type), kind = scene.S.kind;
   renderStrip(s, w);
@@ -187,10 +195,10 @@ const renderHUD = (s, w) => {
       <div><b>${HW.esc(s.eta || '—')}</b><span>ETA</span></div>
       <div><b>${(+s.lat).toFixed(2)}, ${(+s.lon).toFixed(2)}</b><span>POSITION</span></div>
     </div>`;
-  if (!w) { $('wx').innerHTML = '<div class="tag">WEATHER AT THE SHIP</div><p style="color:#bbb;font:13px var(--sans);margin:10px 0 0">Loading live conditions…</p>'; }
+  if (!w) { $('wx').innerHTML = `<div class="tag">WEATHER AT THE SHIP</div><p style="color:#bbb;font:13px var(--sans);margin:10px 0 0">${w === false ? 'The weather service is not answering right now. Trying again every 20 seconds.' : 'Loading live conditions…'}</p>`; }
   else {
     const f = (v, u, d = 1) => v == null ? '—' : (+v).toFixed(d) + u;
-    $('wx').innerHTML = `<div class="tag">WEATHER AT THE SHIP · LIVE</div>
+    $('wx').innerHTML = `<div class="tag">WEATHER AT THE SHIP · ${w.approx ? 'NEAREST GRID POINT' : 'LIVE'} · ${new Date(w.approx && w.time ? w.time : Date.now()).toISOString().slice(11, 16)} UTC</div>
       <div class="num" style="margin-top:8px">${SKY(+w.weather_code)}${w.is_day === 0 ? ' · NIGHT' : ''}</div>
       <div class="grid">
         <div><b>${f(w.wind_speed_10m, ' kn')}</b><span>WIND FROM ${w.wind_direction_10m != null ? COMPASS(w.wind_direction_10m) : '—'}</span></div>
@@ -257,7 +265,7 @@ $('back').addEventListener('click', () => {
   globe.zoomBy(0.35);
 });
 const altTick = () => {
-  if (scene.S.on) $('hudScale').textContent = 'ALT ' + Math.round(scene.S.alt != null ? scene.S.alt : HW.lerp(1800, 320, HW.ease(scene.S.intro))).toLocaleString('en-US') + ' M · ' + (scene.S.mode === 'top' ? 'DRONE' : 'PROFILE');
+  if (scene.S.on) $('hudScale').textContent = 'ALT ' + Math.round(scene.S.alt != null ? scene.S.alt : HW.lerp(1800, 320, HW.ease(scene.S.intro))).toLocaleString('en-US') + ' M';
   requestAnimationFrame(altTick);
 };
 altTick();
