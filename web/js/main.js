@@ -21,7 +21,8 @@ try {
   throw e;
 }
 weeks = D.status.weeks; nW = weeks.length;
-$('introtag').textContent = `SYS.ROUTES: ${D.corridors.features.length} · STRAITS: ${D.straits.length} · DATA TO ${HW.fDate(D.overview.as_of)}`;
+// what the loader says: the weekly strait counts (IMF PortWatch) run up to this date; ships are live
+$('introtag').textContent = `${D.corridors.features.length} ROUTES · ${D.straits.length} STRAITS · WEEKLY COUNTS TO ${HW.fDate(D.overview.as_of)} · SHIPS LIVE`;
 
 globe = HW.makeGlobe($('globe'), D, { onSelect: item => showPanel(item) });
 // the ship view: a satellite zoom into real drone footage, dressed in the live weather (js/shipvideo.js)
