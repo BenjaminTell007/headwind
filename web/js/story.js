@@ -55,6 +55,10 @@ css.textContent = `
   .hedgecard button.buy:disabled { opacity:.6; cursor:default; }
   .hedgecard .msg { margin-top:10px; font:400 12px/1.45 var(--sans); color:#cfcfcf; }
   .hedgecard .msg a { color:var(--accent); }
+  .hedgecard .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .hedgecard .chips button { background:rgba(76,141,255,.14); border:1px solid rgba(76,141,255,.5); color:#f2f2f0; border-radius:16px; padding:6px 11px; font:400 12.5px/1.2 var(--sans); cursor:pointer; }
+  .hedgecard .chips button:hover { background:var(--accent); }
+  .hedgecard .chips small { color:#a8a8a8; margin-left:6px; font-size:10.5px; }
   .hedgecard .try { display:flex; gap:8px; margin-top:12px; }
   .hedgecard .try input { flex:1; min-width:0; background:rgba(236,236,236,.07); border:1px solid rgba(236,236,236,.16); border-radius:9px; padding:9px 10px; color:#f2f2f0; font:400 13px/1.2 var(--sans); outline:none; }
   .hedgecard .try input:focus { border-color:var(--accent); }
@@ -121,6 +125,32 @@ const serverSays = e => {   // the server answers {"detail": "..."}; show that s
   return msg.replace(/^quote failed: \d+ /, '');
 };
 
+/* ---------- ports the model knows (IMF PortWatch, about 2,000), for suggestions ---------- */
+let portsP = null;
+const loadPorts = () => portsP || (portsP = (async () => {
+  for (const u of ['../data/processed/portwatch_ports.json', `${HW.SERVER}/data/portwatch_ports.json`]) {
+    try { const r = await fetch(u); if (r.ok) return (await r.json()).filter(p => p.name && isFinite(p.lat) && isFinite(p.lon)); } catch { /* next */ }
+  }
+  return [];
+})());
+const RADg = Math.PI / 180;
+const nmBetween = (la1, lo1, la2, lo2) => { const a = Math.sin((la2 - la1) * RADg / 2) ** 2 + Math.cos(la1 * RADg) * Math.cos(la2 * RADg) * Math.sin((lo2 - lo1) * RADg / 2) ** 2; return 3440 * 2 * Math.asin(Math.sqrt(a)); };
+const bearing = (la1, lo1, la2, lo2) => { const y = Math.sin((lo2 - lo1) * RADg) * Math.cos(la2 * RADg), x = Math.cos(la1 * RADg) * Math.sin(la2 * RADg) - Math.sin(la1 * RADg) * Math.cos(la2 * RADg) * Math.cos((lo2 - lo1) * RADg); return (Math.atan2(y, x) / RADg + 360) % 360; };
+/* Ports worth offering for a ship whose own destination the model doesn't know: busy ports in the
+   country its destination code names (US CDE -> United States) if it gives one, otherwise busy
+   ports ahead of it on its course. Nearer and busier first. */
+const suggestPorts = async (ship, dest) => {
+  const all = await loadPorts(); if (!all.length) return [];
+  const last = String(dest || '').split(/[>=]+/).pop().trim().toUpperCase(), m = /^([A-Z]{2}) ?[A-Z]{3}$/.exec(last), cc = m ? m[1] : null;
+  const lat = +ship.lat, lon = +ship.lon, cog = ship.cog != null ? +ship.cog : null;
+  let pool = cc ? all.filter(p => (p.locode || '').toUpperCase().startsWith(cc)) : [];
+  const scored = (pool.length >= 2 ? pool : all).map(p => {
+    const d = nmBetween(lat, lon, p.lat, p.lon); let off = cog == null ? 0 : Math.abs(bearing(lat, lon, p.lat, p.lon) - cog); if (off > 180) off = 360 - off;
+    return { p, d, off, score: Math.sqrt((p.vessels || 0) + 50) / (d + 250) * (off <= 70 ? 1 : pool.length >= 2 ? 0.45 : 0.1) };
+  }).filter(x => x.d > 3 && x.d < 9000).sort((a, b) => b.score - a.score);
+  return scored.slice(0, 4).map(x => ({ name: x.p.name, code: x.p.locode || x.p.name, nm: Math.round(x.d) }));
+};
+
 /* ---------- the hedge card in the ship view ---------- */
 let card = null, hs = null;   // hs: { ship, port, q, state, msg, done }
 const quoteCache = new Map();
@@ -130,10 +160,13 @@ const paintHedge = () => {
   if (!card || !hs) return;
   const s = hs, q = s.q;
   const head = `<div class="tag">HEDGE THIS SHIP · LIVE PRICE ON MONAD</div>`;
-  if (s.state === 'none') {   // no price: say why, and let them name a port the model does know
+  if (s.state === 'none') {   // no price: say why, and offer ports the model does know
+    const sug = s.sug || [];
     card.innerHTML = `${head}<div class="msg">${esc(s.msg || 'This ship reports no destination, so there is no arrival to price.')}</div>
-      <div class="try"><input id="hcPort" placeholder="Try a port, like Rotterdam" autocomplete="off"><button id="hcTry">PRICE</button></div>
-      <div class="msg" style="color:#8a8a8a">Arrival prices use the 2,000 or so ports IMF PortWatch tracks. Small harbours and river ports are not in it.</div>`;
+      ${sug.length ? `<div class="tag" style="margin-top:12px">${s.sugWhy || 'Price it to a port nearby instead'}</div><div class="chips">${sug.map(p => `<button data-port="${esc(p.code)}" data-name="${esc(p.name)}">${esc(p.name)}<small>${p.nm.toLocaleString('en-US')} nm</small></button>`).join('')}</div>` : ''}
+      <div class="try"><input id="hcPort" list="hcPorts" placeholder="Or type any port" autocomplete="off"><button id="hcTry">PRICE</button></div>
+      <datalist id="hcPorts">${(s.names || []).map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+      <div class="msg" style="color:#8a8a8a">Arrival prices cover the 2,000 or so ports IMF PortWatch tracks. Start typing and pick one from the list.</div>`;
     return;
   }
   if (s.state === 'pricing' || !q) { card.innerHTML = `${head}<h4>Pricing a late arrival…</h4><div class="bar"><i style="width:35%"></i></div><div class="msg">Distance, speed, weather on the way and the wait at the port.</div>`; return; }
@@ -183,19 +216,29 @@ const buy = async () => {
   }
   if (hs === s) paintHedge();
 };
+const addSuggestions = async s => {
+  try {
+    s.sug = await suggestPorts(s.ship, s.orig || s.port);
+    const cc = /^([A-Z]{2}) ?[A-Z]{3}$/.exec(String(s.orig || s.port).split(/[>=]+/).pop().trim().toUpperCase());
+    s.sugWhy = cc ? 'Busy ports in the same country' : 'Busy ports ahead of this ship';
+    s.names = (await loadPorts()).slice().sort((a, b) => (b.vessels || 0) - (a.vessels || 0)).map(p => p.name);
+  } catch { s.sug = []; }
+};
 const tryPort = () => { const el = document.getElementById('hcPort'), v = el && el.value.trim(); if (v && hs) showHedge({ ...hs.ship, destination: v }); };
 const showHedge = async ship => {
   const hud = document.querySelector('#dive .hud'); if (!hud) return;
-  if (!card) { card = document.createElement('div'); card.className = 'card hedgecard'; hud.appendChild(card); card.addEventListener('click', e => { if (e.target.closest('#hcBuy')) buy(); if (e.target.closest('#hcTry')) tryPort(); });
+  if (!card) { card = document.createElement('div'); card.className = 'card hedgecard'; hud.appendChild(card); card.addEventListener('click', e => { if (e.target.closest('#hcBuy')) buy(); if (e.target.closest('#hcTry')) tryPort(); const chip = e.target.closest('[data-port]'); if (chip && hs) showHedge({ ...hs.ship, destination: chip.dataset.port, portName: chip.dataset.name }); });
     card.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'hcPort') tryPort(); });   /* typing here must not trigger the page's shortcut keys */ }
   const port = String(ship.destination || '').trim(), key = (ship.mmsi || ship.name) + '|' + port;
-  const s = hs = { ship, port, key, q: null, state: 'pricing', msg: '', done: null };
-  if (!port) { s.state = 'none'; return paintHedge(); }
+  const s = hs = { ship, port, key, q: null, state: 'pricing', msg: '', done: null, orig: ship.origDest || port };
+  ship.origDest = s.orig;
+  if (!port) { s.state = 'none'; paintHedge(); await addSuggestions(s); if (hs === s) paintHedge(); return; }
   const had = quoteCache.get(key);
   if (had && Number(had.quote.expiry) * 1000 > Date.now() + 30e3) { s.q = had; s.state = 'quoted'; return paintHedge(); }
   paintHedge();
   try { s.q = await priceShip(ship, port); quoteCache.set(key, s.q); s.state = 'quoted'; }
-  catch (e) { const m = serverSays(e); s.state = 'none'; s.msg = /unknown port/i.test(m) ? `The pricing model doesn't know the port this ship reports (${port}).` : m; }
+  catch (e) { const m = serverSays(e); s.state = 'none'; s.msg = /unknown port/i.test(m) ? `The pricing model doesn't know the port “${port}”.` : m; }
+  if (s.state === 'none') { if (hs === s) paintHedge(); await addSuggestions(s); }
   if (hs === s) paintHedge();
 };
 window.addEventListener('headway:dive', e => showHedge(e.detail));
