@@ -76,13 +76,37 @@
   };
 
   /* Live weather at a point, straight from Open-Meteo (free, no key). */
+  /* Weather at one point, live from Open-Meteo. Open-Meteo limits how often one address can ask,
+     so a refused call is tried twice more, and if it still fails the nearest point of the
+     weather snapshot (web/data/weather_grid.json, the globe overlay's file) is used instead,
+     marked approx so the ship view can say so. */
+  let gridP = null;
+  const fromGrid = async (lat, lon) => {
+    gridP = gridP || fetch('data/weather_grid.json').then(r => r.ok ? r.json() : null).catch(() => null);
+    const g = await gridP; if (!g || !g.points) return null;
+    let best = null, bd = 1e9;
+    for (const p of g.points) {
+      if (p.wind == null) continue;
+      let dl = Math.abs(p.lon - lon); if (dl > 180) dl = 360 - dl;
+      const d = (p.lat - lat) ** 2 + dl * dl; if (d < bd) { bd = d; best = p; }
+    }
+    if (!best) return null;
+    return { wind_speed_10m: best.wind, wind_gusts_10m: best.gust, weather_code: best.code, cloud_cover: best.cloud, precipitation: best.rain, wave_height: best.wave, approx: true, time: g.at };
+  };
+  const getJson = async url => {
+    for (let i = 0; i < 3; i++) {
+      try { const r = await fetch(url); if (r.ok) return await r.json(); if (r.status !== 429 && r.status < 500) return null; } catch { /* network: try again */ }
+      await new Promise(res => setTimeout(res, 900 * (i + 1)));
+    }
+    return null;
+  };
   HW.weatherAt = async (lat, lon) => {
     const q = `latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}`;
     const [w, m] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?${q}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,cloud_cover,precipitation,visibility,is_day&wind_speed_unit=kn`).then(r => r.json()).catch(() => null),
-      fetch(`https://marine-api.open-meteo.com/v1/marine?${q}&current=wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,sea_surface_temperature`).then(r => r.json()).catch(() => null),
+      getJson(`https://api.open-meteo.com/v1/forecast?${q}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,weather_code,cloud_cover,precipitation,visibility,is_day&wind_speed_unit=kn`),
+      getJson(`https://marine-api.open-meteo.com/v1/marine?${q}&current=wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,sea_surface_temperature`),
     ]);
-    if (!w || !w.current) return null;
+    if (!w || !w.current) return fromGrid(lat, lon);
     return { ...w.current, ...(m && m.current ? m.current : {}) };
   };
 })();
